@@ -26,15 +26,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16+
+      - name: Select Xcode (26 preferred for the iOS 26 SDK)
         run: |
           ls /Applications | grep -i xcode || true
-          XCODE_APP="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -n 1)"
+          XCODE_APP="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -z "$XCODE_APP" ]]; then
+            XCODE_APP="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -n 1)"
+          fi
           if [[ -n "$XCODE_APP" ]]; then
             echo "Using $XCODE_APP"
             sudo xcode-select -s "$XCODE_APP/Contents/Developer"
           else
-            echo "No Xcode_16*.app found, keeping default:"
+            echo "No versioned Xcode found, keeping default:"
             xcode-select -p
           fi
           xcodebuild -version

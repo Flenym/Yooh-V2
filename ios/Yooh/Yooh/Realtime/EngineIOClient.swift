@@ -179,7 +179,7 @@ final class EngineIOClient {
             let upgraded = self.wsUpgraded
             self.lock.unlock()
             guard isCurrent, !isClosed, !upgraded else { return }
-            if let error as NSError?, error.code != NSURLErrorCancelled {
+            if let nsError = error as NSError?, nsError.code != NSURLErrorCancelled {
                 // A failed long-poll GET is usually transient (timeout races);
                 // re-issue unless the watchdog already fired.
                 #if DEBUG

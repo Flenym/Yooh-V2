@@ -87,13 +87,13 @@ struct YoohGlass: ViewModifier {
         if #available(iOS 26.0, *) {
             switch style {
             case .regular:
-                content.glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+                content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius))
             case .interactive:
-                content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
+                content.glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: cornerRadius))
             }
         } else {
             content
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: cornerRadius))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
         }
     }
 }
