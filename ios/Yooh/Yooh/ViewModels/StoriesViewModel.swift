@@ -10,11 +10,7 @@ final class StoriesViewModel {
     private(set) var isLoading = false
     private(set) var error: String?
 
-    private let app: AppState
-
-    init(app: AppState) {
-        self.app = app
-    }
+    var app: AppState! = nil
 
     func clearError() { error = nil }
 

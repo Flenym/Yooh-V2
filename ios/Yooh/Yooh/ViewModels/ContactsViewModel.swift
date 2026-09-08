@@ -11,12 +11,8 @@ final class ContactsViewModel {
     private(set) var isSearching = false
     private(set) var error: String?
 
-    private let app: AppState
+    var app: AppState! = nil
     private var searchTask: Task<Void, Never>?
-
-    init(app: AppState) {
-        self.app = app
-    }
 
     func clearError() { error = nil }
 

@@ -17,11 +17,7 @@ final class SettingsViewModel {
 
     var serverURL: String = UserDefaults.standard.string(forKey: AppConfig.Keys.serverURLOverride) ?? ""
 
-    private let app: AppState
-
-    init(app: AppState) {
-        self.app = app
-    }
+    var app: AppState! = nil
 
     func clearError() { error = nil }
     func clearNotice() { notice = nil }

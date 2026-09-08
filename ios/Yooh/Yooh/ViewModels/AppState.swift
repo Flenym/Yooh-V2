@@ -66,13 +66,21 @@ final class AppState {
         settingsService = SettingsService()
         authService = AuthService()
         callService = CallService(socket: socket)
-        chatsViewModel = ChatsViewModel(app: self)
-        contactsViewModel = ContactsViewModel(app: self)
-        profileViewModel = ProfileViewModel(app: self)
-        settingsViewModel = SettingsViewModel(app: self)
-        storiesViewModel = StoriesViewModel(app: self)
-        callsViewModel = CallsViewModel(app: self)
+        chatsViewModel = ChatsViewModel()
+        contactsViewModel = ContactsViewModel()
+        profileViewModel = ProfileViewModel()
+        settingsViewModel = SettingsViewModel()
+        storiesViewModel = StoriesViewModel()
+        callsViewModel = CallsViewModel()
         socket.delegate = self
+        // Circular refs, wired last: every stored property is set now,
+        // so `self` is fully initialized and safe to share.
+        chatsViewModel.app = self
+        contactsViewModel.app = self
+        profileViewModel.app = self
+        settingsViewModel.app = self
+        storiesViewModel.app = self
+        callsViewModel.app = self
     }
 
     // MARK: - Lifecycle

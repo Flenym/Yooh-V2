@@ -17,11 +17,7 @@ final class ProfileViewModel {
     var username = ""
     var about = ""
 
-    private let app: AppState
-
-    init(app: AppState) {
-        self.app = app
-    }
+    var app: AppState! = nil
 
     var user: YoohUser? { app.session.currentUser }
 

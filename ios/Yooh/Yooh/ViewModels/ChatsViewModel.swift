@@ -17,16 +17,10 @@ final class ChatsViewModel {
     var searchText = ""
     var showArchived = false
 
-    private let app: AppState
+    var app: AppState! = nil
     private var prefs: LocalPreferences?
     private var refreshTask: Task<Void, Never>?
     private var socketTask: Task<Void, Never>?
-
-    init(app: AppState) {
-        self.app = app
-        // Socket state → UI dot. Assigned lazily on first refresh to
-        // avoid retain issues during AppState init.
-    }
 
     var myUserId: String? { app.session.currentUser?.id }
 

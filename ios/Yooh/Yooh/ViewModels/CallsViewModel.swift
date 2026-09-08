@@ -18,11 +18,7 @@ final class CallsViewModel {
     private(set) var error: String?
     private(set) var notice: String?
 
-    private let app: AppState
-
-    init(app: AppState) {
-        self.app = app
-    }
+    var app: AppState! = nil
 
     var visible: [CallLog] {
         filter == .all ? calls : calls.filter(\.isMissed)
