@@ -1,0 +1,9 @@
+{
+  "appId": "com.yooh.app",
+  "appName": "Yooh",
+  "webDir": "src/client",
+  "server": {
+    "url": "https://yooh.cloudpub.ru",
+    "cleartext": false
+  }
+}

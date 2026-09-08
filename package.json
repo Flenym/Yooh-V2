@@ -1,0 +1,83 @@
+{
+    "name": "yooh",
+    "version": "0.1.0",
+    "description": "Yooh messenger MVP (Web + Desktop)",
+    "main": "src/server/index.js",
+    "scripts": {
+        "dev": "node scripts/dev-server.mjs",
+        "dev:server": "node scripts/dev-server.mjs",
+        "dev:desktop": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4200 && npm run desktop:native:dev\"",
+        "dev:desktop:electron": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4200 && electron desktop/main.cjs\"",
+        "start": "node src/server/index.js",
+        "desktop": "wait-on http://localhost:4200 && npm run desktop:native:dev",
+        "desktop:electron": "wait-on http://localhost:4200 && electron desktop/main.cjs",
+        "desktop:native:dev": "python desktop_native/yooh_desktop.py",
+        "desktop:native:build": "powershell -ExecutionPolicy Bypass -File desktop_native/build_windows.ps1",
+        "launch:web": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4200 && node scripts/open-url.mjs http://localhost:4200\"",
+        "launch:admin": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4201/admin && node scripts/open-url.mjs http://localhost:4201/admin\"",
+        "launch:app": "npm run dev:desktop",
+        "launch:all": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4201/admin && node scripts/open-url.mjs http://localhost:4200 http://localhost:4201/admin\" \"wait-on http://localhost:4200 && npm run desktop:native:dev\"",
+        "tunnel": "node scripts/tunnel.mjs",
+        "tuna": "node scripts/tuna.mjs",
+        "tunnel:cloudflare": "node scripts/cloudflare-tunnel.mjs",
+        "launch:tunnel": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4200 && npm run tunnel\"",
+        "launch:tuna": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4200 && npm run tuna\"",
+        "launch:cloudflare": "concurrently \"npm run dev:server\" \"wait-on http://localhost:4200 && npm run tunnel:cloudflare\"",
+        "android:sync": "npx cap sync android",
+        "android:open": "npx cap open android",
+        "android:apk:debug": "cd android && gradlew.bat assembleDebug",
+        "android:apk:release": "cd android && gradlew.bat assembleRelease",
+        "android:build": "npm run android:sync && npm run android:apk:debug",
+        "lint": "eslint .",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/DenisYiuGit/Yooh.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "bugs": {
+        "url": "https://github.com/DenisYiuGit/Yooh/issues"
+    },
+    "homepage": "https://github.com/DenisYiuGit/Yooh#readme",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "compression": "^1.8.1",
+        "cors": "^2.8.6",
+        "express": "^5.2.1",
+        "helmet": "^8.1.0",
+        "http-proxy": "^1.18.1",
+        "jsonwebtoken": "^9.0.3",
+        "morgan": "^1.10.1",
+        "multer": "^2.0.2",
+        "nodemailer": "^6.10.1",
+        "qr-scanner": "^1.4.2",
+        "qrcode": "^1.5.4",
+        "web-push": "^3.6.7",
+        "socket.io": "^4.8.3",
+        "uuid": "^13.0.0",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@capacitor/android": "^7.6.0",
+        "@capacitor/cli": "^7.6.0",
+        "@capacitor/core": "^7.6.0",
+        "@eslint/js": "^10.0.1",
+        "concurrently": "^9.2.1",
+        "electron": "^40.4.1",
+        "eslint": "^10.0.0",
+        "globals": "^17.3.0",
+        "localtunnel": "^2.0.2",
+        "playwright": "^1.58.2",
+        "supertest": "^7.2.2",
+        "vitest": "^4.0.18",
+        "wait-on": "^9.0.4"
+    },
+    "engines": {
+        "node": ">=20"
+    }
+}

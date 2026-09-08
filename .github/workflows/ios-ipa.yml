@@ -1,0 +1,121 @@
+name: iOS IPA (unsigned Release)
+
+# Builds the native SwiftUI client on a macOS runner with Xcode and
+# uploads an UNSIGNED Release IPA (+ BUILD_INFO) as a run artifact.
+# Sign it afterwards with a sideload tool (AltStore / Sideloadly).
+#
+# Run: GitHub → Actions → "iOS IPA" → Run workflow (or push to ios-client).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ios-client]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-ipa.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build-ipa:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 16+
+        run: |
+          ls /Applications | grep -i xcode || true
+          XCODE_APP="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -n "$XCODE_APP" ]]; then
+            echo "Using $XCODE_APP"
+            sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          else
+            echo "No Xcode_16*.app found, keeping default:"
+            xcode-select -p
+          fi
+          xcodebuild -version
+
+      - name: Build (Release, unsigned)
+        working-directory: ios/Yooh
+        run: |
+          xcodebuild \
+            -project Yooh.xcodeproj \
+            -scheme Yooh \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ../../build/derived \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Unit tests (best effort, never blocks the IPA)
+        working-directory: ios/Yooh
+        continue-on-error: true
+        run: |
+          DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; ds=[d for r in json.load(sys.stdin)["devices"].values() for d in r if "iPhone" in d.get("name","") and d.get("isAvailable",True)]; print(ds[0]["name"] if ds else "")')"
+          if [[ -z "$DEVICE" ]]; then echo "No iPhone simulator, skipping tests."; exit 0; fi
+          echo "Testing on: $DEVICE"
+          xcodebuild \
+            -project Yooh.xcodeproj \
+            -scheme Yooh \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -derivedDataPath ../../build/derived-test \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            test
+
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH="$(find build/derived/Build/Products/Release-iphoneos -maxdepth 1 -name 'Yooh.app' | head -n 1)"
+          if [[ -z "${APP_PATH:-}" || ! -d "$APP_PATH" ]]; then
+            echo "[ERROR] Yooh.app not found under build/derived."
+            exit 1
+          fi
+          echo "Found: $APP_PATH"
+          rm -rf build/Payload build/Yooh.ipa
+          mkdir -p build/Payload
+          cp -R "$APP_PATH" build/Payload/
+          (cd build && zip -qr Yooh.ipa Payload)
+          echo "--- Payload content ---"
+          unzip -l build/Yooh.ipa | head -n 20
+
+      - name: Write BUILD_INFO.txt
+        run: |
+          INFO_PLIST="build/Payload/Yooh.app/Info.plist"
+          VERSION="$(defaults read "$PWD/$INFO_PLIST" CFBundleShortVersionString 2>/dev/null || echo 1.0)"
+          BUILD="$(defaults read "$PWD/$INFO_PLIST" CFBundleVersion 2>/dev/null || echo 1)"
+          cat > build/BUILD_INFO.txt <<EOF
+          Build date: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          App version: $VERSION
+          Build number: $BUILD
+          Scheme: Yooh
+          Configuration: Release
+          Deployment target: iOS 17.0
+          Server host: yooh-test.cloudpub.ru
+          Server port: 443 (public https via CloudPub; local backend :1111)
+          API URL: https://yooh-test.cloudpub.ru
+          WebSocket URL: wss://yooh-test.cloudpub.ru/socket.io/
+          Signing status: UNSIGNED (CODE_SIGNING_ALLOWED=NO) — sign with a sideload tool before installing
+          IPA path: build/Yooh.ipa
+          GitHub run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Commit: $GITHUB_SHA
+
+          Backend:  start.bat  (HOST=0.0.0.0 PORT=1111 ADMIN_PORT=1112 -> node src/server/index.js)
+          IPA:      GitHub Actions (.github/workflows/ios-ipa.yml) on macos-15 + Xcode 16
+          EOF
+          cat build/BUILD_INFO.txt
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yooh-ipa
+          path: |
+            build/Yooh.ipa
+            build/BUILD_INFO.txt
+          if-no-files-found: error
+          retention-days: 30

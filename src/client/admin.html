@@ -1,0 +1,321 @@
+﻿<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yooh Admin</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body class="admin-body admin-v2-body">
+    <header class="admin-v2-header">
+      <div class="admin-v2-brand">
+        <div class="admin-v2-logo">Y</div>
+        <div class="admin-v2-brand-text">
+          <strong data-i18n="brandTitle">Yooh Admin</strong>
+          <span data-i18n="brandHint">Управление пользователями, модерацией и поддержкой</span>
+        </div>
+      </div>
+      <div class="admin-v2-header-actions">
+        <select id="admin-lang-select" class="small admin-v2-control" aria-label="Language">
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+        </select>
+        <button id="runtime-monitor-toggle" type="button" class="small ghost admin-v2-control" data-i18n="runtimeOff">
+          Мониторинг ресурсов: выкл
+        </button>
+        <a href="/" class="file-btn admin-v2-control" data-i18n="openApp">Открыть приложение</a>
+      </div>
+    </header>
+
+    <main class="admin-v2-shell">
+      <aside class="admin-v2-sidebar">
+        <div class="admin-v2-nav-title" data-i18n="navTitle">Навигация</div>
+        <div class="admin-v2-nav-list admin-tabs">
+          <button type="button" class="tab active admin-v2-nav-btn" data-admin-tab-btn="overview" data-i18n="tabOverview">Обзор</button>
+          <button type="button" class="tab admin-v2-nav-btn" data-admin-tab-btn="moderation" data-i18n="tabModeration">Модерация</button>
+          <button type="button" class="tab admin-v2-nav-btn" data-admin-tab-btn="feedback" data-i18n="tabFeedback">Обращения</button>
+          <button type="button" class="tab admin-v2-nav-btn" data-admin-tab-btn="tickets" data-i18n="tabTickets">Тикеты поддержки</button>
+          <button type="button" class="tab admin-v2-nav-btn" data-admin-tab-btn="bot" data-i18n="tabBot">Системный бот</button>
+          <button type="button" class="tab admin-v2-nav-btn" data-admin-tab-btn="logs" data-i18n="tabLogs">Логи</button>
+        </div>
+      </aside>
+
+      <section class="admin-v2-main">
+        <section class="admin-v2-card admin-v2-auth-card">
+          <div class="admin-v2-auth-head">
+            <label for="admin-token" data-i18n="adminToken">Admin token</label>
+            <div class="admin-v2-auth-row">
+              <input id="admin-token" value="yooh-admin-local" />
+              <button id="load-btn" type="button" class="admin-load-btn" data-i18n="loadBtn">Загрузить</button>
+            </div>
+          </div>
+          <div class="admin-v2-tools">
+            <div class="admin-v2-search">
+              <input id="admin-quick-search" type="text" placeholder="Быстрый поиск" />
+              <button id="admin-quick-search-clear" type="button" class="small ghost" data-i18n="quickSearchClear">Очистить</button>
+            </div>
+            <div class="admin-v2-tool-actions">
+              <button id="admin-refresh-now" type="button" class="small" data-i18n="refreshNow">Обновить</button>
+              <button id="admin-auto-refresh-toggle" type="button" class="small ghost" data-i18n="autoRefreshOn">Автообновление: вкл</button>
+            </div>
+          </div>
+          <div id="admin-last-updated" class="hint admin-v2-last-updated">Последнее обновление: -</div>
+          <div id="admin-status" class="status"></div>
+        </section>
+
+        <div class="admin-v2-content">
+          <section class="admin-v2-panel" data-admin-tab="overview">
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="statsTitle">Статистика</div>
+              <div id="stats-grid" class="auth-grid admin-stats-grid"></div>
+            </article>
+
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="usersTitle">Пользователи</div>
+              <div class="admin-table-wrap">
+                <table id="users-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="colStatus">Статус</th>
+                      <th data-i18n="colName">Имя</th>
+                      <th data-i18n="colUsername">Юзернейм</th>
+                      <th data-i18n="colPremium">Plus</th>
+                      <th data-i18n="colStars">Звезды</th>
+                      <th data-i18n="colBusiness">Business</th>
+                      <th data-i18n="colPhone">Телефон</th>
+                      <th data-i18n="colSessions">Сессии</th>
+                      <th data-i18n="colLastSeen">Последний вход</th>
+                      <th data-i18n="colCreated">Создан</th>
+                      <th data-i18n="colActions">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="otpTitle">Активные OTP-коды</div>
+              <div class="admin-table-wrap">
+                <table id="codes-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="colTarget">Цель</th>
+                      <th data-i18n="colPurpose">Назначение</th>
+                      <th data-i18n="colCode">Код</th>
+                      <th data-i18n="colCreated">Создан</th>
+                      <th data-i18n="colExpires">Истекает</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section class="admin-v2-panel hidden" data-admin-tab="moderation">
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="reportsTitle">Жалобы</div>
+              <div class="admin-table-wrap">
+                <table id="reports-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="colWhen">Когда</th>
+                      <th data-i18n="colReporter">Кто пожаловался</th>
+                      <th data-i18n="colReported">На кого</th>
+                      <th data-i18n="colChat">Чат</th>
+                      <th data-i18n="colReason">Причина</th>
+                      <th data-i18n="colActions">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="moderationActions">Действия модерации</div>
+              <div class="auth-grid admin-moderation-grid">
+                <form id="ban-form" class="auth-form admin-form-card">
+                  <strong data-i18n="banUserTitle">Бан пользователя</strong>
+                  <input id="ban-user-id" placeholder="userId" />
+                  <input id="ban-reason" placeholder="reason" />
+                  <input id="ban-expires-at" type="datetime-local" />
+                  <button type="submit" data-i18n="banBtn">Забанить</button>
+                </form>
+
+                <form id="mute-form" class="auth-form admin-form-card">
+                  <strong data-i18n="muteUserTitle">Мут пользователя в чате</strong>
+                  <input id="mute-chat-id" placeholder="chatId" />
+                  <input id="mute-user-id" placeholder="userId" />
+                  <input id="mute-reason" placeholder="reason" />
+                  <input id="mute-expires-at" type="datetime-local" />
+                  <button type="submit" data-i18n="muteBtn">Выдать мут</button>
+                </form>
+              </div>
+            </article>
+
+            <div class="admin-v2-split">
+              <article class="admin-v2-card">
+                <div class="section-title" data-i18n="activeBans">Активные баны</div>
+                <div class="admin-table-wrap">
+                  <table id="bans-table">
+                    <thead>
+                      <tr>
+                        <th data-i18n="colUser">Пользователь</th>
+                        <th data-i18n="colReason">Причина</th>
+                        <th data-i18n="colExpires">Истекает</th>
+                        <th data-i18n="colAction">Действие</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </article>
+
+              <article class="admin-v2-card">
+                <div class="section-title" data-i18n="activeMutes">Активные муты</div>
+                <div class="admin-table-wrap">
+                  <table id="mutes-table">
+                    <thead>
+                      <tr>
+                        <th data-i18n="colUser">Пользователь</th>
+                        <th data-i18n="colChat">Чат</th>
+                        <th data-i18n="colReason">Причина</th>
+                        <th data-i18n="colExpires">Истекает</th>
+                        <th data-i18n="colAction">Действие</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-v2-panel hidden" data-admin-tab="feedback">
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="feedbackTitle">Обращения</div>
+              <div class="auth-grid admin-moderation-grid">
+                <label class="admin-form-card">
+                  <strong data-i18n="feedbackCategoryFilter">Фильтр категории</strong>
+                  <select id="feedback-category-filter">
+                    <option value="all" data-i18n="all">Все</option>
+                    <option value="bug" data-i18n="categoryBug">Ошибки</option>
+                    <option value="improvement" data-i18n="categoryImprovement">Улучшения</option>
+                    <option value="wish" data-i18n="categoryWish">Пожелания</option>
+                  </select>
+                </label>
+                <label class="admin-form-card">
+                  <strong data-i18n="feedbackUserFilter">Фильтр пользователя</strong>
+                  <input id="feedback-user-filter" placeholder="@username | name | phone" />
+                </label>
+                <label class="admin-form-card">
+                  <strong data-i18n="sortTitle">Сортировка</strong>
+                  <select id="feedback-sort">
+                    <option value="newest" data-i18n="sortNewest">Сначала новые</option>
+                    <option value="oldest" data-i18n="sortOldest">Сначала старые</option>
+                    <option value="user" data-i18n="sortUser">По пользователю</option>
+                    <option value="category" data-i18n="sortCategory">По категории</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="admin-table-wrap">
+                <table id="feedback-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="colWhen">Когда</th>
+                      <th data-i18n="colUser">Пользователь</th>
+                      <th data-i18n="colCategory">Категория</th>
+                      <th data-i18n="colMessage">Сообщение</th>
+                      <th data-i18n="colStatus">Статус</th>
+                      <th data-i18n="colActions">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section class="admin-v2-panel hidden" data-admin-tab="tickets">
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="ticketsSectionTitle">Тикеты поддержки (Yooh Support)</div>
+              <div class="admin-support-layout">
+                <aside class="admin-support-list-wrap">
+                  <div id="support-tickets-list" class="admin-support-tickets-list"></div>
+                </aside>
+                <section class="admin-support-chat-wrap">
+                  <div id="support-ticket-meta" class="hint"></div>
+                  <div class="admin-action-row">
+                    <button id="support-ticket-claim-btn" type="button" class="small" data-i18n="claimTicket">Принять тикет</button>
+                    <button id="support-ticket-close-btn" type="button" class="small ghost danger" data-i18n="closeTicket">Закрыть тикет</button>
+                  </div>
+                  <div id="support-ticket-empty" class="hint" data-i18n="ticketSelectHint">Выберите тикет слева.</div>
+                  <div id="support-ticket-messages" class="admin-support-messages hidden"></div>
+                  <form id="support-ticket-reply-form" class="admin-support-reply-form">
+                    <textarea id="support-ticket-reply-text" rows="3" placeholder="Сообщение оператора"></textarea>
+                    <button type="submit" data-i18n="sendReply">Отправить</button>
+                  </form>
+                </section>
+              </div>
+            </article>
+          </section>
+
+          <section class="admin-v2-panel hidden" data-admin-tab="bot">
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="botTitle">Системный бот</div>
+              <div class="auth-grid admin-moderation-grid">
+                <form id="bot-broadcast-form" class="auth-form admin-form-card">
+                  <strong data-i18n="botBroadcastTitle">Рассылка всем пользователям</strong>
+                  <textarea id="bot-broadcast-text" rows="4" placeholder="Message text"></textarea>
+                  <button type="submit" data-i18n="sendAll">Отправить всем</button>
+                </form>
+
+                <form id="bot-story-form" class="auth-form admin-form-card">
+                  <strong data-i18n="botStoryTitle">Опубликовать сторис всем</strong>
+                  <textarea id="bot-story-text" rows="4" placeholder="Story text"></textarea>
+                  <button type="submit" data-i18n="publishStory">Опубликовать</button>
+                </form>
+
+                <form id="bot-message-form" class="auth-form admin-form-card">
+                  <strong data-i18n="botMessageTitle">Сообщение одному пользователю</strong>
+                  <input id="bot-target" placeholder="user id | @username | chat id" />
+                  <textarea id="bot-message-text" rows="4" placeholder="Message text"></textarea>
+                  <button type="submit" data-i18n="sendReply">Отправить</button>
+                </form>
+              </div>
+              <div id="bot-state" class="hint"></div>
+            </article>
+          </section>
+
+          <section class="admin-v2-panel hidden" data-admin-tab="logs">
+            <article class="admin-v2-card">
+              <div class="section-title" data-i18n="logsTitle">Логи ошибок</div>
+              <div class="admin-table-wrap">
+                <table id="error-logs-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="colWhen">Когда</th>
+                      <th data-i18n="colSource">Источник</th>
+                      <th data-i18n="colUser">Пользователь</th>
+                      <th data-i18n="colEndpoint">Endpoint</th>
+                      <th data-i18n="colMessage">Сообщение</th>
+                      <th data-i18n="colStatus">Статус</th>
+                      <th data-i18n="colAction">Действие</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/admin.js"></script>
+  </body>
+</html>

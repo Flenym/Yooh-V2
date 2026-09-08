@@ -1,0 +1,1777 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#162331" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Yooh" />
+    <title>Yooh</title>
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+    <style>
+      .hidden {
+        display: none !important;
+      }
+
+      html.yooh-has-token-boot #auth-view {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-theme="night" data-platform="pc">
+    <header class="topbar app-topbar">
+      <div class="brand-wrap">
+        <div class="brand">Yooh</div>
+        <div class="hint" id="subtitle" data-i18n="subtitle">Messenger</div>
+      </div>
+      <div class="lang-wrap">
+        <select id="lang-select">
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+        </select>
+      </div>
+    </header>
+
+    <section id="platform-picker" class="settings-panel hidden">
+      <div class="settings-card platform-picker-card">
+        <div class="settings-head">
+          <h2 data-i18n="platformPickerTitle">Platform</h2>
+        </div>
+        <div class="settings-block">
+          <p class="hint" data-i18n="platformPickerHint">Choose platform for optimized interface.</p>
+          <div class="platform-picker-actions">
+            <button type="button" class="platform-btn" data-platform-value="pc">PC</button>
+            <button type="button" class="platform-btn" data-platform-value="iphone">iPhone</button>
+            <button type="button" class="platform-btn" data-platform-value="android">Android</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="shell">
+      <section id="auth-view" class="auth-view auth-modern">
+        <div class="auth-top-actions">
+          <button type="button" id="auth-theme-toggle-btn" class="ghost small"></button>
+        </div>
+
+        <div id="auth-card" class="auth-card auth-modern-card">
+          <h1 class="auth-brand">Yooh</h1>
+          <p class="hint" id="auth-subtitle" data-i18n="authSubtitle">Log in via QR, phone or email code.</p>
+
+          <div id="auth-qr-view" class="auth-entry">
+            <div class="auth-qr-wrap">
+              <img id="auth-qr-image" class="auth-qr-image" alt="QR login" />
+              <span class="auth-qr-badge">Y</span>
+            </div>
+            <button type="button" id="auth-open-phone-btn" class="auth-primary-btn" data-i18n="authPhoneEntryBtn">Login by phone number</button>
+            <div class="auth-inline-actions">
+              <button type="button" id="auth-qr-refresh-btn" class="ghost small" data-i18n="authQrRefreshBtn">Refresh QR</button>
+            </div>
+            <div id="auth-qr-status" class="hint"></div>
+          </div>
+
+          <div id="auth-phone-view" class="auth-entry hidden">
+            <div class="auth-tabs auth-main-tabs">
+              <button type="button" id="tab-login" class="tab active" data-i18n="login">Login</button>
+              <button type="button" id="tab-register" class="tab" data-i18n="register">Register</button>
+            </div>
+
+            <div id="auth-login-method-tabs" class="auth-tabs">
+              <button type="button" id="tab-login-phone" class="tab active" data-i18n="authLoginMethodPhone">Phone</button>
+              <button type="button" id="tab-login-email" class="tab" data-i18n="authLoginMethodEmail">Email</button>
+            </div>
+
+            <h2 id="auth-entry-title" class="auth-entry-title" data-i18n="authPhoneTitle">Your phone number</h2>
+            <p id="auth-entry-hint" class="hint auth-entry-hint" data-i18n="authPhoneHint">Enter your phone number to receive an SMS code.</p>
+
+            <form id="request-code-form" class="auth-form auth-stage-card">
+              <div id="auth-phone-fields">
+                <label for="auth-country-select" id="auth-country-label" data-i18n="authCountryLabel">Country</label>
+                <select id="auth-country-select">
+                  <option value="+7" selected>RU Russia</option>
+                  <option value="+1">US United States</option>
+                  <option value="+44">GB United Kingdom</option>
+                  <option value="+49">DE Germany</option>
+                  <option value="+33">FR France</option>
+                  <option value="+39">IT Italy</option>
+                  <option value="+34">ES Spain</option>
+                  <option value="+91">IN India</option>
+                </select>
+
+                <label for="phone-input" id="phone-label" data-i18n="phoneLabel">Phone</label>
+                <div class="auth-phone-row">
+                  <span id="auth-country-code" class="auth-phone-prefix">+7</span>
+                  <input id="phone-input" name="phone" autocomplete="tel-national" placeholder="900 000 00 00" data-i18n-placeholder="phonePlaceholder" />
+                </div>
+              </div>
+
+              <div id="auth-email-fields" class="hidden">
+                <label for="email-input" id="email-label" data-i18n="emailLabel">Email</label>
+                <input id="email-input" name="email" type="email" autocomplete="email" placeholder="name@example.com" data-i18n-placeholder="emailPlaceholder" />
+              </div>
+              <button type="submit" id="request-code-btn" class="auth-primary-btn" data-i18n="authPhoneContinue">Continue</button>
+            </form>
+
+            <form id="verify-code-form" class="auth-form auth-stage-card hidden">
+              <label for="code-input" id="code-label" class="auth-hidden-native-code-label" data-i18n="codeLabel">SMS code</label>
+              <div id="auth-code-target-hint" class="hint auth-code-target-hint"></div>
+              <input
+                id="code-input"
+                class="auth-hidden-native-code"
+                name="code"
+                placeholder="123456"
+                data-i18n-placeholder="codePlaceholder"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                autocomplete="one-time-code"
+              />
+              <div id="auth-code-digits" class="auth-code-digits" aria-label="Verification code">
+                <input class="auth-code-digit" type="text" inputmode="numeric" maxlength="1" />
+                <input class="auth-code-digit" type="text" inputmode="numeric" maxlength="1" />
+                <input class="auth-code-digit" type="text" inputmode="numeric" maxlength="1" />
+                <input class="auth-code-digit" type="text" inputmode="numeric" maxlength="1" />
+                <input class="auth-code-digit" type="text" inputmode="numeric" maxlength="1" />
+                <input class="auth-code-digit" type="text" inputmode="numeric" maxlength="1" />
+              </div>
+              <div id="auth-code-resend-hint" class="hint auth-code-resend-hint"></div>
+              <button type="submit" id="verify-code-btn" class="auth-primary-btn" data-i18n="verifyLogin">Sign in</button>
+            </form>
+
+            <form id="auth-register-username-form" class="auth-form auth-stage-card hidden">
+              <label for="username-input" id="username-label" data-i18n="usernameLabel">Username</label>
+              <div class="auth-username-row">
+                <span class="auth-username-prefix">@</span>
+                <input id="username-input" name="username" placeholder="denis_yooh" data-i18n-placeholder="usernamePlaceholder" />
+              </div>
+              <div class="hint" data-i18n="authRegisterUsernameHint">Use 5-32 latin letters, numbers or underscore.</div>
+              <button type="submit" id="auth-register-username-next-btn" class="auth-primary-btn" data-i18n="authPhoneContinue">Continue</button>
+            </form>
+
+            <form id="auth-register-profile-form" class="auth-form auth-stage-card hidden">
+              <div class="auth-register-avatar-wrap">
+                <button type="button" id="auth-register-avatar-pick-btn" class="auth-register-avatar-btn" data-i18n-title="changeAvatar" title="Avatar">
+                  <span id="auth-register-avatar-preview" class="avatar auth-register-avatar-preview">Y</span>
+                  <span class="auth-register-avatar-camera svg-icon" data-svg-icon="camera"></span>
+                </button>
+                <input id="auth-register-avatar-file-input" type="file" accept="image/*" class="hidden-input" />
+              </div>
+              <label for="display-name-input" id="display-name-label" data-i18n="displayNameLabel">Display name</label>
+              <input id="display-name-input" name="displayName" placeholder="Denis" data-i18n-placeholder="displayNamePlaceholder" />
+              <button type="submit" id="auth-register-profile-submit-btn" class="auth-primary-btn" data-i18n="verifyRegister">Create account</button>
+              <button type="button" id="auth-register-profile-skip-btn" class="ghost small" data-i18n="authRegisterSkipPhoto">Skip photo</button>
+            </form>
+
+            <div id="register-fields" class="hidden auth-form-inline" aria-hidden="true"></div>
+
+            <form id="cloud-password-form" class="auth-form auth-stage-card hidden">
+              <input
+                id="cloud-username-input"
+                name="username"
+                type="text"
+                autocomplete="username"
+                class="hidden-input"
+                tabindex="-1"
+                aria-hidden="true"
+              />
+              <label for="cloud-password-input" data-i18n="cloudPassword">Cloud password</label>
+              <div class="auth-password-row">
+                <input id="cloud-password-input" type="password" autocomplete="current-password" />
+                <button
+                  type="button"
+                  id="cloud-password-toggle-btn"
+                  class="ghost small auth-password-toggle"
+                  data-svg-icon="eye"
+                  data-i18n-title="authPasswordShow"
+                  title="Show password"
+                ></button>
+              </div>
+              <button type="submit" id="cloud-password-btn" class="auth-primary-btn" data-i18n="authPhoneContinue">Continue</button>
+              <button type="button" id="cloud-password-forgot-btn" class="auth-link-btn" data-i18n="authCloudPasswordForgot">Forgot password?</button>
+            </form>
+
+            <button type="button" id="auth-open-qr-btn" class="ghost small" data-i18n="authQrBackBtn">Quick login via QR</button>
+          </div>
+
+          <div id="auth-status" class="status"></div>
+          <button type="button" id="auth-lang-toggle-btn" class="auth-lang-toggle"></button>
+        </div>
+      </section>
+
+      <section id="app-view" class="yooh-layout hidden">
+        <aside class="sidebar">
+          <nav class="side-rail">
+            <button
+              type="button"
+              id="side-menu-toggle"
+              class="rail-btn rail-btn-top"
+              data-i18n-title="menu"
+              title="Menu"
+              data-svg-icon="menu"
+            ></button>
+            <div id="side-folder-list" class="side-folder-list"></div>
+            <button
+              type="button"
+              id="folders-edit-btn"
+              class="rail-btn rail-btn-bottom"
+              data-i18n-title="chatFolders"
+              title="Folders"
+              data-svg-icon="sliders"
+            ></button>
+            <button
+              type="button"
+              id="youtube-btn"
+              class="rail-btn rail-btn-bottom"
+              data-i18n-title="youtubeTitle"
+              title="YouTube"
+              data-svg-icon="play-circle"
+            ></button>
+            <button
+              type="button"
+              id="game-mode-btn"
+              class="rail-btn rail-btn-bottom"
+              data-i18n-title="gameMode"
+              title="Game mode"
+              data-svg-icon="gamepad"
+            ></button>
+          </nav>
+
+          <div class="sidebar-main">
+            <div class="iphone-shell-header">
+              <div class="iphone-statusbar">
+                <span id="iphone-status-time" class="iphone-status-time">9:41</span>
+                <span class="iphone-status-icons">
+                  <span class="iphone-status-cell">5G</span>
+                  <span class="iphone-status-wifi">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </span>
+                  <span class="iphone-status-battery">
+                    <span class="iphone-status-battery-level"></span>
+                  </span>
+                </span>
+              </div>
+              <div class="iphone-nav-row">
+                <button type="button" id="iphone-edit-btn" class="iphone-nav-link">Edit</button>
+                <button type="button" id="iphone-chats-title-btn" class="iphone-nav-title" data-i18n="chats">Chats</button>
+                <div class="iphone-header-actions">
+                  <button
+                    type="button"
+                    id="iphone-menu-btn"
+                    class="ghost small icon-btn mobile-menu-btn"
+                    data-i18n-title="menu"
+                    title="Menu"
+                    data-svg-icon="menu"
+                  ></button>
+                  <button
+                    type="button"
+                    id="iphone-search-shortcut-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="search"
+                    title="Search"
+                    data-svg-icon="search"
+                  ></button>
+                  <button
+                    type="button"
+                    id="iphone-compose-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="newMessage"
+                    title="New message"
+                    data-svg-icon="edit"
+                  ></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-header">
+              <div class="avatar" id="profile-avatar">Y</div>
+              <div class="sidebar-profile">
+                <div id="profile-title" class="profile-title" data-i18n="profile">Profile</div>
+                <div id="profile-info" class="hint">-</div>
+              </div>
+              <button type="button" id="settings-btn" class="hidden" aria-hidden="true"></button>
+            </div>
+
+            <form id="global-search-form" class="search-form">
+              <span class="iphone-search-icon svg-icon" data-svg-icon="search"></span>
+              <input id="global-search-input" />
+                <button
+                  id="iphone-search-voice-btn"
+                  type="button"
+                  class="ghost small iphone-search-voice-btn"
+                  data-i18n-title="find"
+                  title="Find"
+                  data-svg-icon="send"
+                ></button>
+              <button id="search-help-btn" type="button" class="ghost small search-help-btn" data-i18n-title="searchHelpInfo" title="Information" data-svg-icon="info"></button>
+              <button
+                id="global-search-btn"
+                type="submit"
+                class="ghost small search-submit-btn"
+                data-i18n-title="find"
+                title="Find"
+                data-svg-icon="search"
+                aria-label="Find"
+              ></button>
+              <button type="button" id="iphone-search-cancel-btn" class="iphone-search-cancel-btn" data-i18n="cancel">Cancel</button>
+            </form>
+            <div id="push-permission-row" class="push-permission-row hidden">
+              <button type="button" id="push-permission-btn" class="small" data-i18n="pushEnable">Enable notifications</button>
+              <div id="push-permission-hint" class="push-permission-hint" data-i18n="pushHintIos">
+                Notifications on iOS require adding Yooh to the Home Screen.
+              </div>
+            </div>
+            <div id="search-help-popover" class="search-help-popover hidden">
+              <div class="search-help-title" data-i18n="searchHelpTitle">Search symbols</div>
+              <div class="search-help-row"><strong>@</strong> <span data-i18n="searchHelpUser">users</span></div>
+              <div class="search-help-row"><strong>%</strong> <span data-i18n="searchHelpChannel">channels</span></div>
+              <div class="search-help-row"><strong>&</strong> <span data-i18n="searchHelpGroup">groups</span></div>
+              <div class="search-help-row"><strong>$</strong> <span data-i18n="searchHelpServer">servers</span></div>
+              <div class="search-help-row"><strong>*</strong> <span data-i18n="searchHelpBot">bots</span></div>
+            </div>
+            <div id="global-search-results" class="search-results"></div>
+            <div id="desktop-stories-panel" class="desktop-stories-panel hidden">
+              <div class="section-title" data-i18n="storyActiveTitle">Active stories</div>
+              <div id="desktop-stories-strip" class="desktop-stories-strip"></div>
+            </div>
+            <div id="iphone-stories-strip" class="iphone-stories-strip hidden"></div>
+            <div id="iphone-edit-toolbar" class="iphone-edit-toolbar hidden">
+              <div id="iphone-edit-selection-count" class="iphone-edit-selection-count">0</div>
+              <div class="iphone-edit-toolbar-actions">
+                <button type="button" id="iphone-edit-archive-btn" class="ghost small" data-i18n="archiveSelectedChats">Archive</button>
+                <button type="button" id="iphone-edit-delete-btn" class="ghost small danger" data-i18n="deleteSelectedChats">Delete</button>
+              </div>
+            </div>
+
+            <div class="chat-list-wrap">
+              <div class="section-title" id="chat-list-title" data-i18n="chats">Chats</div>
+              <div id="chat-list" class="chat-list"></div>
+            </div>
+          </div>
+
+          <section id="drawer-panel" class="drawer-panel hidden">
+            <div class="drawer-head">
+              <button
+                type="button"
+                id="drawer-back-btn"
+                class="ghost small icon-btn hidden"
+                data-i18n-title="backToChats"
+                title="Back"
+                data-svg-icon="arrow-left"
+              ></button>
+              <div id="drawer-head-title" class="drawer-head-title hidden">Menu</div>
+              <button type="button" id="drawer-close-btn" class="ghost small icon-btn" data-i18n-title="close" title="Close" data-svg-icon="x"></button>
+            </div>
+            <div class="drawer-menu-profile">
+              <button type="button" id="drawer-profile-btn" class="drawer-profile-row">
+                <span id="drawer-profile-avatar" class="avatar drawer-profile-avatar">Y</span>
+                <span class="drawer-profile-meta">
+                  <span id="drawer-profile-name" class="drawer-profile-name">User</span>
+                  <span id="drawer-profile-status" class="drawer-profile-status hint">online</span>
+                </span>
+              </button>
+            </div>
+            <div class="drawer-nav drawer-menu-list">
+              <button type="button" class="drawer-nav-btn" data-drawer-tab="profile">
+                <span class="svg-icon" data-svg-icon="user"></span>
+                <span data-i18n="profileMyTitle">My profile</span>
+              </button>
+              <button type="button" class="drawer-nav-btn" data-drawer-tab="contacts">
+                <span class="svg-icon" data-svg-icon="contact"></span>
+                <span data-i18n="contactsTab">Contacts</span>
+              </button>
+              <button type="button" class="drawer-nav-btn" data-drawer-tab="calls">
+                <span class="svg-icon" data-svg-icon="phone"></span>
+                <span data-i18n="callsTab">Calls</span>
+              </button>
+              <button type="button" class="drawer-nav-btn" data-menu-action="favorites">
+                <span class="svg-icon" data-svg-icon="bookmark"></span>
+                <span data-i18n="favorites">Favorites</span>
+              </button>
+              <button type="button" class="drawer-nav-btn" data-drawer-tab="settings">
+                <span class="svg-icon" data-svg-icon="settings"></span>
+                <span data-i18n="settings">Settings</span>
+              </button>
+              <div class="drawer-menu-separator" aria-hidden="true"></div>
+              <button type="button" class="drawer-nav-btn" data-menu-action="create-group">
+                <span class="svg-icon" data-svg-icon="users"></span>
+                <span data-i18n="drawerCreateGroup">Create group</span>
+              </button>
+              <button type="button" class="drawer-nav-btn" data-menu-action="create-channel">
+                <span class="svg-icon" data-svg-icon="megaphone"></span>
+                <span data-i18n="drawerCreateChannel">Create channel</span>
+              </button>
+              <div class="drawer-menu-separator" aria-hidden="true"></div>
+              <label class="drawer-menu-toggle">
+                <span class="drawer-menu-toggle-main">
+                  <span class="svg-icon" data-svg-icon="moon"></span>
+                  <span data-i18n="drawerNightMode">Night mode</span>
+                </span>
+                <span class="switch">
+                  <input id="drawer-night-toggle" type="checkbox" />
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <button type="button" class="drawer-nav-btn" data-menu-action="yooh-plus">
+                <span class="svg-icon" data-svg-icon="star"></span>
+                <span data-i18n="settingsPremiumInfo">Yooh Plus</span>
+              </button>
+              <button type="button" class="drawer-nav-btn" data-menu-action="about">
+                <span class="svg-icon" data-svg-icon="info"></span>
+                <span data-i18n="drawerAbout">About</span>
+              </button>
+            </div>
+            <div class="drawer-menu-footer hint">Yooh Desktop</div>
+
+            <div id="drawer-tab-settings" class="drawer-tab">
+              <div id="settings-home-card" class="settings-home-card">
+                <div id="settings-home-toolbar" class="settings-home-toolbar">
+                  <div id="settings-home-title" class="section-title settings-home-title" data-i18n="settings">Settings</div>
+                  <div class="settings-home-toolbar-actions">
+                    <button
+                      type="button"
+                      id="settings-home-qr-btn"
+                      class="ghost small icon-btn"
+                      data-i18n-title="settingsQr"
+                      title="QR"
+                      data-svg-icon="layout"
+                    ></button>
+                    <button
+                      type="button"
+                      id="settings-home-more-btn"
+                      class="ghost small icon-btn"
+                      data-i18n-title="callsMenu"
+                      title="Menu"
+                      data-svg-icon="more"
+                    ></button>
+                    <div id="settings-home-more-menu" class="drawer-more-menu settings-home-more-menu hidden">
+                      <button type="button" id="settings-home-logout-btn" class="small danger" data-i18n="logout">Logout</button>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" id="settings-home-profile-btn" class="settings-home-profile">
+                  <span id="settings-home-avatar" class="avatar settings-home-avatar">Y</span>
+                  <span class="settings-home-profile-meta">
+                    <strong id="settings-home-name">User</strong>
+                    <span id="settings-home-phone">-</span>
+                    <span id="settings-home-username">@username</span>
+                  </span>
+                </button>
+
+                <div class="settings-home-list">
+                  <button type="button" class="settings-home-item" data-settings-action="account">
+                    <span class="svg-icon" data-svg-icon="user"></span>
+                    <span data-i18n="settingsMyAccount">My account</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="stories">
+                    <span class="svg-icon" data-svg-icon="image"></span>
+                    <span data-i18n="settingsMyStories">My Stories</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="privacy">
+                    <span class="svg-icon" data-svg-icon="lock"></span>
+                    <span data-i18n="settingsSectionPrivacy">Privacy and Security</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="notifications">
+                    <span class="svg-icon" data-svg-icon="alert"></span>
+                    <span data-i18n="notificationsAndSounds">Notifications and Sounds</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="data-storage">
+                    <span class="svg-icon" data-svg-icon="bookmark"></span>
+                    <span data-i18n="settingsDataStorage">Data and Storage</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="chats">
+                    <span class="svg-icon" data-svg-icon="chat"></span>
+                    <span data-i18n="settingsChatSettings">Chat settings</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="advanced">
+                    <span class="svg-icon" data-svg-icon="sliders"></span>
+                    <span data-i18n="settingsAdvanced">Advanced settings</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="stickers">
+                    <span class="svg-icon" data-svg-icon="smile"></span>
+                    <span data-i18n="settingsStickersEmoji">Stickers and Emoji</span>
+                  </button>
+                  <button type="button" class="settings-home-item" data-settings-action="help">
+                    <span class="svg-icon" data-svg-icon="info"></span>
+                    <span data-i18n="settingsHelp">Help</span>
+                  </button>
+                  <button type="button" class="settings-home-item settings-home-language" data-settings-action="language">
+                    <span class="svg-icon" data-svg-icon="language"></span>
+                    <span data-i18n="settingsLanguage">Language</span>
+                    <span id="settings-home-language-value">Russian</span>
+                  </button>
+                </div>
+
+                <div class="settings-home-scale">
+                  <label class="settings-home-scale-row">
+                    <span data-i18n="settingsScaleDefault">Default scale</span>
+                    <input id="settings-scale-default" type="checkbox" />
+                  </label>
+                  <div class="settings-home-scale-slider">
+                    <input id="settings-scale-range" type="range" min="80" max="160" step="5" value="100" />
+                    <span id="settings-scale-value">100%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="settings-detail-card" class="settings-detail-card hidden">
+                <div class="settings-detail-head">
+                  <button
+                    type="button"
+                    id="settings-detail-back-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="backToSettings"
+                    title="Back"
+                    data-svg-icon="arrow-left"
+                  ></button>
+                  <div id="settings-detail-title" class="settings-detail-title">Settings</div>
+                  <button
+                    type="button"
+                    id="settings-detail-close-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="close"
+                    title="Close"
+                    data-svg-icon="x"
+                  ></button>
+                </div>
+                <div id="settings-detail-content" class="settings-detail-content"></div>
+              </div>
+
+              <form id="settings-form" class="settings-block drawer-form hidden">
+                <h3 data-i18n="notificationsAndSounds">Notifications and Sounds</h3>
+                <label class="checkbox-row"><input id="s-notify-private" type="checkbox" /> <span data-i18n="privateChats">Private chats</span></label>
+                <label class="checkbox-row"><input id="s-notify-groups" type="checkbox" /> <span data-i18n="groups">Groups</span></label>
+                <label class="checkbox-row"><input id="s-notify-channels" type="checkbox" /> <span data-i18n="channels">Channels</span></label>
+                <label class="checkbox-row"><input id="s-notify-preview" type="checkbox" /> <span data-i18n="messagePreview">Message preview</span></label>
+                <label class="checkbox-row"><input id="s-notify-sounds" type="checkbox" /> <span data-i18n="sounds">Sounds</span></label>
+                <label class="checkbox-row"><input id="s-notify-vibration" type="checkbox" /> <span data-i18n="vibration">Vibration</span></label>
+
+                <h3 data-i18n="privacyAndSecurity">Privacy and Security</h3>
+                <label data-i18n="lastSeen">Last seen</label>
+                <select id="s-privacy-last-seen">
+                  <option value="everyone" data-i18n="everybody">Everybody</option>
+                  <option value="contacts" data-i18n="myContacts">My contacts</option>
+                  <option value="nobody" data-i18n="nobody">Nobody</option>
+                </select>
+                <label data-i18n="calls">Calls</label>
+                <select id="s-privacy-calls">
+                  <option value="everyone" data-i18n="everybody">Everybody</option>
+                  <option value="contacts" data-i18n="myContacts">My contacts</option>
+                  <option value="nobody" data-i18n="nobody">Nobody</option>
+                </select>
+                <label class="checkbox-row"><input id="s-privacy-read-receipts" type="checkbox" /> <span data-i18n="readReceipts">Read receipts</span></label>
+
+                <h3 data-i18n="dataAndStorage">Data and Storage</h3>
+                <label class="checkbox-row"><input id="s-data-mobile" type="checkbox" /> <span data-i18n="autoDownloadMobile">Auto download on mobile</span></label>
+                <label class="checkbox-row"><input id="s-data-wifi" type="checkbox" /> <span data-i18n="autoDownloadWifi">Auto download on Wi-Fi</span></label>
+                <label class="checkbox-row"><input id="s-data-roaming" type="checkbox" /> <span data-i18n="autoDownloadRoaming">Auto download on roaming</span></label>
+                <label data-i18n="useLessDataForCalls">Use less data for calls</label>
+                <select id="s-data-calls">
+                  <option value="never" data-i18n="never">Never</option>
+                  <option value="mobile" data-i18n="onMobile">On mobile</option>
+                  <option value="always" data-i18n="always">Always</option>
+                </select>
+
+                <h3 data-i18n="appearance">Appearance</h3>
+                <label data-i18n="theme">Theme</label>
+                <select id="s-theme">
+                  <option value="classic" data-i18n="themeClassic">Classic</option>
+                  <option value="day" data-i18n="themeDay">Day</option>
+                  <option value="night" data-i18n="themeNight">Night</option>
+                </select>
+                <label data-i18n="fontSize">Font size</label>
+                <input id="s-font-size" type="number" min="12" max="24" />
+                <label data-i18n="chatFontSize">Chat font size</label>
+                <input id="s-chat-font-size" type="number" min="12" max="30" />
+                <label data-i18n="interfaceMode">Interface mode</label>
+                <select id="s-platform-mode">
+                  <option value="pc" data-i18n="platformPc">PC</option>
+                  <option value="iphone" data-i18n="platformIphone">iPhone</option>
+                  <option value="android" data-i18n="platformAndroid">Android</option>
+                </select>
+
+                <h3 data-i18n="foldersAndAdvanced">Folders and Advanced</h3>
+                <label class="checkbox-row"><input id="s-folders-enabled" type="checkbox" /> <span data-i18n="chatFolders">Chat folders</span></label>
+                <button type="button" id="open-folders-settings-btn" class="ghost small" data-i18n="folderEditorTitle">Folders</button>
+                <label class="checkbox-row"><input id="s-advanced-stickers" type="checkbox" /> <span data-i18n="animatedStickers">Animated stickers</span></label>
+                <label class="checkbox-row"><input id="s-advanced-gallery" type="checkbox" /> <span data-i18n="saveToGallery">Save to gallery</span></label>
+
+                <button type="submit" data-i18n="saveSettings">Save settings</button>
+              </form>
+            </div>
+
+            <div id="drawer-tab-create" class="drawer-tab hidden">
+              <form id="create-chat-form" class="create-form drawer-form">
+                <div class="section-title" id="create-chat-title" data-i18n="createChat">Create chat</div>
+                <select id="chat-type-select" name="type">
+                  <option value="direct" data-i18n="chatTypeDirect">Direct</option>
+                  <option value="group" data-i18n="chatTypeGroup">Group</option>
+                  <option value="channel" data-i18n="chatTypeChannel">Channel</option>
+                  <option value="server" data-i18n="chatTypeServer">Server</option>
+                </select>
+                <input id="chat-title-input" name="title" placeholder="Group or channel title" data-i18n-placeholder="chatTitlePlaceholder" />
+                <textarea
+                  id="chat-description-input"
+                  name="description"
+                  rows="2"
+                  placeholder="Chat description"
+                  data-i18n-placeholder="chatDescriptionPlaceholder"
+                ></textarea>
+                <input id="chat-member-id-input" name="memberId" placeholder="Member ID (optional)" data-i18n-placeholder="memberIdPlaceholder" />
+                <input
+                  id="chat-member-username-input"
+                  name="memberUsername"
+                  placeholder="Member username (optional)"
+                  data-i18n-placeholder="memberUsernamePlaceholder"
+                />
+                <label class="checkbox-row">
+                  <input id="chat-allow-invites-input" type="checkbox" checked />
+                  <span data-i18n="allowMemberInvites">Allow members to invite</span>
+                </label>
+                <label class="checkbox-row">
+                  <input id="chat-comments-enabled-input" type="checkbox" checked />
+                  <span data-i18n="commentsEnabled">Enable comments in channel</span>
+                </label>
+                <label class="checkbox-row">
+                  <input id="chat-public-input" type="checkbox" />
+                  <span data-i18n="publicChat">Public chat/channel</span>
+                </label>
+                <input id="chat-handle-input" name="handle" placeholder="public handle (%channel or &group)" data-i18n-placeholder="handlePlaceholder" />
+                <button type="submit" id="create-chat-btn" data-i18n="create">Create</button>
+              </form>
+            </div>
+
+            <div id="drawer-tab-contacts" class="drawer-tab hidden">
+              <div class="drawer-modal-toolbar">
+                <div class="section-title drawer-modal-title" data-i18n="contactsTab">Contacts</div>
+                <div class="drawer-modal-toolbar-actions">
+                  <button
+                    type="button"
+                    id="contacts-add-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="contactsAdd"
+                    title="Add contact"
+                    data-svg-icon="plus"
+                  ></button>
+                  <button
+                    type="button"
+                    id="contacts-sort-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="contactsSortRecent"
+                    title="Sort"
+                    data-svg-icon="sliders"
+                  ></button>
+                </div>
+              </div>
+              <div class="drawer-modal-search">
+                <span class="drawer-modal-search-icon" data-svg-icon="search"></span>
+                <input id="contacts-search-input" data-i18n-placeholder="contactsSearchPlaceholder" placeholder="Search contacts" />
+              </div>
+              <div class="contacts-layout">
+                <div id="contacts-list" class="contact-list"></div>
+                <div id="contacts-alpha-index" class="contacts-alpha-index"></div>
+              </div>
+              <div class="drawer-modal-actions">
+                <button type="button" id="contacts-invite-btn" class="ghost small" data-i18n="inviteFriends">Invite Friends</button>
+                <button type="button" id="contacts-close-btn" class="ghost small" data-i18n="close">Close</button>
+              </div>
+            </div>
+
+            <div id="drawer-tab-calls" class="drawer-tab hidden">
+              <div class="drawer-modal-toolbar">
+                <div class="section-title drawer-modal-title" data-i18n="callsTab">Calls</div>
+                <div class="drawer-modal-toolbar-actions">
+                  <button
+                    type="button"
+                    id="calls-create-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="callsCreateGroup"
+                    title="Group call"
+                    data-svg-icon="video"
+                  ></button>
+                </div>
+                <div class="drawer-more-wrap">
+                  <button
+                    type="button"
+                    id="calls-more-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="callsMenu"
+                    title="Menu"
+                    data-svg-icon="more"
+                  ></button>
+                  <div id="calls-more-menu" class="drawer-more-menu hidden">
+                    <button type="button" id="calls-clear-btn" class="small danger" data-i18n="clearAllCalls">Clear all</button>
+                  </div>
+                </div>
+              </div>
+              <div class="calls-filter" role="tablist" aria-label="Call filters">
+                <button type="button" id="calls-filter-all-btn" class="calls-filter-btn active" data-i18n="callsAll">All</button>
+                <button type="button" id="calls-filter-missed-btn" class="calls-filter-btn" data-i18n="callsMissed">Missed</button>
+              </div>
+              <div class="drawer-modal-search">
+                <span class="drawer-modal-search-icon" data-svg-icon="search"></span>
+                <input id="calls-search-input" data-i18n-placeholder="callsSearchPlaceholder" placeholder="Search calls" />
+              </div>
+              <div id="calls-list" class="call-history-list"></div>
+              <div class="drawer-modal-actions">
+                <button type="button" id="calls-close-btn" class="ghost small" data-i18n="close">Close</button>
+              </div>
+            </div>
+
+            <div id="drawer-tab-profile" class="drawer-tab hidden">
+              <div id="profile-view" class="profile-view">
+                <div class="profile-view-head">
+                  <button type="button" id="profile-self-avatar" class="avatar avatar-xlarge">Y</button>
+                  <div class="profile-view-meta">
+                    <div class="profile-modern-name" id="profile-modern-name">User</div>
+                    <div class="hint" id="profile-modern-status">-</div>
+                    <div id="profile-modern-username" class="profile-modern-username">@username</div>
+                  </div>
+                  <button type="button" id="profile-edit-open-btn" class="ghost small" data-i18n="settingsEditProfile">Edit profile</button>
+                </div>
+
+                <div class="settings-home-list profile-view-list">
+                  <button type="button" id="profile-change-avatar-btn" class="settings-home-item">
+                    <span class="svg-icon" data-svg-icon="camera"></span>
+                    <span data-i18n="changeAvatar">Change avatar</span>
+                  </button>
+                  <button type="button" id="profile-open-privacy-root" class="settings-home-item">
+                    <span class="svg-icon" data-svg-icon="lock"></span>
+                    <span data-i18n="settingsSectionPrivacy">Privacy and Security</span>
+                  </button>
+                  <button type="button" id="profile-open-sessions-btn" class="settings-home-item">
+                    <span class="svg-icon" data-svg-icon="devices"></span>
+                    <span data-i18n="settingsPrivacyActiveSessions">Active sessions</span>
+                  </button>
+                  <button type="button" id="profile-open-blocked-btn" class="settings-home-item">
+                    <span class="svg-icon" data-svg-icon="ban"></span>
+                    <span data-i18n="settingsPrivacyBlockedUsers">Blocked users</span>
+                  </button>
+                </div>
+
+                <div class="profile-view-actions">
+                  <button type="button" id="profile-username-copy" class="ghost small copy-btn">-</button>
+                  <button type="button" id="logout-btn" class="ghost small danger" data-i18n="logout">Logout</button>
+                </div>
+              </div>
+
+              <form id="profile-form" class="settings-block drawer-form hidden">
+                <div class="settings-detail-head profile-edit-head">
+                  <button
+                    type="button"
+                    id="profile-edit-back-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="backToProfile"
+                    title="Back"
+                    data-svg-icon="arrow-left"
+                  ></button>
+                  <div class="settings-detail-title" data-i18n="settingsEditProfile">Edit profile</div>
+                  <button
+                    type="button"
+                    id="profile-edit-close-btn"
+                    class="ghost small icon-btn"
+                    data-i18n-title="close"
+                    title="Close"
+                    data-svg-icon="x"
+                  ></button>
+                </div>
+
+                <div class="profile-edit-body">
+                  <div class="profile-edit-layout">
+                    <aside class="profile-edit-preview-card">
+                      <div class="profile-edit-preview-top">
+                        <div class="avatar avatar-large" id="profile-avatar-preview">Y</div>
+                        <div class="profile-edit-preview-meta">
+                          <div id="profile-edit-preview-name" class="profile-modern-name">User</div>
+                          <div id="profile-edit-preview-username" class="profile-modern-username">@username</div>
+                        </div>
+                      </div>
+                      <div class="profile-avatar-actions">
+                        <button type="button" id="profile-avatar-pick" class="small ghost" data-i18n="changeAvatar">Change avatar</button>
+                        <input id="profile-avatar-file" type="file" accept="image/*" class="hidden-input" />
+                      </div>
+                      <div id="profile-plus-badge-preview-card" class="profile-plus-badge-preview hidden">
+                        <div class="profile-plus-badge-preview-head">Yooh Plus</div>
+                        <div class="profile-plus-badge-preview-row">
+                          <span data-i18n="settingsPremiumBadgeEditorTitle">Yooh Plus badge</span>
+                          <strong id="profile-plus-badge-preview-name">User</strong>
+                        </div>
+                      </div>
+                      <div class="profile-tg-static-row profile-chat-id-row">
+                        <span data-i18n="chatIdField">Chat ID (immutable)</span>
+                        <strong id="profile-modern-chat-id" class="profile-chat-id-value">-</strong>
+                      </div>
+                    </aside>
+
+                    <div class="profile-edit-fields">
+                      <label data-i18n="displayNameLabel">Display name</label>
+                      <input id="settings-display-name" />
+                      <label data-i18n="usernameLabel">Username</label>
+                      <input id="settings-username" data-i18n-placeholder="usernamePlaceholder" placeholder="denis_yooh" />
+                      <div id="settings-username-status" class="profile-username-status hint hidden" aria-live="polite"></div>
+                      <button type="button" id="profile-premium-editor-open-btn" class="ghost small profile-premium-open-btn hidden">
+                        <span class="svg-icon" data-svg-icon="star"></span>
+                        <span data-i18n="profilePremiumBadgeOpen">Yooh Plus badge settings</span>
+                      </button>
+
+                      <label data-i18n="profileDescription">Description</label>
+                      <textarea id="settings-about" rows="3" data-i18n-placeholder="profileDescriptionPlaceholder" placeholder="About"></textarea>
+                      <input id="settings-chat-id" class="hidden" readonly />
+                      <input id="settings-avatar-data" type="hidden" />
+                      <button type="submit" data-i18n="saveProfile">Save profile</button>
+                    </div>
+                  </div>
+                  <div id="profile-premium-editor-overlay" class="profile-premium-overlay hidden">
+                    <div class="profile-premium-overlay-card">
+                      <div class="profile-premium-overlay-head">
+                        <strong data-i18n="settingsPremiumBadgeEditorTitle">Yooh Plus badge</strong>
+                        <button
+                          type="button"
+                          id="profile-premium-editor-close-btn"
+                          class="ghost small icon-btn"
+                          data-i18n-title="close"
+                          title="Close"
+                          data-svg-icon="x"
+                        ></button>
+                      </div>
+                      <div class="profile-premium-live-preview">
+                        <div class="avatar avatar-medium" id="profile-premium-live-preview-avatar">Y</div>
+                        <div class="profile-premium-live-preview-meta">
+                          <span class="hint" data-i18n="settingsPremiumBadgePreviewLabel">Live preview</span>
+                          <strong id="profile-premium-live-preview-name">User</strong>
+                          <span id="profile-premium-live-preview-username" class="profile-modern-username">@username</span>
+                        </div>
+                      </div>
+                      <div id="settings-premium-badge-editor" class="profile-premium-editor hidden">
+                        <div class="profile-tg-static-row">
+                          <span data-i18n="settingsPremiumBadgeEditorTitle">Yooh Plus badge</span>
+                          <strong data-i18n="settingsPremiumVisibleToEveryone">Visible to everyone</strong>
+                        </div>
+                        <label>Badge type</label>
+                        <select id="settings-premium-badge-type">
+                          <option value="star">Star</option>
+                          <option value="svg">Custom SVG</option>
+                          <option value="photo">Photo</option>
+                          <option value="none">Off</option>
+                        </select>
+                        <label id="settings-premium-badge-star-row">Star / emoji
+                          <input id="settings-premium-badge-star" maxlength="8" placeholder="⭐" />
+                        </label>
+                        <label id="settings-premium-badge-svg-row">SVG URL or raw SVG
+                          <textarea id="settings-premium-badge-svg" rows="2" placeholder="https://... or &lt;svg ...&gt;"></textarea>
+                        </label>
+                        <label id="settings-premium-badge-photo-row">Photo URL or data:image
+                          <input id="settings-premium-badge-photo" placeholder="https://..." />
+                          <div class="profile-premium-photo-actions">
+                            <button type="button" id="settings-premium-badge-photo-pick" class="small ghost">Choose photo</button>
+                            <input id="settings-premium-badge-photo-file" type="file" accept="image/*" class="hidden-input" />
+                          </div>
+                        </label>
+                        <label id="settings-premium-badge-color-row">Badge background color
+                          <input id="settings-premium-badge-color" type="color" value="#f4c84c" />
+                        </label>
+                        <label class="profile-premium-range-row">Size
+                          <span id="settings-premium-badge-size-value" class="profile-premium-range-value">16px</span>
+                          <input id="settings-premium-badge-size" type="range" min="12" max="36" step="1" value="16" />
+                        </label>
+                        <label class="profile-premium-range-row">Offset X
+                          <span id="settings-premium-badge-offset-x-value" class="profile-premium-range-value">0px</span>
+                          <input id="settings-premium-badge-offset-x" type="range" min="-24" max="24" step="1" value="0" />
+                        </label>
+                        <label class="profile-premium-range-row">Offset Y
+                          <span id="settings-premium-badge-offset-y-value" class="profile-premium-range-value">0px</span>
+                          <input id="settings-premium-badge-offset-y" type="range" min="-24" max="24" step="1" value="0" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </section>
+          <button
+            type="button"
+            id="chat-column-resizer"
+            class="chat-column-resizer"
+            title="Resize chats column"
+            aria-label="Resize chats column"
+          ></button>
+        </aside>
+
+        <section class="chat-main">
+          <header class="chat-head">
+            <div class="chat-head-left">
+              <button
+                type="button"
+                id="chat-back-btn"
+                class="ghost small icon-btn chat-back-btn hidden"
+                data-i18n-title="backToChats"
+                title="Back"
+                aria-label="Back"
+                data-svg-icon="arrow-left"
+              ></button>
+              <button type="button" id="active-chat-avatar-btn" class="chat-head-avatar avatar hidden" title="Open profile">Y</button>
+              <button type="button" id="active-chat-title-btn" class="chat-title-btn">
+                <span id="active-chat-title" class="chat-title" data-i18n="selectChat">Select a chat</span>
+              </button>
+              <div id="active-chat-meta" class="hint">-</div>
+            </div>
+            <div class="chat-head-right">
+              <div id="stream-switch" class="stream-switch hidden">
+                <button type="button" id="stream-main-btn" class="stream-btn active" data-i18n="posts">Posts</button>
+                <button type="button" id="stream-comment-btn" class="stream-btn" data-i18n="comments">Comments</button>
+              </div>
+              <button type="button" id="call-btn" class="ghost small hidden" data-i18n-title="callStart" data-svg-icon="phone"></button>
+              <button type="button" id="call-video-btn" class="ghost small hidden" data-i18n-title="callStartVideo" title="Video call" data-svg-icon="video"></button>
+              <button type="button" id="chat-more-btn" class="ghost small hidden" data-i18n-title="callsMenu" title="Menu" data-svg-icon="more"></button>
+              <div id="chat-actions" class="chat-actions hidden">
+                <button type="button" id="chat-manage-btn" class="ghost small hidden" data-i18n="manageChat" data-i18n-title="manageChat">Manage</button>
+                <button type="button" id="chat-edit-btn" class="ghost small hidden" data-i18n="renameChat" data-i18n-title="renameChat">Rename</button>
+                <button type="button" id="chat-privacy-btn" class="ghost small hidden" data-i18n="togglePublic" data-i18n-title="togglePublic">Public</button>
+                <button type="button" id="chat-delete-btn" class="ghost small danger hidden" data-i18n="deleteChat" data-i18n-title="deleteChat">Delete</button>
+              </div>
+            </div>
+          </header>
+          <div id="chat-pinned-strip" class="chat-pinned-strip hidden">
+            <button type="button" id="chat-pinned-strip-main" class="chat-pinned-strip-main">
+              <strong id="chat-pinned-strip-title">Pinned message</strong>
+              <span id="chat-pinned-strip-preview"></span>
+            </button>
+            <button
+              type="button"
+              id="chat-pinned-strip-close-btn"
+              class="ghost small icon-btn"
+              data-i18n-title="close"
+              title="Close"
+              data-svg-icon="x"
+            ></button>
+          </div>
+
+          <div id="chat-stage" class="chat-stage">
+            <aside id="server-channel-panel" class="server-channel-panel hidden">
+              <div class="server-channel-top">
+                <div id="server-active-game" class="server-active-game" data-i18n="notSharing">Not Sharing</div>
+                <div id="server-voice-status" class="server-voice-status" data-i18n="voiceDisconnected">Voice disconnected</div>
+              </div>
+              <div class="server-channel-head" data-i18n="serverTextChannels">Text channels</div>
+              <button type="button" id="server-main-btn" class="server-channel-btn active">
+                <span>#</span>
+                <span data-i18n="posts">Posts</span>
+              </button>
+              <button type="button" id="server-comment-btn" class="server-channel-btn">
+                <span>#</span>
+                <span data-i18n="comments">Comments</span>
+              </button>
+              <div class="server-channel-head" data-i18n="serverVoiceChannels">Voice channels</div>
+              <div id="server-voice-list" class="server-voice-list"></div>
+
+              <div id="server-self-card" class="server-self-card">
+                <div class="server-self-main">
+                  <div id="server-self-avatar" class="avatar">Y</div>
+                  <div class="server-self-meta">
+                    <div id="server-self-name" class="server-self-name">User</div>
+                    <div id="server-self-game-label" class="server-self-game-label">Not Sharing</div>
+                  </div>
+                </div>
+                <div class="server-self-controls">
+                  <input id="server-game-input" type="text" data-i18n-placeholder="currentGamePlaceholder" placeholder="Current game" />
+                  <button type="button" id="server-game-save-btn" class="small" data-i18n="saveGame">Save</button>
+                </div>
+              </div>
+            </aside>
+
+            <div class="chat-stage-main">
+              <div id="message-selection-toolbar" class="message-selection-toolbar hidden">
+                <button type="button" id="message-selection-cancel-btn" class="ghost small" data-i18n="cancel">Cancel</button>
+                <span id="message-selection-count" class="message-selection-count">0</span>
+                <button type="button" id="message-selection-delete-btn" class="small danger" data-i18n="deleteMessage">Delete message</button>
+              </div>
+              <div id="message-list" class="message-list"></div>
+
+              <form id="send-message-form" class="composer">
+                <div id="composer-readonly" class="composer-readonly hidden" data-i18n="channelReadonly">
+                  Only admins can publish posts in channel. Use Comments.
+                </div>
+                <div id="support-keyboard" class="support-keyboard hidden">
+                  <div id="support-keyboard-title" class="support-keyboard-title">Yooh Support</div>
+                  <div id="support-keyboard-hint" class="support-keyboard-hint"></div>
+                  <div id="support-keyboard-actions" class="support-keyboard-actions"></div>
+                </div>
+                <div id="composer-reply-preview" class="composer-reply-preview hidden">
+                  <button type="button" id="composer-reply-jump" class="composer-reply-main">
+                    <strong id="composer-reply-author"></strong>
+                    <span id="composer-reply-text"></span>
+                  </button>
+                  <button type="button" id="composer-reply-clear" class="ghost small icon-btn" data-i18n-title="close" title="Close" data-svg-icon="x"></button>
+                </div>
+                <textarea id="message-input" rows="2" data-i18n-placeholder="messagePlaceholder" placeholder="Write message"></textarea>
+                <div id="attachment-preview" class="attachment-preview hidden">
+                  <span id="attachment-name"></span>
+                  <button type="button" id="attachment-clear-btn" class="ghost small" data-i18n="removeAttachment" data-i18n-title="removeAttachment">
+                    Remove
+                  </button>
+                </div>
+                <div class="emoji-wrap">
+                  <button type="button" id="emoji-toggle-btn" class="ghost icon-btn" data-i18n-title="emoji" title="Emoji" data-svg-icon="smile"></button>
+                  <div id="emoji-panel" class="emoji-panel hidden">
+                    <div class="emoji-panel-head">
+                      <div class="emoji-panel-search">
+                        <span class="emoji-panel-search-icon" data-svg-icon="search"></span>
+                        <input id="emoji-panel-search-input" type="text" data-i18n-placeholder="search" placeholder="Search" />
+                      </div>
+                    </div>
+                    <div class="emoji-panel-tabs" role="tablist" aria-label="Emoji panel tabs">
+                      <button type="button" id="emoji-tab-emoji-btn" class="emoji-panel-tab active" data-emoji-tab="emoji" title="Emoji">
+                        <span class="svg-icon" data-svg-icon="smile"></span>
+                        <span class="emoji-panel-tab-label" data-i18n="emoji">Emoji</span>
+                      </button>
+                      <button type="button" id="emoji-tab-stickers-btn" class="emoji-panel-tab" data-emoji-tab="stickers" title="Stickers">
+                        <span class="svg-icon" data-svg-icon="paperclip"></span>
+                        <span class="emoji-panel-tab-label" data-i18n="settingsSectionStickers">Stickers</span>
+                      </button>
+                      <button type="button" id="emoji-tab-gif-btn" class="emoji-panel-tab" data-emoji-tab="gif" title="GIF">
+                        <span class="svg-icon" data-svg-icon="image"></span>
+                        <span class="emoji-panel-tab-label" data-i18n="gifs">GIF</span>
+                      </button>
+                    </div>
+                    <div id="emoji-smart-row" class="emoji-smart-row hidden"></div>
+                    <div id="emoji-panel-body" class="emoji-panel-body"></div>
+                  </div>
+                </div>
+                <div id="composer-actions" class="composer-actions">
+                  <button type="button" id="file-label" class="file-btn icon-btn" data-i18n-title="attach" title="Attach" data-svg-icon="paperclip"></button>
+                  <input id="file-input" type="file" multiple class="hidden-input" />
+                  <input id="media-input" type="file" accept="image/*,video/*" multiple class="hidden-input" />
+                  <input id="document-input" type="file" multiple class="hidden-input" />
+                  <div id="attachment-menu" class="attachment-menu hidden">
+                    <button type="button" id="attach-media-btn" class="small">
+                      <span class="svg-icon" data-svg-icon="image"></span>
+                      <span>Фото или видео</span>
+                    </button>
+                    <button type="button" id="attach-document-btn" class="small">
+                      <span class="svg-icon" data-svg-icon="file"></span>
+                      <span>Документ</span>
+                    </button>
+                    <button type="button" id="attach-location-btn" class="small">
+                      <span class="svg-icon" data-svg-icon="pin"></span>
+                      <span>Геопозиция</span>
+                    </button>
+                    <button type="button" id="attach-poll-btn" class="small hidden">
+                      <span class="svg-icon" data-svg-icon="sliders"></span>
+                      <span>Опрос</span>
+                    </button>
+                  </div>
+                  <button type="button" id="voice-btn" class="ghost icon-btn" data-i18n-title="voice" title="Voice" data-svg-icon="mic"></button>
+                  <div id="voice-recording-indicator" class="voice-recording-indicator hidden" aria-live="polite">
+                    <span class="voice-recording-dot" aria-hidden="true"></span>
+                    <span id="voice-recording-time">0:00</span>
+                    <span id="voice-recording-cancel-hint" class="voice-recording-cancel-hint" data-i18n="voiceRecordingCancelHint">Swipe left to cancel</span>
+                    <span id="voice-recording-lock-hint" class="voice-recording-lock-hint hidden">LOCK</span>
+                    <span id="voice-recording-lock-actions" class="voice-recording-lock-actions hidden">
+                      <button
+                        type="button"
+                        id="voice-recording-cancel-btn"
+                        class="ghost small icon-btn"
+                        data-i18n-title="cancel"
+                        title="Cancel"
+                        data-svg-icon="x"
+                      ></button>
+                      <button type="button" id="voice-recording-pause-btn" class="ghost small icon-btn" data-i18n-title="voiceRecordPause" title="Pause" data-svg-icon="pause"></button>
+                      <button
+                        type="button"
+                        id="voice-recording-send-btn"
+                        class="small icon-btn"
+                        data-i18n-title="send"
+                        title="Send"
+                        data-svg-icon="send"
+                      ></button>
+                    </span>
+                    <span class="voice-recording-bars" aria-hidden="true">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </span>
+                  </div>
+                  <button type="submit" id="send-message-btn" class="icon-btn" data-i18n-title="send" title="Send" data-svg-icon="send"></button>
+                </div>
+              </form>
+            </div>
+
+            <aside id="server-members-panel" class="server-members-panel hidden">
+              <div class="server-members-head">
+                <span data-i18n="activity">Activity</span>
+              </div>
+              <div id="server-activity-list" class="server-activity-list"></div>
+              <div class="server-members-head">
+                <span data-i18n="serverMembers">Members</span>
+              </div>
+              <div id="server-members-list" class="server-members-list"></div>
+            </aside>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <section id="call-panel" class="call-panel hidden" aria-live="polite">
+      <div id="call-card" class="call-window" role="dialog" aria-modal="true">
+        <div id="call-mode-badge" class="call-mode-badge" data-svg-icon="phone"></div>
+        <div id="call-peer-avatar" class="call-peer-avatar">Y</div>
+        <div id="call-peer" class="call-peer">-</div>
+        <div id="call-peer-username" class="call-peer-username hint"></div>
+        <div id="call-status" class="call-status hint">-</div>
+        <div id="call-incoming-note" class="call-incoming-note hidden">
+          <span class="svg-icon" data-svg-icon="phone"></span>
+          <span data-i18n="callIncomingHint">Incoming call on the full screen</span>
+        </div>
+        <div id="call-verification-strip" class="call-verification-strip hidden">
+          <div class="call-verification-head" data-i18n="callVerificationTitle">Emoji verification</div>
+          <div id="call-verification-emojis" class="call-verification-emojis"></div>
+          <div class="call-verification-hint" data-i18n="callVerificationHint">Compare these emoji with other participants to verify the call.</div>
+        </div>
+        <div id="call-video-wrap" class="call-video-wrap hidden">
+          <div id="call-group-stage" class="call-group-stage hidden">
+            <div id="call-group-main" class="call-group-main hidden"></div>
+            <div id="call-group-grid" class="call-group-grid"></div>
+          </div>
+          <div id="call-remote-fallback" class="call-video-fallback">
+            <div id="call-remote-fallback-avatar" class="call-video-fallback-avatar">Y</div>
+            <div class="call-video-fallback-label" data-i18n="cameraOff">Camera off</div>
+          </div>
+          <div id="call-local-fallback" class="call-video-fallback call-video-fallback-mini">
+            <div id="call-local-fallback-avatar" class="call-video-fallback-avatar">Y</div>
+            <div class="call-video-fallback-label" data-i18n="cameraOff">Camera off</div>
+          </div>
+          <video id="call-remote-video" autoplay playsinline></video>
+          <video id="call-local-video" autoplay playsinline muted></video>
+          <div id="call-screen-mini-strip" class="call-screen-mini-strip hidden">
+            <div class="call-screen-mini-card">
+              <video id="call-screen-mini-remote-video" autoplay playsinline muted></video>
+              <div id="call-screen-mini-remote-fallback" class="call-screen-mini-fallback">
+                <div id="call-screen-mini-remote-avatar" class="call-screen-mini-avatar">Y</div>
+              </div>
+            </div>
+            <div class="call-screen-mini-card">
+              <video id="call-screen-mini-local-video" autoplay playsinline muted></video>
+              <div id="call-screen-mini-local-fallback" class="call-screen-mini-fallback">
+                <div id="call-screen-mini-local-avatar" class="call-screen-mini-avatar">Y</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="call-actions-row">
+          <button type="button" id="call-accept-btn" class="call-action-btn accept hidden" data-i18n-title="callAccept" title="Accept" data-svg-icon="check"></button>
+          <button type="button" id="call-decline-btn" class="call-action-btn ghost hidden" data-i18n-title="callDecline" title="Decline" data-svg-icon="x"></button>
+          <button type="button" id="call-hangup-btn" class="call-action-btn danger hidden" data-i18n-title="callHangup" title="Hang up" data-svg-icon="phone-off"></button>
+          <button type="button" id="call-mute-btn" class="call-action-btn ghost hidden" data-i18n-title="callMute" title="Mute" data-svg-icon="mic-off"></button>
+          <button type="button" id="call-speaker-btn" class="call-action-btn ghost hidden" data-i18n-title="callSpeakerOn" title="Speaker on" data-svg-icon="volume"></button>
+          <button type="button" id="call-camera-btn" class="call-action-btn ghost hidden" data-i18n-title="callCameraOff" title="Camera off" data-svg-icon="video-off"></button>
+          <button
+            type="button"
+            id="call-screen-btn"
+            class="call-action-btn ghost hidden"
+            data-i18n-title="callScreenShareStart"
+            title="Share screen"
+            data-svg-icon="screen"
+          ></button>
+          <button
+            type="button"
+            id="call-mini-btn"
+            class="call-action-btn ghost hidden"
+            data-i18n-title="callShowMiniVideos"
+            title="Show mini videos"
+            data-svg-icon="layout"
+          ></button>
+          <button
+            type="button"
+            id="call-fullscreen-btn"
+            class="call-action-btn ghost hidden"
+            data-i18n-title="callFullscreen"
+            title="Fullscreen"
+            data-svg-icon="maximize"
+          ></button>
+        </div>
+        <div id="call-extra-panel" class="call-extra-panel hidden">
+          <div class="call-extra-actions">
+            <button type="button" id="call-add-btn" class="call-extra-btn hidden">
+              <span class="svg-icon" data-svg-icon="plus"></span>
+              <span data-i18n="callAddParticipant">Add participant</span>
+            </button>
+            <button type="button" id="call-noise-btn" class="call-extra-btn hidden">
+              <span class="svg-icon" data-svg-icon="volume"></span>
+              <span data-i18n="callNoiseCancellation">Noise cancellation</span>
+            </button>
+            <button type="button" id="call-keypad-btn" class="call-extra-btn hidden">
+              <span class="svg-icon" data-svg-icon="dialpad"></span>
+              <span data-i18n="callKeypad">Keypad</span>
+            </button>
+          </div>
+          <div id="call-keypad-panel" class="call-keypad-panel hidden">
+            <div id="call-keypad-display" class="call-keypad-display" data-i18n="callKeypadEmpty">Tap digits to send DTMF</div>
+            <div class="call-keypad-grid">
+              <button type="button" class="call-keypad-digit" data-digit="1">1</button>
+              <button type="button" class="call-keypad-digit" data-digit="2">2</button>
+              <button type="button" class="call-keypad-digit" data-digit="3">3</button>
+              <button type="button" class="call-keypad-digit" data-digit="4">4</button>
+              <button type="button" class="call-keypad-digit" data-digit="5">5</button>
+              <button type="button" class="call-keypad-digit" data-digit="6">6</button>
+              <button type="button" class="call-keypad-digit" data-digit="7">7</button>
+              <button type="button" class="call-keypad-digit" data-digit="8">8</button>
+              <button type="button" class="call-keypad-digit" data-digit="9">9</button>
+              <button type="button" class="call-keypad-digit" data-digit="*">*</button>
+              <button type="button" class="call-keypad-digit" data-digit="0">0</button>
+              <button type="button" class="call-keypad-digit" data-digit="#">#</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <audio id="call-remote-audio" autoplay playsinline class="hidden"></audio>
+    </section>
+
+    <section id="settings-panel" class="hidden" aria-hidden="true">
+      <button type="button" id="settings-close-btn" class="hidden" aria-hidden="true"></button>
+    </section>
+
+    <div id="app-notification-stack" class="app-notification-stack"></div>
+    <div id="emoji-interactive-effect" class="emoji-interactive-effect hidden" aria-hidden="true">
+      <div class="emoji-interactive-effect-backdrop"></div>
+      <div id="emoji-interactive-effect-symbol" class="emoji-interactive-effect-symbol">🎉</div>
+    </div>
+
+    <section id="entity-panel" class="settings-panel hidden">
+      <div class="settings-card">
+        <div class="settings-head">
+          <button type="button" id="entity-panel-back-btn" class="ghost small icon-btn hidden" data-i18n-title="backToChats" title="Back" data-svg-icon="arrow-left"></button>
+          <h2 id="entity-panel-title">Info</h2>
+          <button type="button" id="entity-panel-close-btn" class="ghost small" data-i18n="close">Close</button>
+          <span class="entity-panel-head-spacer hidden" aria-hidden="true"></span>
+        </div>
+        <div id="entity-panel-body" class="settings-block"></div>
+      </div>
+    </section>
+
+    <section id="chat-manage-panel" class="settings-panel hidden">
+      <div class="settings-card">
+        <div class="settings-head">
+          <h2 data-i18n="manageChat">Manage chat</h2>
+          <button type="button" id="chat-manage-close-btn" class="ghost small" data-i18n="close">Close</button>
+        </div>
+
+        <form id="chat-manage-form" class="settings-block">
+          <h3 data-i18n="chatSettings">Chat settings</h3>
+          <label data-i18n="chatTitle">Title</label>
+          <input id="manage-chat-title" />
+          <label data-i18n="chatDescription">Description</label>
+          <textarea id="manage-chat-description" rows="3"></textarea>
+          <label class="checkbox-row">
+            <input id="manage-chat-public" type="checkbox" />
+            <span data-i18n="publicChat">Public chat/channel</span>
+          </label>
+          <label data-i18n="handleLabel">Public handle</label>
+          <input id="manage-chat-handle" placeholder="public handle (%channel or &group)" data-i18n-placeholder="handlePlaceholder" />
+          <label class="checkbox-row">
+            <input id="manage-allow-invites" type="checkbox" />
+            <span data-i18n="allowMemberInvites">Allow members to invite</span>
+          </label>
+          <label class="checkbox-row">
+            <input id="manage-reactions-enabled" type="checkbox" />
+            <span data-i18n="reactionsEnabled">Enable reactions</span>
+          </label>
+          <label class="checkbox-row">
+            <input id="manage-comments-enabled" type="checkbox" />
+            <span data-i18n="commentsEnabled">Enable comments in channel</span>
+          </label>
+          <label class="checkbox-row hidden" id="manage-hide-participants-row">
+            <input id="manage-hide-participants" type="checkbox" />
+            <span data-i18n="hideParticipants">Hide participants for members</span>
+          </label>
+          <button type="submit" data-i18n="saveSettings">Save settings</button>
+        </form>
+
+        <div class="settings-block">
+          <h3 data-i18n="members">Members</h3>
+          <form id="chat-member-add-form" class="auth-form-inline">
+            <input id="chat-member-add-input" placeholder="@username or user id" data-i18n-placeholder="memberAddPlaceholder" />
+            <button type="submit" class="small" data-i18n="addMember">Add member</button>
+          </form>
+          <button type="button" id="chat-member-add-contacts-btn" class="small ghost" data-i18n="addMemberFromContacts">
+            Add from contacts
+          </button>
+          <button type="button" id="chat-bot-add-btn" class="small ghost" data-i18n="addBots">Add bots</button>
+          <div id="chat-members-list" class="member-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="image-viewer" class="image-viewer hidden">
+      <div class="image-viewer-top">
+        <button type="button" id="image-viewer-close" class="ghost small" data-i18n="close">Close</button>
+        <div class="image-viewer-menu-wrap">
+          <button type="button" id="image-viewer-menu-btn" class="ghost small">...</button>
+          <div id="image-viewer-menu" class="image-viewer-menu hidden">
+            <button type="button" id="image-save-btn" class="small" data-i18n="saveToDevice">Save</button>
+            <button type="button" id="image-forward-btn" class="small" data-i18n="forward">Forward</button>
+            <button type="button" id="image-open-tab-btn" class="small" data-i18n="openInTab">Open tab</button>
+          </div>
+        </div>
+      </div>
+      <div id="image-viewer-stage" class="image-viewer-stage">
+        <img id="image-viewer-img" class="image-viewer-img hidden" alt="preview" />
+        <video id="image-viewer-video" class="image-viewer-video hidden" playsinline controls></video>
+      </div>
+    </section>
+
+    <section id="story-viewer" class="story-viewer hidden">
+      <div class="story-viewer-top">
+        <div id="story-viewer-progress" class="story-viewer-progress"></div>
+        <button type="button" id="story-viewer-close-btn" class="ghost small icon-btn" data-i18n-title="close" title="Close" data-svg-icon="x"></button>
+      </div>
+      <div id="story-viewer-stage" class="story-viewer-stage">
+        <button type="button" id="story-viewer-prev-btn" class="story-viewer-nav story-viewer-nav-prev" aria-label="Previous story"></button>
+        <div id="story-viewer-card" class="story-viewer-card">
+          <div class="story-viewer-head">
+            <span id="story-viewer-avatar" class="avatar story-viewer-avatar">Y</span>
+            <div class="story-viewer-meta">
+              <strong><span id="story-viewer-title">Story</span><span id="story-viewer-live-badge" class="story-viewer-live-badge hidden">LIVE</span></strong>
+              <span id="story-viewer-subtitle">-</span>
+            </div>
+          </div>
+          <div id="story-viewer-media" class="story-viewer-media">
+            <img id="story-viewer-image" class="story-viewer-image hidden" alt="story" />
+            <video id="story-viewer-video" class="story-viewer-video hidden" playsinline loop></video>
+            <div id="story-viewer-fallback" class="story-viewer-fallback">
+              <div id="story-viewer-fallback-avatar" class="avatar story-viewer-fallback-avatar">Y</div>
+              <div id="story-viewer-fallback-title" class="story-viewer-fallback-title">Story</div>
+            </div>
+          </div>
+          <div id="story-viewer-caption" class="story-viewer-caption"></div>
+          <div id="story-viewer-live-comments" class="story-viewer-live-comments hidden"></div>
+          <div class="story-viewer-actions">
+            <button type="button" id="story-viewer-views-btn" class="ghost small icon-btn hidden" data-i18n-title="storyViews" title="Views" data-svg-icon="eye"></button>
+            <div class="story-viewer-actions-right">
+              <button type="button" id="story-viewer-like-btn" class="ghost small icon-btn" data-i18n-title="storyLike" title="Like" data-svg-icon="heart"></button>
+              <button type="button" id="story-viewer-more-btn" class="ghost small icon-btn" data-i18n-title="callsMenu" title="Menu" data-svg-icon="more"></button>
+            </div>
+          </div>
+          <div id="story-viewer-reaction-menu" class="story-viewer-reaction-menu hidden" aria-label="Story reactions"></div>
+          <div id="story-viewer-more-menu" class="story-viewer-more-menu hidden">
+            <button type="button" id="story-viewer-edit-btn" class="small hidden"><span class="svg-icon" data-svg-icon="edit"></span><span data-i18n="storyEdit">Edit story</span></button>
+            <button type="button" id="story-viewer-save-profile-btn" class="small hidden"><span class="svg-icon" data-svg-icon="bookmark"></span><span data-i18n="storySaveToProfile">Save to profile</span></button>
+            <button type="button" id="story-viewer-save-media-btn" class="small hidden"><span class="svg-icon" data-svg-icon="download"></span><span data-i18n="storySaveMedia">Save media</span></button>
+            <button type="button" id="story-viewer-hide-btn" class="small"><span class="svg-icon" data-svg-icon="eye-off"></span><span id="story-viewer-hide-label" data-i18n="storyHide">Hide stories</span></button>
+            <button type="button" id="story-viewer-delete-btn" class="small danger hidden"><span class="svg-icon" data-svg-icon="trash"></span><span data-i18n="storyDelete">Delete</span></button>
+          </div>
+          <form id="story-viewer-reply-form" class="story-viewer-reply">
+            <input id="story-viewer-reply-input" data-i18n-placeholder="storyReplyPlaceholder" placeholder="Write a reply..." />
+            <button type="submit" id="story-viewer-reply-send-btn" class="small icon-btn" data-i18n-title="send" title="Send" data-svg-icon="send"></button>
+          </form>
+        </div>
+        <button type="button" id="story-viewer-next-btn" class="story-viewer-nav story-viewer-nav-next" aria-label="Next story"></button>
+      </div>
+    </section>
+
+    <section id="story-editor" class="settings-panel hidden">
+      <div class="settings-card story-editor-card">
+        <div class="settings-head">
+          <button type="button" id="story-editor-back-btn" class="ghost small hidden" data-i18n="backToSettings">Back</button>
+          <h2 id="story-editor-heading" data-i18n="storyEditorTitle">Story</h2>
+          <div class="story-editor-head-actions">
+            <button type="button" id="story-editor-reset-btn" class="ghost small story-editor-head-btn" title="Cancel">
+              <span class="svg-icon" data-svg-icon="rotate-ccw"></span>
+              <span data-i18n="cancel">Cancel</span>
+            </button>
+            <button type="button" id="story-editor-download-btn" class="ghost small story-editor-head-btn" title="Save">
+              <span class="svg-icon" data-svg-icon="download"></span>
+              <span data-i18n="saveToDevice">Save</span>
+            </button>
+          </div>
+          <button type="button" id="story-editor-close-btn" class="ghost small" data-i18n="close" data-i18n-title="close">Close</button>
+        </div>
+        <div class="story-editor-body">
+          <div id="story-editor-preview" class="story-editor-preview">
+            <img id="story-editor-preview-image" class="story-editor-preview-image hidden" alt="story preview" />
+            <video id="story-editor-preview-video" class="story-editor-preview-video hidden" playsinline muted loop></video>
+            <div id="story-editor-preview-fallback" class="story-editor-preview-fallback">
+              <span id="story-editor-preview-avatar" class="avatar story-editor-preview-avatar">Y</span>
+              <strong id="story-editor-preview-title">My story</strong>
+            </div>
+            <div id="story-editor-preview-caption" class="story-editor-preview-caption"></div>
+          </div>
+          <div id="story-editor-compose-step" class="settings-block">
+            <label for="story-editor-caption-input" data-i18n="storyCaption">Caption</label>
+            <textarea id="story-editor-caption-input" rows="3" maxlength="200" data-i18n-placeholder="storyCaptionPlaceholder" placeholder="Add a caption"></textarea>
+            <label for="story-editor-bg-select" data-i18n="storyBackground">Background</label>
+            <select id="story-editor-bg-select">
+              <option value="sunset">Sunset</option>
+              <option value="ocean">Ocean</option>
+              <option value="forest">Forest</option>
+              <option value="night">Night</option>
+            </select>
+            <label class="story-editor-upload story-editor-upload-btn">
+              <span class="svg-icon" data-svg-icon="image"></span>
+              <span data-i18n="attachmentPhotoVideo">Photo or Video</span>
+              <input id="story-editor-file" type="file" accept="image/*,video/*" class="hidden-input" />
+            </label>
+            <div class="story-editor-iphone-capture-row">
+              <label class="story-editor-upload story-editor-upload-btn">
+                <span class="svg-icon" data-svg-icon="camera"></span>
+                <span data-i18n="storyTakePhoto">Take photo</span>
+                <input id="story-editor-camera-photo-input" type="file" accept="image/*" capture="environment" class="hidden-input" />
+              </label>
+              <label class="story-editor-upload story-editor-upload-btn">
+                <span class="svg-icon" data-svg-icon="video"></span>
+                <span data-i18n="storyRecordVideo">Record video</span>
+                <input id="story-editor-camera-video-input" type="file" accept="video/*" capture="environment" class="hidden-input" />
+              </label>
+            </div>
+          </div>
+          <div id="story-editor-publish-step" class="settings-block hidden">
+            <label for="story-editor-privacy-select" data-i18n="storyPrivacyTitle">Who can view</label>
+            <select id="story-editor-privacy-select">
+              <option value="contacts" data-i18n="storyPrivacyContacts">My Contacts</option>
+              <option value="close-friends" data-i18n="storyPrivacyCloseFriends">Close Friends</option>
+              <option value="selected" data-i18n="storyPrivacySelected">Selected Contacts</option>
+            </select>
+            <div id="story-editor-selected-users-block" class="story-editor-audience-block hidden">
+              <label for="story-editor-selected-users-input" data-i18n="storySelectedUsers">Selected viewers</label>
+              <input
+                id="story-editor-selected-users-input"
+                data-i18n-placeholder="storySelectedUsersPlaceholder"
+                placeholder="@username1, @username2"
+              />
+              <div class="hint" data-i18n="storySelectedUsersHint">Use @usernames separated by commas.</div>
+            </div>
+            <label for="story-editor-exceptions-input" data-i18n="storyPrivacyExceptions">Exceptions</label>
+            <input
+              id="story-editor-exceptions-input"
+              data-i18n-placeholder="storyPrivacyExceptionsPlaceholder"
+              placeholder="@username1, @username2"
+            />
+            <div class="hint" data-i18n="storyPrivacyExceptionsHint">These users will not see the story.</div>
+            <label class="checkbox-row">
+              <input id="story-editor-disable-screenshots" type="checkbox" />
+              <span data-i18n="storyDisableScreenshots">Disable screenshots</span>
+            </label>
+            <label for="story-editor-expiration-select" data-i18n="storyExpiration">Expiration</label>
+            <select id="story-editor-expiration-select">
+              <option value="6">6 hours</option>
+              <option value="12">12 hours</option>
+              <option value="24">24 hours</option>
+              <option value="48">48 hours</option>
+            </select>
+            <label class="checkbox-row">
+              <input id="story-editor-save-profile" type="checkbox" />
+              <span data-i18n="storySaveToProfile">Save to profile</span>
+            </label>
+            <label class="checkbox-row">
+              <input id="story-editor-live-toggle" type="checkbox" />
+              <span data-i18n="storyLiveToggle">Go live</span>
+            </label>
+            <div id="story-editor-live-price-row" class="story-editor-audience-block hidden">
+              <label for="story-editor-live-price-input" data-i18n="storyLivePrice">Comment price</label>
+              <input id="story-editor-live-price-input" type="number" min="0" max="10000" step="1" value="0" />
+              <div class="hint" data-i18n="storyLivePriceHint">0 means comments are free.</div>
+            </div>
+          </div>
+        </div>
+        <div class="call-actions-row">
+          <button type="button" id="story-editor-cancel-btn" class="small ghost" data-i18n="cancel">Cancel</button>
+          <button type="button" id="story-editor-submit-btn" class="small" data-i18n="storyEditorNext">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <template id="global-search-item-template">
+      <div class="search-item chat-discovery-item">
+        <span class="search-main"></span>
+        <span class="search-sub"></span>
+        <button type="button" class="small join-chat-btn">Open</button>
+      </div>
+    </template>
+
+    <template id="chat-item-template">
+      <button type="button" class="chat-item">
+        <span class="chat-avatar-wrap">
+          <span class="chat-avatar"></span>
+          <span class="chat-avatar-online hidden"></span>
+          <span class="chat-item-select-marker hidden"></span>
+        </span>
+        <span class="chat-body">
+          <span class="chat-row">
+            <span class="chat-item-title"></span>
+            <span class="chat-row-right">
+              <span class="chat-item-time"></span>
+              <span class="chat-item-pin hidden" data-svg-icon="pin"></span>
+              <span class="chat-item-mute hidden" data-svg-icon="volume-off"></span>
+              <span class="chat-item-unread hidden"></span>
+            </span>
+          </span>
+          <span class="chat-row">
+            <span class="chat-item-preview-wrap">
+              <span class="chat-item-preview-icon hidden"></span>
+              <span class="chat-item-preview"></span>
+            </span>
+          </span>
+        </span>
+      </button>
+    </template>
+
+    <template id="message-template">
+      <div class="message-row">
+        <div class="message-avatar"></div>
+        <div class="message">
+          <div class="message-meta">
+            <span class="message-author"></span>
+            <span class="message-time"></span>
+          </div>
+          <div class="message-body"></div>
+          <div class="message-actions"></div>
+        </div>
+      </div>
+    </template>
+
+    <div id="chat-context-menu" class="chat-context-menu hidden">
+      <button type="button" id="chat-context-open-window-btn" class="small"><span class="svg-icon" data-svg-icon="desktop"></span><span class="menu-label" data-i18n="openInSeparateWindow">Open in separate window</span></button>
+      <button type="button" id="chat-context-archive-btn" class="small"><span class="svg-icon" data-svg-icon="archive"></span><span class="menu-label" data-i18n="archiveChat">Archive</span></button>
+      <button type="button" id="chat-context-pin-btn" class="small"><span class="svg-icon" data-svg-icon="pin"></span><span class="menu-label" data-i18n="pinChat">Pin chat</span></button>
+      <button type="button" id="chat-context-notifications-btn" class="small"><span class="svg-icon" data-svg-icon="volume"></span><span class="menu-label">Mute notifications</span></button>
+      <button type="button" id="chat-context-read-toggle-btn" class="small"><span class="svg-icon" data-svg-icon="chat"></span><span class="menu-label" data-i18n="markAsRead">Mark as read</span></button>
+      <button type="button" id="chat-context-add-to-folder-btn" class="small"><span class="svg-icon" data-svg-icon="bookmark"></span><span class="menu-label" data-i18n="entityAddToFolder">Add to folder</span></button>
+      <button type="button" id="chat-context-remove-from-folder-btn" class="small hidden"><span class="svg-icon" data-svg-icon="x"></span><span class="menu-label" data-i18n="removeFromGroup">Remove from group</span></button>
+      <button type="button" id="chat-context-clear-history-btn" class="small"><span class="svg-icon" data-svg-icon="trash"></span><span class="menu-label" data-i18n="clearHistory">Clear history</span></button>
+      <button type="button" id="chat-context-leave-btn" class="small danger hidden"><span class="svg-icon" data-svg-icon="x"></span><span class="menu-label" data-i18n="entityLeaveGroup">Leave group</span></button>
+      <button type="button" id="chat-context-delete-btn" class="small danger"><span class="svg-icon" data-svg-icon="trash"></span><span class="menu-label" data-i18n="deleteChat">Delete chat</span></button>
+    </div>
+
+    <div id="message-context-menu" class="chat-context-menu message-context-menu hidden">
+      <div id="message-context-reactions" class="message-context-reactions"></div>
+      <button type="button" id="message-context-reply-btn" class="small"><span class="svg-icon" data-svg-icon="reply"></span><span class="menu-label" data-i18n="replyToMessage">Reply</span></button>
+      <button type="button" id="message-context-pin-btn" class="small"><span class="svg-icon" data-svg-icon="pin"></span><span class="menu-label" data-i18n="pinMessage">Pin</span></button>
+      <button type="button" id="message-context-copy-btn" class="small"><span class="svg-icon" data-svg-icon="copy"></span><span class="menu-label" data-i18n="copyText">Copy text</span></button>
+      <button type="button" id="message-context-save-sound-btn" class="small"><span class="svg-icon" data-svg-icon="volume"></span><span class="menu-label" data-i18n="settingsNotificationSaveSound">Save sound</span></button>
+      <button type="button" id="message-context-forward-btn" class="small"><span class="svg-icon" data-svg-icon="forward"></span><span class="menu-label" data-i18n="forward">Forward</span></button>
+      <button type="button" id="message-context-edit-btn" class="small"><span class="svg-icon" data-svg-icon="edit"></span><span class="menu-label" data-i18n="editMessage">Edit</span></button>
+      <button type="button" id="message-context-select-btn" class="small"><span class="svg-icon" data-svg-icon="check"></span><span class="menu-label" data-i18n="selectMessage">Select</span></button>
+      <button type="button" id="message-context-delete-btn" class="small danger"><span class="svg-icon" data-svg-icon="trash"></span><span class="menu-label" data-i18n="deleteMessage">Delete</span></button>
+    </div>
+
+    <section id="create-flow-panel" class="settings-panel hidden">
+      <div class="settings-card create-flow-card">
+        <form id="create-flow-step-1" class="create-flow-step">
+          <div class="create-flow-step-top">
+            <button type="button" id="create-flow-avatar-btn" class="create-flow-avatar" data-svg-icon="camera" data-i18n-title="changeAvatar" title="Avatar"></button>
+            <div class="create-flow-title-wrap">
+              <label for="create-flow-title-input" id="create-flow-title-label" data-i18n="createFlowGroupName">Group title</label>
+              <input id="create-flow-title-input" data-i18n-placeholder="createFlowGroupName" placeholder="Group title" maxlength="90" />
+            </div>
+            <button type="button" id="create-flow-more-btn" class="ghost small icon-btn" data-svg-icon="more" data-i18n-title="callsMenu" title="Menu"></button>
+          </div>
+          <textarea
+            id="create-flow-description-input"
+            class="hidden"
+            rows="2"
+            data-i18n-placeholder="chatDescriptionPlaceholder"
+            placeholder="Chat description"
+          ></textarea>
+          <div class="create-flow-type">
+            <label data-i18n="chatTypeLabel">Chat type</label>
+            <div class="create-flow-type-options">
+              <label class="create-flow-type-option">
+                <input type="radio" name="create-flow-visibility" value="private" checked />
+                <span data-i18n="privateLabel">Private</span>
+              </label>
+              <label class="create-flow-type-option">
+                <input type="radio" name="create-flow-visibility" value="public" />
+                <span data-i18n="publicLabel">Public</span>
+              </label>
+            </div>
+            <input id="create-flow-handle-input" class="hidden" data-i18n-placeholder="handlePlaceholder" placeholder="public handle" />
+          </div>
+          <label data-i18n="settingsPrivacyAutoDeleteMessages">Auto-delete messages</label>
+          <select id="create-flow-auto-delete">
+            <option value="off" data-i18n="settingsAutoDeleteOff">Off</option>
+            <option value="1" data-i18n="settingsAutoDeleteDay">1 day</option>
+            <option value="7" data-i18n="settingsAutoDeleteWeek">1 week</option>
+            <option value="30" data-i18n="settingsAutoDeleteMonth">1 month</option>
+          </select>
+          <input id="create-flow-avatar-file" type="file" accept="image/*" class="hidden-input" />
+          <div class="create-flow-actions">
+            <button type="button" id="create-flow-cancel-btn" class="ghost small" data-i18n="cancel">Cancel</button>
+            <button type="submit" id="create-flow-next-btn" class="small" data-i18n="createFlowNext">Next</button>
+          </div>
+        </form>
+
+        <div id="create-flow-step-2" class="create-flow-step hidden">
+          <div class="create-flow-members-head">
+            <strong data-i18n="createFlowAddMembers">Add members</strong>
+            <span id="create-flow-selected-count">0 / 200000</span>
+          </div>
+          <div class="drawer-modal-search create-flow-search">
+            <span class="drawer-modal-search-icon" data-svg-icon="search"></span>
+            <input id="create-flow-member-search" data-i18n-placeholder="createFlowMembersSearch" placeholder="Search contacts" />
+          </div>
+          <div id="create-flow-members-list" class="create-flow-members-list"></div>
+          <div class="create-flow-actions">
+            <button type="button" id="create-flow-back-btn" class="ghost small" data-i18n="cancel">Cancel</button>
+            <button type="button" id="create-flow-create-btn" class="small" data-i18n="create">Create</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="app-dialog" class="settings-panel hidden">
+      <div class="settings-card dialog-card">
+        <div class="settings-head">
+          <h2 id="dialog-title">Dialog</h2>
+          <button type="button" id="dialog-close-btn" class="ghost small" data-i18n="close" data-i18n-title="close">Close</button>
+        </div>
+        <form id="dialog-form" class="settings-block">
+          <div id="dialog-message" class="hint hidden"></div>
+          <label id="dialog-checkbox-row" class="checkbox-row hidden">
+            <input id="dialog-checkbox" type="checkbox" />
+            <span id="dialog-checkbox-label">Option</span>
+          </label>
+          <textarea id="dialog-input" class="hidden" rows="3"></textarea>
+          <select id="dialog-select" class="hidden"></select>
+          <div class="call-actions-row">
+            <button type="button" id="dialog-cancel-btn" class="small ghost" data-i18n="close">Close</button>
+            <button type="submit" id="dialog-submit-btn" class="small">OK</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="contact-create-panel" class="settings-panel hidden">
+      <div class="settings-card contact-create-card">
+        <div class="settings-head">
+          <h2 data-i18n="contactsAdd">Add Contact</h2>
+          <button type="button" id="contact-create-close-btn" class="ghost small" data-i18n="close" data-i18n-title="close">Close</button>
+        </div>
+        <form id="contact-create-form" class="settings-block contact-create-form">
+          <label for="contact-create-first-name" data-i18n="firstName">First name</label>
+          <input id="contact-create-first-name" maxlength="40" />
+          <label for="contact-create-last-name" data-i18n="lastName">Last name</label>
+          <input id="contact-create-last-name" maxlength="40" />
+          <label for="contact-create-username" data-i18n="usernameLabel">Username</label>
+          <input id="contact-create-username" data-i18n-placeholder="contactUsernamePlaceholder" placeholder="@username" maxlength="64" />
+          <div class="call-actions-row">
+            <button type="button" id="contact-create-cancel-btn" class="small ghost" data-i18n="cancel">Cancel</button>
+            <button type="submit" id="contact-create-submit-btn" class="small" data-i18n="create">Create</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="attachment-sheet" class="attachment-sheet hidden">
+      <div class="attachment-sheet-backdrop"></div>
+      <div class="attachment-sheet-card">
+        <button type="button" id="attachment-sheet-photo-btn" class="attachment-sheet-item">
+          <span class="svg-icon" data-svg-icon="image"></span>
+          <span data-i18n="attachmentPhotoVideo">Photo or Video</span>
+        </button>
+        <button type="button" id="attachment-sheet-file-btn" class="attachment-sheet-item">
+          <span class="svg-icon" data-svg-icon="paperclip"></span>
+          <span data-i18n="attachmentFile">File</span>
+        </button>
+        <button type="button" id="attachment-sheet-poll-btn" class="attachment-sheet-item">
+          <span class="svg-icon" data-svg-icon="chart"></span>
+          <span data-i18n="attachmentPoll">Poll</span>
+        </button>
+        <button type="button" id="attachment-sheet-location-btn" class="attachment-sheet-item">
+          <span class="svg-icon" data-svg-icon="location"></span>
+          <span data-i18n="attachmentLocation">Location</span>
+        </button>
+        <button type="button" id="attachment-sheet-contact-btn" class="attachment-sheet-item">
+          <span class="svg-icon" data-svg-icon="contact"></span>
+          <span data-i18n="attachmentContact">Contact</span>
+        </button>
+        <button type="button" id="attachment-sheet-cancel-btn" class="attachment-sheet-cancel" data-i18n="cancel">Cancel</button>
+      </div>
+    </section>
+
+    <section id="voice-preview-panel" class="settings-panel hidden">
+      <div class="settings-card voice-preview-card">
+        <div class="settings-head">
+          <h2 data-i18n="voicePreviewTitle">Voice</h2>
+          <button type="button" id="voice-preview-close-btn" class="ghost small" data-i18n="close" data-i18n-title="close">Close</button>
+        </div>
+        <div class="settings-block voice-preview-body">
+          <div class="voice-waveform-wrap">
+            <canvas id="voice-waveform-canvas" class="voice-waveform-canvas" width="600" height="140"></canvas>
+          </div>
+          <audio id="voice-preview-audio" controls></audio>
+          <div id="voice-trim-controls" class="voice-trim-controls">
+            <div class="voice-trim-head">
+              <span data-i18n="trimStart">Start</span>
+              <strong id="voice-trim-start-value" class="hint">0:00</strong>
+            </div>
+            <input id="voice-trim-start" type="range" min="0" max="0" step="0.01" value="0" />
+            <div class="voice-trim-head">
+              <span data-i18n="trimEnd">End</span>
+              <strong id="voice-trim-end-value" class="hint">0:00</strong>
+            </div>
+            <input id="voice-trim-end" type="range" min="0" max="0" step="0.01" value="0" />
+          </div>
+          <div class="voice-preview-actions">
+            <button
+              type="button"
+              id="voice-preview-delete-btn"
+              class="small ghost danger icon-btn"
+              data-i18n-title="deleteMessage"
+              title="Delete"
+              data-svg-icon="trash"
+            ></button>
+            <button
+              type="button"
+              id="voice-preview-edit-btn"
+              class="small ghost icon-btn"
+              data-i18n-title="cancel"
+              title="Cancel"
+              data-svg-icon="x"
+            ></button>
+            <button
+              type="button"
+              id="voice-preview-send-btn"
+              class="small icon-btn"
+              data-i18n-title="send"
+              title="Send"
+              data-svg-icon="send"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="image-crop-panel" class="settings-panel hidden">
+      <div class="settings-card image-crop-card">
+        <div class="settings-head image-crop-headline">
+          <h2 id="image-crop-title">Edit image</h2>
+          <button type="button" id="image-crop-close-btn" class="ghost small" data-i18n="close" data-i18n-title="close">Close</button>
+        </div>
+        <div class="image-crop-stage-wrap">
+          <div id="image-crop-stage" class="image-crop-stage circle">
+            <img id="image-crop-image" class="image-crop-image" alt="" />
+          </div>
+        </div>
+        <div class="image-crop-controls">
+          <span>Zoom</span>
+          <input id="image-crop-zoom" type="range" min="1" max="4" step="0.01" value="1" />
+          <small id="image-crop-zoom-value">100%</small>
+        </div>
+        <div class="call-actions-row">
+          <button type="button" id="image-crop-cancel-btn" class="small ghost" data-i18n="cancel">Cancel</button>
+          <button type="button" id="image-crop-apply-btn" class="small">Apply</button>
+        </div>
+      </div>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,12 @@
+{
+  "app_name": "Yooh",
+  "start_url": "https://yooh.cloudpub.ru",
+  "fallback_url": "http://localhost:4200",
+  "close_to_tray": true,
+  "window_width": 1440,
+  "window_height": 900,
+  "window_min_width": 980,
+  "window_min_height": 640,
+  "auto_reload_on_server_update": true,
+  "version_poll_seconds": 15
+}

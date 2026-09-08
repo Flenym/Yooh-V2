@@ -1,0 +1,53 @@
+﻿:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #06090f;
+  color: #ecf4ff;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+.shell {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+}
+
+.legacy-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  max-width: min(90vw, 640px);
+  padding: 10px 14px;
+  border: 1px solid #23324c;
+  border-radius: 10px;
+  background: rgba(6, 10, 18, 0.88);
+  color: #c7d8f6;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #06090f;
+}

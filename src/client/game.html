@@ -1,0 +1,29 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yooh</title>
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="stylesheet" href="/game.css?v=20260224-2" />
+  </head>
+  <body>
+    <main class="shell">
+      <div class="legacy-hidden">
+        <div id="game-status">Connecting...</div>
+        <button type="button" id="back-to-chat-btn">Back to chats</button>
+      </div>
+      <div id="game-overlay" class="overlay">Подключение игрового режима...</div>
+      <iframe
+        id="game-mode-iframe"
+        class="frame"
+        src="about:blank"
+        data-playmode-src="/playmode/"
+        title="Yooh Playmode"
+        allow="camera; microphone; autoplay"
+      ></iframe>
+    </main>
+
+    <script src="/game.js?v=20260224-2" defer></script>
+  </body>
+</html>

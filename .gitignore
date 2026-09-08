@@ -1,0 +1,16 @@
+node_modules/
+runtime/
+coverage/
+.env
+npm-debug.log*
+.venv-desktop/
+build/
+dist/
+*.spec
+__pycache__/
+data/
+logs/
+exports/
+run/
+strategies/
+strategy_config.yaml
