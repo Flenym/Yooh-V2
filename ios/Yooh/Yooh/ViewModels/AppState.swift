@@ -49,7 +49,7 @@ final class AppState {
     private(set) var incomingCall: CallSignal?
 
     /// Set by the open ChatDetailViewModel; cleared on disappear.
-    var messageHandler: ((YoohSocketEvent) -> Void)?
+    var messageHandler: ((YoohSocketEvent) -> Void)? = nil
 
     /// One-shot launch guard (see RootView).
     var didBoot = false
