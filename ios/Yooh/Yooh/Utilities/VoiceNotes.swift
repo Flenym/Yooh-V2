@@ -15,7 +15,11 @@ final class VoiceRecorder {
     private var fileURL: URL?
 
     func toggle() {
-        isRecording ? stop(discard: true) : start()
+        if isRecording {
+            _ = stop(discard: true)
+        } else {
+            start()
+        }
     }
 
     func start() {
@@ -89,7 +93,11 @@ final class VoicePlayer {
     private var timer: Timer?
 
     func toggle(fileId: String, token: String) {
-        isPlaying ? stop() : Task { await play(fileId: fileId, token: token) }
+        if isPlaying {
+            stop()
+        } else {
+            Task { await play(fileId: fileId, token: token) }
+        }
     }
 
     private func play(fileId: String, token: String) async {
