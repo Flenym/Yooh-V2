@@ -45,7 +45,7 @@ enum YoohTheme {
 
     // MARK: - Typography (Dynamic Type friendly, relative styles only)
 
-    enum Type {
+    enum Fonts {
         static let chatTitle = Font.headline
         static let chatPreview = Font.subheadline
         static let timestamp = Font.caption

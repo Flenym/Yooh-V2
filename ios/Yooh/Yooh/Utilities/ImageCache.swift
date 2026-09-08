@@ -8,16 +8,16 @@ actor ImageCache {
     static let shared = ImageCache()
 
     private let memory = NSCache<NSString, UIImage>()
-    private let fileManager = FileManager.default
 
-    private var cacheDir: URL {
-        fileManager.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    /// Pure path computation — safe to call from any isolation domain.
+    nonisolated private var cacheDir: URL {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("yooh-images", isDirectory: true)
     }
 
     private init() {
         memory.countLimit = 200
-        try? fileManager.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
     }
 
     func image(for key: String) -> UIImage? {
@@ -51,8 +51,8 @@ actor ImageCache {
 
     func clear() {
         memory.removeAllObjects()
-        try? fileManager.removeItem(at: cacheDir)
-        try? fileManager.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+        try? FileManager.default.removeItem(at: cacheDir)
+        try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
     }
 
     private func safeFileName(_ key: String) -> String {

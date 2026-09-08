@@ -79,7 +79,7 @@ final class APIClient: NSObject, @unchecked Sendable {
     }
 
     /// Multipart file upload → decodes JSON response as `T`.
-    func upload<T: Decodable>(path: String, fileData: Data, filename: String, mimeType: String, fields: [String: String] = []) async throws -> T {
+    func upload<T: Decodable>(path: String, fileData: Data, filename: String, mimeType: String, fields: [String: String] = [:]) async throws -> T {
         var body = MultipartBody()
         for (k, v) in fields { body.addField(name: k, value: v) }
         body.addFile(name: "file", filename: filename, mimeType: mimeType, fileData: fileData)

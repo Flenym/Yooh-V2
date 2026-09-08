@@ -23,21 +23,23 @@ final class AppState {
     let session = SessionStore.shared
     let socket = YoohSocket()
 
-    lazy var chatsService = ChatService()
-    lazy var messageService = MessageService()
-    lazy var userService = UserService()
-    lazy var mediaService = MediaService()
-    lazy var storyService = StoryService()
-    lazy var settingsService = SettingsService()
-    lazy var authService = AuthService()
-    lazy var callService: CallService = CallService(socket: socket)
+    // NOTE: no `lazy` here — @Observable rewrites lazy members into
+    // computed properties. Everything is wired once in init().
+    let chatsService: ChatService
+    let messageService: MessageService
+    let userService: UserService
+    let mediaService: MediaService
+    let storyService: StoryService
+    let settingsService: SettingsService
+    let authService: AuthService
+    let callService: CallService
 
-    lazy var chatsViewModel = ChatsViewModel(app: self)
-    lazy var contactsViewModel = ContactsViewModel(app: self)
-    lazy var profileViewModel = ProfileViewModel(app: self)
-    lazy var settingsViewModel = SettingsViewModel(app: self)
-    lazy var storiesViewModel = StoriesViewModel(app: self)
-    lazy var callsViewModel = CallsViewModel(app: self)
+    let chatsViewModel: ChatsViewModel
+    let contactsViewModel: ContactsViewModel
+    let profileViewModel: ProfileViewModel
+    let settingsViewModel: SettingsViewModel
+    let storiesViewModel: StoriesViewModel
+    let callsViewModel: CallsViewModel
 
     /// Online state by user id (from presence:snapshot/update).
     private(set) var onlineUsers: Set<String> = []
@@ -56,6 +58,20 @@ final class AppState {
     private var lastTypingSent: [String: Date] = [:]
 
     init() {
+        chatsService = ChatService()
+        messageService = MessageService()
+        userService = UserService()
+        mediaService = MediaService()
+        storyService = StoryService()
+        settingsService = SettingsService()
+        authService = AuthService()
+        callService = CallService(socket: socket)
+        chatsViewModel = ChatsViewModel(app: self)
+        contactsViewModel = ContactsViewModel(app: self)
+        profileViewModel = ProfileViewModel(app: self)
+        settingsViewModel = SettingsViewModel(app: self)
+        storiesViewModel = StoriesViewModel(app: self)
+        callsViewModel = CallsViewModel(app: self)
         socket.delegate = self
     }
 
