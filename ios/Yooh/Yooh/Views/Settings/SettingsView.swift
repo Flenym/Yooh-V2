@@ -19,7 +19,7 @@ struct SettingsView: View {
                 securitySection(settings)
                 stickersSection(settings)
                 feedbackSection(settings)
-                serverSection(settings)
+                serverSection(url: $settings.serverURL, onApply: { settings.applyServerURL() })
                 aboutSection
                 logoutSection
             }
@@ -174,18 +174,16 @@ struct SettingsView: View {
         }
     }
 
-    private func serverSection(_ settings: SettingsViewModel) -> some View {
+    private func serverSection(url: Binding<String>, onApply: @escaping () -> Void) -> some View {
         Section("Backend") {
-            TextField("Server URL (empty = local default)", text: $settings.serverURL)
+            TextField("Server URL (empty = local default)", text: url)
                 .keyboardType(.URL)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
             Text("Applies on next login. Changing the server logs you out (sessions live server-side).")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-            Button("Apply server URL") {
-                settings.applyServerURL()
-            }
+            Button("Apply server URL", action: onApply)
         }
     }
 

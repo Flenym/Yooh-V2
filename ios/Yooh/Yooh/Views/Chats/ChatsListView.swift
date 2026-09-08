@@ -1,6 +1,9 @@
 import SwiftUI
 
 /// Chat list: search, archive toggle, swipe + context actions, compose sheet.
+///
+/// The body is deliberately decomposed into small helpers: a single giant
+/// ViewBuilder expression times out the type-checker in Release builds.
 struct ChatsListView: View {
     @Environment(AppState.self) private var app
     @State private var showComposer = false
@@ -17,66 +20,7 @@ struct ChatsListView: View {
                                    title: "No chats yet",
                                    subtitle: "Start a conversation from Contacts or the compose button.")
                 } else {
-                    List {
-                        ForEach(chats.visibleChats) { chat in
-                            Button {
-                                selectedChatId = chat.id
-                            } label: {
-                                ChatRowView(chat: chat,
-                                            myUserId: chats.myUserId ?? "",
-                                            isPinned: chats.isPinned(chat.id),
-                                            isMuted: chats.isMuted(chat.id),
-                                            isOnline: isPeerOnline(chat))
-                            }
-                            .buttonStyle(.plain)
-                            .swipeActions(edge: .leading) {
-                                Button { chats.togglePin(chat.id) } label: {
-                                    Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
-                                          systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
-                                }
-                                .tint(.orange)
-                                Button { chats.toggleArchive(chat.id) } label: {
-                                    Label("Archive", systemImage: "archivebox")
-                                }
-                                .tint(.gray)
-                            }
-                            .swipeActions(edge: .trailing) {
-                                Button { chats.toggleMute(chat.id) } label: {
-                                    Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
-                                          systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
-                                }
-                                .tint(.blue)
-                                Button(role: .destructive) { confirmDelete = chat } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
-                            .contextMenu {
-                                Button { selectedChatId = chat.id } label: {
-                                    Label("Open", systemImage: "bubble.left")
-                                }
-                                Button { chats.togglePin(chat.id) } label: {
-                                    Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
-                                          systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
-                                }
-                                Button { chats.toggleMute(chat.id) } label: {
-                                    Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
-                                          systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
-                                }
-                                Button { chats.toggleArchive(chat.id) } label: {
-                                    Label(chats.isArchived(chat.id) ? "Unarchive" : "Archive",
-                                          systemImage: chats.isArchived(chat.id) ? "archivebox.fill" : "archivebox")
-                                }
-                                Button { confirmClear = chat } label: {
-                                    Label("Clear history", systemImage: "eraser")
-                                }
-                                Button(role: .destructive) { confirmDelete = chat } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .refreshable { await chats.refresh() }
+                    chatList(chats)
                 }
             }
             .navigationTitle(chats.showArchived ? "Archived" : "Chats")
@@ -133,13 +77,100 @@ struct ChatsListView: View {
             }
             .navigationDestination(for: String.self) { chatId in
                 if let chat = chats.chats.first(where: { $0.id == chatId }) {
-                    ChatDetailView(chat: chat)
+                    ChatDetailView(chat: chat, app: app)
                 }
             }
             .overlay {
                 if chats.isLoading, chats.chats.isEmpty {
                     ProgressView()
                 }
+            }
+        }
+    }
+
+    // MARK: - List
+
+    private func chatList(_ chats: ChatsViewModel) -> some View {
+        List {
+            ForEach(chats.visibleChats) { chat in
+                chatRow(chat, chats)
+            }
+        }
+        .listStyle(.plain)
+        .refreshable { await chats.refresh() }
+    }
+
+    private func chatRow(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
+        Button {
+            selectedChatId = chat.id
+        } label: {
+            ChatRowView(chat: chat,
+                        myUserId: chats.myUserId ?? "",
+                        isPinned: chats.isPinned(chat.id),
+                        isMuted: chats.isMuted(chat.id),
+                        isOnline: isPeerOnline(chat))
+        }
+        .buttonStyle(.plain)
+        .swipeActions(edge: .leading) {
+            leadingActions(chat, chats)
+        }
+        .swipeActions(edge: .trailing) {
+            trailingActions(chat, chats)
+        }
+        .contextMenu {
+            rowMenu(chat, chats)
+        }
+    }
+
+    private func leadingActions(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
+        Group {
+            Button { chats.togglePin(chat.id) } label: {
+                Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
+                      systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
+            }
+            .tint(.orange)
+            Button { chats.toggleArchive(chat.id) } label: {
+                Label("Archive", systemImage: "archivebox")
+            }
+            .tint(.gray)
+        }
+    }
+
+    private func trailingActions(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
+        Group {
+            Button { chats.toggleMute(chat.id) } label: {
+                Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
+                      systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
+            }
+            .tint(.blue)
+            Button(role: .destructive) { confirmDelete = chat } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+
+    private func rowMenu(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
+        Group {
+            Button { selectedChatId = chat.id } label: {
+                Label("Open", systemImage: "bubble.left")
+            }
+            Button { chats.togglePin(chat.id) } label: {
+                Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
+                      systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
+            }
+            Button { chats.toggleMute(chat.id) } label: {
+                Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
+                      systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
+            }
+            Button { chats.toggleArchive(chat.id) } label: {
+                Label(chats.isArchived(chat.id) ? "Unarchive" : "Archive",
+                      systemImage: chats.isArchived(chat.id) ? "archivebox.fill" : "archivebox")
+            }
+            Button { confirmClear = chat } label: {
+                Label("Clear history", systemImage: "eraser")
+            }
+            Button(role: .destructive) { confirmDelete = chat } label: {
+                Label("Delete", systemImage: "trash")
             }
         }
     }
