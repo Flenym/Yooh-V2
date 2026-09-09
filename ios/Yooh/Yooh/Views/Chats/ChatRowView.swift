@@ -124,7 +124,14 @@ struct ChatRowView: View {
     private var previewPlain: String {
         guard let m = chat.lastMessage else { return chat.description }
         if let t = m.text, !t.isEmpty {
-            let prefix = m.senderId == myUserId ? "You: " : senderPrefix(m)
+            var prefix = ""
+            if m.senderId == myUserId {
+                prefix = "You: "
+            } else if chat.type != .direct,
+                      let name = m.sender?.displayName ?? m.sender?.username, !name.isEmpty
+            {
+                prefix = "\(name): "
+            }
             return prefix + t
         }
         switch m.type {
