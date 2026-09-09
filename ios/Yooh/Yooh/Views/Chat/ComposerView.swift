@@ -55,19 +55,25 @@ struct ComposerView: View {
                         Label("Poll", systemImage: "chart.bar")
                     }
                 } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(width: YoohTheme.Layout.minTouch, height: YoohTheme.Layout.minTouch)
+                    Image(systemName: "paperclip")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 40, height: 40)
                 }
+                .yoohGlass(.interactive, cornerRadius: 20)
                 .accessibilityLabel(Text("Attach"))
                 .disabled(isLocating)
 
                 TextField("Message", text: $vm.draft, axis: .vertical)
                     .lineLimit(1...5)
+                    .padding(.horizontal, YoohTheme.Spacing.m)
+                    .padding(.vertical, 10)
+                    .background(YoohTheme.TG.field, in: .rect(cornerRadius: 20))
                     .onChange(of: vm.draft) {
                         app.sendTyping(chatId: vm.chatId, active: true)
                     }
                     .onSubmit { vm.send() }
+                    .accessibilityLabel(Text("Message text"))
 
                 if vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, vm.editing == nil {
                     Button {
@@ -83,24 +89,25 @@ struct ComposerView: View {
                     } label: {
                         Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(recorder.isRecording ? .red : Color.accentColor)
-                            .frame(width: YoohTheme.Layout.minTouch, height: YoohTheme.Layout.minTouch)
+                            .foregroundStyle(recorder.isRecording ? .red : .primary)
+                            .frame(width: 40, height: 40)
                     }
+                    .yoohGlass(.interactive, cornerRadius: 20)
                     .accessibilityLabel(Text(recorder.isRecording ? "Send voice message" : "Record voice message"))
                 } else {
                     Button { vm.send() } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 30))
-                            .foregroundStyle(Color.accentColor)
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 40, height: 40)
+                            .background(YoohTheme.TG.badge, in: .circle)
                     }
-                    .frame(width: YoohTheme.Layout.minTouch, height: YoohTheme.Layout.minTouch)
                     .accessibilityLabel(Text(vm.editing == nil ? "Send" : "Save edit"))
                 }
             }
             .padding(.horizontal, YoohTheme.Spacing.s)
             .padding(.vertical, YoohTheme.Spacing.xs)
         }
-        .yoohGlass()
         .padding(.horizontal, YoohTheme.Spacing.s)
         .padding(.bottom, YoohTheme.Spacing.s)
         .onChange(of: photoItem) { _, item in

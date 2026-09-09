@@ -43,6 +43,75 @@ enum YoohTheme {
         static let subtleText = Color.secondary
     }
 
+    // MARK: - Messenger palette (Telegram-style density, original values)
+    //
+    // Adaptive pairs: dark values follow the reference glass-black style,
+    // light values follow classic messenger light themes. No third-party
+    // artwork is used anywhere — icons are SF Symbols, colors are our own.
+
+    enum TG {
+        private static func dynamic(_ light: UIColor, _ dark: UIColor) -> Color {
+            Color(UIColor { traits in
+                traits.userInterfaceStyle == .dark ? dark : light
+            })
+        }
+
+        /// App/chat-list background: pure black (dark) / white (light).
+        static let background = dynamic(.white, .black)
+        /// Grouped cards (settings, menus): system grays.
+        static let card = Color(.secondarySystemBackground)
+        /// Search fields, folder chips, composer field.
+        static let field = dynamic(
+            UIColor(red: 0.94, green: 0.94, blue: 0.96, alpha: 1),
+            UIColor(red: 0.13, green: 0.13, blue: 0.15, alpha: 1)
+        )
+        /// Incoming bubble.
+        static let incoming = dynamic(
+            .white,
+            UIColor(red: 0.13, green: 0.13, blue: 0.15, alpha: 1)
+        )
+        /// Outgoing bubble (Telegram-green family).
+        static let outgoing = dynamic(
+            UIColor(red: 0.87, green: 0.97, blue: 0.80, alpha: 1),
+            UIColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1)
+        )
+        static let outgoingBorder = dynamic(
+            UIColor(white: 0, alpha: 0.06),
+            UIColor(white: 1, alpha: 0.10)
+        )
+        /// Unread badge / links / active states (messenger blue).
+        static let badge = Color(red: 0.20, green: 0.57, blue: 0.93)
+        /// Muted badge.
+        static let badgeMuted = Color(.systemGray)
+        /// Read checkmarks on outgoing messages.
+        static let checksRead = Color(red: 0.35, green: 0.78, blue: 0.35)
+        static let checksSent = Color.secondary
+        /// Online presence.
+        static let presence = Color(red: 0.30, green: 0.75, blue: 0.30)
+        /// Day separator chip.
+        static let dayChip = dynamic(
+            UIColor(red: 0.90, green: 0.90, blue: 0.93, alpha: 1),
+            UIColor(red: 0.16, green: 0.16, blue: 0.18, alpha: 1)
+        )
+        /// Chat wallpaper: subtle original gradient, adaptive.
+        static let wallpaperTop = dynamic(
+            UIColor(red: 0.93, green: 0.92, blue: 0.88, alpha: 1),
+            UIColor(red: 0.07, green: 0.07, blue: 0.12, alpha: 1)
+        )
+        static let wallpaperBottom = dynamic(
+            UIColor(red: 0.85, green: 0.87, blue: 0.84, alpha: 1),
+            UIColor.black
+        )
+
+        /// Sender-name colors for group chats (hash-picked, like classic messengers).
+        static func senderColor(for userId: String) -> Color {
+            let palette: [Color] = [
+                .red, .orange, .yellow, .green, .teal, .blue, .purple, .pink,
+            ]
+            return palette[abs(userId.hashValue) % palette.count]
+        }
+    }
+
     // MARK: - Typography (Dynamic Type friendly, relative styles only)
 
     enum Fonts {

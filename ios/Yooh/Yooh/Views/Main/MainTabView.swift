@@ -1,30 +1,39 @@
 import SwiftUI
 
-/// App root after login: native TabView (system tab bar = system glass).
-/// Incoming-call alerts overlay any tab; auth screen shows when logged out.
+/// Root shell after login: four sections (Contacts / Calls / Chats /
+/// Settings) in one floating glass capsule plus a separate circular
+/// search control — the reference bottom-shell layout.
+///
+/// Stories live as a strip inside Chats (not a fifth tab).
 struct MainTabView: View {
     @Environment(AppState.self) private var app
 
+    enum Tab: String, CaseIterable {
+        case contacts, calls, chats, settings
+    }
+
+    @State private var tab: Tab = .chats
+    @State private var showSearch = false
+
     var body: some View {
-        TabView {
-            ChatsListView()
-                .tabItem { Label("Chats", systemImage: "bubble.left.and.bubble.right") }
-                .yoohIf(app.chatsViewModel.unreadCount > 0) {
-                    $0.badge(app.chatsViewModel.unreadCount)
+        ZStack(alignment: .bottom) {
+            Group {
+                switch tab {
+                case .contacts:
+                    ContactsView()
+                case .calls:
+                    CallsView()
+                case .chats:
+                    ChatsListView()
+                case .settings:
+                    SettingsView()
                 }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            ContactsView()
-                .tabItem { Label("Contacts", systemImage: "person.2") }
-
-            StoriesView()
-                .tabItem { Label("Stories", systemImage: "circle.dashed") }
-
-            CallsView()
-                .tabItem { Label("Calls", systemImage: "phone") }
-
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
+            bottomShell
         }
+        .background(YoohTheme.TG.background.ignoresSafeArea())
         .overlay(alignment: .top) {
             if let call = app.incomingCall {
                 IncomingCallBanner(signal: call)
@@ -33,10 +42,80 @@ struct MainTabView: View {
             }
         }
         .animation(.snappy, value: app.incomingCall?.sessionId)
+        .sheet(isPresented: $showSearch) {
+            NavigationStack {
+                GlobalSearchView()
+            }
+        }
         .task {
             await app.chatsViewModel.refresh()
             await app.storiesViewModel.refresh()
         }
+    }
+
+    // MARK: - Bottom shell
+
+    private var bottomShell: some View {
+        HStack(spacing: YoohTheme.Spacing.m) {
+            HStack(spacing: 0) {
+                tabButton(.contacts, symbol: "person.circle", activeSymbol: "person.circle.fill", title: "Contacts")
+                tabButton(.calls, symbol: "phone", activeSymbol: "phone.fill", title: "Calls")
+                tabButton(.chats, symbol: "bubble.left.and.bubble.right", activeSymbol: "bubble.left.and.bubble.right.fill", title: "Chats",
+                          badge: app.chatsViewModel.unreadCount)
+                tabButton(.settings, symbol: "person", activeSymbol: "person.fill", title: "Settings")
+            }
+            .padding(.horizontal, YoohTheme.Spacing.s)
+            .padding(.vertical, YoohTheme.Spacing.xs)
+            .yoohGlass(.interactive, cornerRadius: YoohTheme.Radius.pill)
+
+            Button {
+                Haptics.selection()
+                showSearch = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 56, height: 56)
+            }
+            .yoohGlass(.interactive, cornerRadius: 28)
+            .accessibilityLabel(Text("Search"))
+        }
+        .padding(.horizontal, YoohTheme.Spacing.l)
+        .padding(.bottom, YoohTheme.Spacing.s)
+    }
+
+    private func tabButton(_ t: Tab, symbol: String, activeSymbol: String, title: String, badge: Int = 0) -> some View {
+        let active = (tab == t)
+        return Button {
+            Haptics.selection()
+            withAnimation(.snappy) { tab = t }
+        } label: {
+            VStack(spacing: 2) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: active ? activeSymbol : symbol)
+                        .font(.system(size: 22))
+                        .foregroundStyle(active ? YoohTheme.TG.badge : .primary)
+                        .frame(width: 56, height: 30)
+                    if badge > 0 {
+                        Text(badge > 99 ? "99+" : "\(badge)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(YoohTheme.TG.badge, in: .capsule)
+                            .offset(x: 6, y: -6)
+                            .accessibilityLabel(Text("\(badge) unread chats"))
+                    }
+                }
+                Text(title)
+                    .font(.system(size: 10, weight: active ? .semibold : .regular))
+                    .foregroundStyle(active ? YoohTheme.TG.badge : .secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(title))
     }
 }
 
@@ -80,5 +159,44 @@ private struct IncomingCallBanner: View {
         .yoohGlass(.interactive)
         .padding(.horizontal, YoohTheme.Spacing.l)
         .accessibilityElement(children: .contain)
+    }
+}
+
+/// Global search sheet: people + public groups (one place, like the
+/// reference search entry point).
+private struct GlobalSearchView: View {
+    @Environment(AppState.self) private var app
+    @Environment(\.dismiss) private var dismiss
+    @State private var search = ""
+    @State private var openedChat: YoohChat?
+
+    var body: some View {
+        ContactsSearchBody(
+            search: $search,
+            onPickUser: { user in
+                Task {
+                    if let chat = await app.contactsViewModel.openDirect(with: user) {
+                        openedChat = chat
+                    }
+                }
+            },
+            onJoinPublic: { dc in
+                Task {
+                    if let chat = await app.contactsViewModel.joinPublic(dc) {
+                        openedChat = chat
+                    }
+                }
+            }
+        )
+        .navigationTitle("Search")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Close") { dismiss() }
+            }
+        }
+        .navigationDestination(item: $openedChat) { chat in
+            ChatDetailView(chat: chat, app: app)
+        }
     }
 }

@@ -123,34 +123,46 @@ struct ContactsSearchBody: View {
                     .listRowSeparator(.hidden)
             }
             if !contacts.users.isEmpty {
-                Section("People") {
+                Section {
                     ForEach(contacts.users, id: \.id) { user in
                         Button { onPickUser(user) } label: {
                             HStack(spacing: YoohTheme.Spacing.m) {
                                 AvatarView(dataURL: user.avatar, name: user.title,
-                                           size: YoohTheme.Layout.avatarS,
+                                           size: 52,
                                            isOnline: app.isOnline(user.id))
-                                VStack(alignment: .leading) {
-                                    Text(user.title).font(.headline)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(user.title)
+                                        .font(.system(size: 17))
                                     if let u = user.username {
-                                        Text("@\(u)").font(.caption).foregroundStyle(.secondary)
+                                        Text("@\(u)").font(.system(size: 15)).foregroundStyle(.secondary)
+                                    } else {
+                                        Text(app.isOnline(user.id) ? "online" : "last seen recently")
+                                            .font(.system(size: 15))
+                                            .foregroundStyle(app.isOnline(user.id) ? YoohTheme.TG.presence : .secondary)
                                     }
                                 }
+                                Spacer()
                             }
+                            .padding(.vertical, 6)
                         }
                         .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     }
+                } header: {
+                    Text("People").foregroundStyle(.secondary)
                 }
             }
             if !contacts.publicChats.isEmpty {
-                Section("Public groups") {
+                Section {
                     ForEach(contacts.publicChats, id: \.id) { dc in
-                        HStack {
-                            AvatarView(dataURL: nil, name: dc.title ?? "?", size: YoohTheme.Layout.avatarS)
-                            VStack(alignment: .leading) {
-                                Text(dc.title ?? "Group").font(.headline)
+                        HStack(spacing: YoohTheme.Spacing.m) {
+                            AvatarView(dataURL: nil, name: dc.title ?? "?", size: 52)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(dc.title ?? "Group")
+                                    .font(.system(size: 17))
                                 if let h = dc.handle {
-                                    Text("@\(h)").font(.caption).foregroundStyle(.secondary)
+                                    Text("@\(h)").font(.system(size: 15)).foregroundStyle(.secondary)
                                 }
                             }
                             Spacer()
@@ -162,7 +174,12 @@ struct ContactsSearchBody: View {
                                     .controlSize(.small)
                             }
                         }
+                        .padding(.vertical, 6)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     }
+                } header: {
+                    Text("Public groups").foregroundStyle(.secondary)
                 }
             }
             if search.trimmingCharacters(in: .whitespaces).count >= 2,
@@ -172,7 +189,9 @@ struct ContactsSearchBody: View {
                                subtitle: "Try a different name or @username.")
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(YoohTheme.TG.background)
         .searchable(text: $search, prompt: "Name or @username")
         .onChange(of: search) { _, q in contacts.search(q) }
         .overlay {

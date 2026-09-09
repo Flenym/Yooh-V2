@@ -28,6 +28,8 @@ struct CallsView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(YoohTheme.TG.background)
                     .refreshable { await calls.refresh() }
                 }
             }

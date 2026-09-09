@@ -23,6 +23,8 @@ struct StoriesView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(YoohTheme.TG.background)
                     .refreshable { await stories.refresh() }
                 }
             }

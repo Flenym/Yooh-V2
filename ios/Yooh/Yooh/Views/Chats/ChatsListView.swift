@@ -1,55 +1,36 @@
 import SwiftUI
 
-/// Chat list: search, archive toggle, swipe + context actions, compose sheet.
+/// Chat list in the reference style: glass top bar, search pill, folder
+/// chips, stories strip and dense 76-pt rows.
 ///
-/// The body is deliberately decomposed into small helpers: a single giant
-/// ViewBuilder expression times out the type-checker in Release builds.
+/// Rows are `NavigationLink(value:)` — the canonical in-List routing, so a
+/// tap always pushes the conversation (no state-driven navigation).
 struct ChatsListView: View {
     @Environment(AppState.self) private var app
     @State private var showComposer = false
-    @State private var selectedChatId: String?
+    @State private var showStories = false
     @State private var confirmDelete: YoohChat?
     @State private var confirmClear: YoohChat?
 
     var body: some View {
         @Bindable var chats = app.chatsViewModel
         NavigationStack {
-            Group {
-                if chats.chats.isEmpty, !chats.isLoading {
-                    EmptyStateView(symbol: "bubble.left.and.bubble.right",
-                                   title: "No chats yet",
-                                   subtitle: "Start a conversation from Contacts or the compose button.")
-                } else {
+            ZStack {
+                YoohTheme.TG.background.ignoresSafeArea()
+                VStack(spacing: 0) {
+                    topBar(chats)
+                    searchPill(chats)
+                    foldersStrip(chats)
+                    storiesStrip
                     chatList(chats)
                 }
             }
-            .navigationTitle(chats.showArchived ? "Archived" : "Chats")
-            .searchable(text: $chats.searchText, prompt: "Search chats")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        chats.showArchived.toggle()
-                    } label: {
-                        Image(systemName: chats.showArchived ? "archivebox.fill" : "archivebox")
-                    }
-                    .accessibilityLabel(Text(chats.showArchived ? "Show chats" : "Show archived"))
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showComposer = true
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                    }
-                    .accessibilityLabel(Text("New chat"))
-                }
-            }
-            .overlay(alignment: .top) {
-                if let error = chats.error {
-                    ErrorBanner(message: error, onDismiss: { chats.clearError() })
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showComposer) {
                 NewChatView()
+            }
+            .sheet(isPresented: $showStories) {
+                NavigationStack { StoriesView() }
             }
             .confirmationDialog("Delete this chat?", isPresented: Binding(
                 get: { confirmDelete != nil },
@@ -80,10 +61,163 @@ struct ChatsListView: View {
                     ChatDetailView(chat: chat, app: app)
                 }
             }
-            .overlay {
-                if chats.isLoading, chats.chats.isEmpty {
-                    ProgressView()
+        }
+    }
+
+    // MARK: - Top bar
+
+    private func topBar(_ chats: ChatsViewModel) -> some View {
+        HStack {
+            Button {
+                Haptics.selection()
+                withAnimation(.snappy) { chats.showArchived.toggle() }
+            } label: {
+                Image(systemName: chats.showArchived ? "archivebox.fill" : "archivebox")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 56, height: 40)
+            }
+            .yoohGlass(.interactive, cornerRadius: 20)
+            .accessibilityLabel(Text(chats.showArchived ? "Show chats" : "Show archived chats"))
+
+            Spacer()
+
+            HStack(spacing: -10) {
+                ForEach(topAvatars(chats), id: \.self) { url in
+                    avatarStackItem(url: url)
                 }
+                Text(chats.showArchived ? "Archived" : "Chats")
+                    .font(.system(size: 20, weight: .bold))
+                    .padding(.leading, 14)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(chats.showArchived ? "Archived chats" : "Chats"))
+
+            Spacer()
+
+            Button {
+                Haptics.selection()
+                showComposer = true
+            } label: {
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 40)
+            }
+            .yoohGlass(.interactive, cornerRadius: 20)
+            .accessibilityLabel(Text("New chat"))
+        }
+        .padding(.horizontal, YoohTheme.Spacing.l)
+        .padding(.top, YoohTheme.Spacing.s)
+        .padding(.bottom, YoohTheme.Spacing.xs)
+    }
+
+    private func topAvatars(_ chats: ChatsViewModel) -> [String] {
+        chats.chats.prefix(3).map { $0.avatar ?? "" }
+    }
+
+    private func avatarStackItem(url: String) -> some View {
+        Group {
+            if let img = AvatarLoader.image(for: url.isEmpty ? nil : url) {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Circle().fill(Color(.systemGray3))
+            }
+        }
+        .frame(width: 28, height: 28)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(YoohTheme.TG.background, lineWidth: 2))
+    }
+
+    // MARK: - Search + folders
+
+    private func searchPill(_ chats: ChatsViewModel) -> some View {
+        HStack(spacing: YoohTheme.Spacing.s) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("Search", text: $chats.searchText)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+            if !chats.searchText.isEmpty {
+                Button {
+                    chats.searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel(Text("Clear search"))
+            }
+        }
+        .padding(.horizontal, YoohTheme.Spacing.m)
+        .frame(height: 44)
+        .background(YoohTheme.TG.field, in: .rect(cornerRadius: 22))
+        .padding(.horizontal, YoohTheme.Spacing.l)
+        .padding(.vertical, YoohTheme.Spacing.xs)
+    }
+
+    private func foldersStrip(_ chats: ChatsViewModel) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: YoohTheme.Spacing.s) {
+                ForEach(ChatsViewModel.Folder.allCases, id: \.self) { f in
+                    let active = (chats.folder == f)
+                    Button {
+                        Haptics.selection()
+                        withAnimation(.snappy) { chats.folder = f }
+                    } label: {
+                        Text(f.rawValue)
+                            .font(.system(size: 15, weight: active ? .semibold : .regular))
+                            .foregroundStyle(active ? .white : .primary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(active ? YoohTheme.TG.badge : YoohTheme.TG.field,
+                                        in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("\(f.rawValue) chats"))
+                }
+            }
+            .padding(.horizontal, YoohTheme.Spacing.l)
+            .padding(.vertical, YoohTheme.Spacing.xs)
+        }
+    }
+
+    // MARK: - Stories strip
+
+    @ViewBuilder
+    private var storiesStrip: some View {
+        let groups = app.storiesViewModel.groups
+        if !groups.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: YoohTheme.Spacing.m) {
+                    ForEach(groups.indices, id: \.self) { i in
+                        let g = groups[i]
+                        Button {
+                            Haptics.selection()
+                            showStories = true
+                        } label: {
+                            VStack(spacing: 4) {
+                                AvatarView(dataURL: g.author?.avatar ?? g.stories.first?.image,
+                                           name: g.author?.title ?? "?",
+                                           size: 56)
+                                .overlay {
+                                    Circle()
+                                        .stroke(YoohTheme.TG.badge, lineWidth: 2)
+                                        .frame(width: 62, height: 62)
+                                }
+                                Text(g.author?.title ?? "")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .frame(width: 62)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, YoohTheme.Spacing.l)
+                .padding(.vertical, YoohTheme.Spacing.xs)
             }
         }
     }
@@ -91,88 +225,109 @@ struct ChatsListView: View {
     // MARK: - List
 
     private func chatList(_ chats: ChatsViewModel) -> some View {
-        List {
-            ForEach(chats.visibleChats) { chat in
-                chatRow(chat, chats)
-            }
-        }
-        .listStyle(.plain)
-        .refreshable { await chats.refresh() }
-    }
-
-    private func chatRow(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
-        Button {
-            selectedChatId = chat.id
-        } label: {
-            ChatRowView(chat: chat,
-                        myUserId: chats.myUserId ?? "",
-                        isPinned: chats.isPinned(chat.id),
-                        isMuted: chats.isMuted(chat.id),
-                        isOnline: isPeerOnline(chat))
-        }
-        .buttonStyle(.plain)
-        .swipeActions(edge: .leading) {
-            leadingActions(chat, chats)
-        }
-        .swipeActions(edge: .trailing) {
-            trailingActions(chat, chats)
-        }
-        .contextMenu {
-            rowMenu(chat, chats)
-        }
-    }
-
-    private func leadingActions(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
         Group {
-            Button { chats.togglePin(chat.id) } label: {
-                Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
-                      systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
+            if chats.chats.isEmpty, !chats.isLoading {
+                emptyState(chats)
+            } else if chats.visibleChats.isEmpty {
+                EmptyStateView(symbol: "magnifyingglass", title: "Nothing found",
+                               subtitle: "Try a different search or folder.")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(chats.visibleChats) { chat in
+                        NavigationLink(value: chat.id) {
+                            ChatRowView(chat: chat,
+                                        myUserId: chats.myUserId ?? "",
+                                        isPinned: chats.isPinned(chat.id),
+                                        isMuted: chats.isMuted(chat.id),
+                                        isOnline: isPeerOnline(chat))
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
+                        .swipeActions(edge: .leading) {
+                            Button { chats.togglePin(chat.id) } label: {
+                                Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
+                                      systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
+                            }
+                            .tint(.orange)
+                            Button { chats.toggleArchive(chat.id) } label: {
+                                Label("Archive", systemImage: "archivebox")
+                            }
+                            .tint(.gray)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button { chats.toggleMute(chat.id) } label: {
+                                Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
+                                      systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
+                            }
+                            .tint(.blue)
+                            Button(role: .destructive) { confirmDelete = chat } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .contextMenu {
+                            Button { chats.togglePin(chat.id) } label: {
+                                Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
+                                      systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
+                            }
+                            Button { chats.toggleMute(chat.id) } label: {
+                                Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
+                                      systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
+                            }
+                            Button { chats.toggleArchive(chat.id) } label: {
+                                Label(chats.isArchived(chat.id) ? "Unarchive" : "Archive",
+                                      systemImage: chats.isArchived(chat.id) ? "archivebox.fill" : "archivebox")
+                            }
+                            Button { confirmClear = chat } label: {
+                                Label("Clear history", systemImage: "eraser")
+                            }
+                            Button(role: .destructive) { confirmDelete = chat } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .refreshable { await chats.refresh() }
             }
-            .tint(.orange)
-            Button { chats.toggleArchive(chat.id) } label: {
-                Label("Archive", systemImage: "archivebox")
+        }
+        .overlay(alignment: .top) {
+            if let error = chats.error {
+                ErrorBanner(message: error, onDismiss: { chats.clearError() })
             }
-            .tint(.gray)
+        }
+        .overlay {
+            if chats.isLoading, chats.chats.isEmpty {
+                ProgressView()
+            }
         }
     }
 
-    private func trailingActions(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
-        Group {
-            Button { chats.toggleMute(chat.id) } label: {
-                Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
-                      systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
-            }
-            .tint(.blue)
-            Button(role: .destructive) { confirmDelete = chat } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-    }
-
-    private func rowMenu(_ chat: YoohChat, _ chats: ChatsViewModel) -> some View {
-        Group {
-            Button { selectedChatId = chat.id } label: {
-                Label("Open", systemImage: "bubble.left")
-            }
-            Button { chats.togglePin(chat.id) } label: {
-                Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
-                      systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
-            }
-            Button { chats.toggleMute(chat.id) } label: {
-                Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
-                      systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
-            }
-            Button { chats.toggleArchive(chat.id) } label: {
-                Label(chats.isArchived(chat.id) ? "Unarchive" : "Archive",
-                      systemImage: chats.isArchived(chat.id) ? "archivebox.fill" : "archivebox")
-            }
-            Button { confirmClear = chat } label: {
-                Label("Clear history", systemImage: "eraser")
-            }
-            Button(role: .destructive) { confirmDelete = chat } label: {
-                Label("Delete", systemImage: "trash")
+    private func emptyState(_ chats: ChatsViewModel) -> some View {
+        VStack(spacing: YoohTheme.Spacing.m) {
+            if let error = chats.error {
+                ErrorBanner(message: error, onDismiss: { chats.clearError() })
+                Button("Try again") {
+                    Task { await chats.refresh() }
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, YoohTheme.Spacing.s)
+            } else {
+                EmptyStateView(symbol: "bubble.left.and.bubble.right",
+                               title: "No chats yet",
+                               subtitle: "Start a conversation from Contacts or the compose button.")
+                Button("Reload") {
+                    Task { await chats.refresh() }
+                }
+                .buttonStyle(.bordered)
+                .padding(.top, YoohTheme.Spacing.s)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 
     private func isPeerOnline(_ chat: YoohChat) -> Bool {

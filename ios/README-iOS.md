@@ -34,6 +34,20 @@ open ios/Yooh/Yooh.xcodeproj
 2. Set your **Development Team** (Signing & Capabilities) — required for devices.
 3. `⌘R` to build & run. `⌘U` to run unit tests.
 
+### Ready-made IPA via GitHub Actions
+
+No Mac at hand? The repo builds an unsigned Release IPA in CI:
+
+1. Push the `ios-client` branch (or press **Run workflow** on
+   Actions → “iOS IPA (unsigned Release)”).
+2. Download the **Yooh-ipa** artifact (`Yooh.ipa` + `BUILD_INFO.txt`).
+3. The IPA is **unsigned**: install it with a sideload tool
+   (Sideloadly / AltStore) using your Apple ID, which signs it
+   during installation.
+4. App icon is generated from `new_logo.png` (repo root) into
+   `Assets.xcassets/AppIcon.appiconset` — replace the PNG and rebuild
+   to change it.
+
 ### Point the app at your server
 
 Default base URL is `http://localhost:4200` (works in Simulator).

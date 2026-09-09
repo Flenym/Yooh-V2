@@ -17,6 +17,18 @@ final class ChatsViewModel {
     var searchText = ""
     var showArchived = false
 
+    /// Client-side folder chips (Telegram-style row filter).
+    /// The backend exposes no folder APIs, so this filters locally.
+    enum Folder: String, CaseIterable {
+        case all = "All"
+        case unread = "Unread"
+        case personal = "Personal"
+        case groups = "Groups"
+        case channels = "Channels"
+    }
+
+    var folder: Folder = .all
+
     var app: AppState! = nil
     private var prefs: LocalPreferences?
     private var refreshTask: Task<Void, Never>?
@@ -37,6 +49,20 @@ final class ChatsViewModel {
         let pinned = prefs?.pinnedChatIds ?? []
         let archived = prefs?.archivedChatIds ?? []
         var list = chats.filter { showArchived ? archived.contains($0.id) : !archived.contains($0.id) }
+        if let me = myUserId {
+            switch folder {
+            case .all:
+                break
+            case .unread:
+                list = list.filter { $0.hasUnread(myUserId: me) }
+            case .personal:
+                list = list.filter { $0.type == .direct }
+            case .groups:
+                list = list.filter { $0.type == .group }
+            case .channels:
+                list = list.filter { $0.isChannel }
+            }
+        }
         let q = searchText.trimmingCharacters(in: .whitespaces).lowercased()
         if !q.isEmpty {
             list = list.filter { chat in

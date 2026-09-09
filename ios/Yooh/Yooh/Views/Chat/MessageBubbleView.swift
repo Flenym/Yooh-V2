@@ -14,15 +14,21 @@ struct MessageBubbleView: View {
                 if !message.isOutgoing, vm.chat.type != .direct {
                     Text(message.sender?.displayName ?? message.sender?.title ?? "")
                         .font(.caption.bold())
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(YoohTheme.TG.senderColor(for: message.senderId))
                         .lineLimit(1)
                 }
                 content
                     .padding(.horizontal, YoohTheme.Spacing.m)
                     .padding(.vertical, YoohTheme.Spacing.s)
-                    .background(message.isOutgoing ? YoohTheme.Colors.outgoingBubble : YoohTheme.Colors.incomingBubble,
+                    .background(message.isOutgoing ? YoohTheme.TG.outgoing : YoohTheme.TG.incoming,
                                 in: RoundedRectangle(cornerRadius: YoohTheme.Radius.l))
-                    .foregroundStyle(message.isOutgoing ? YoohTheme.Colors.outgoingText : .primary)
+                    .overlay {
+                        if message.isOutgoing {
+                            RoundedRectangle(cornerRadius: YoohTheme.Radius.l)
+                                .stroke(YoohTheme.TG.outgoingBorder, lineWidth: 1)
+                        }
+                    }
+                    .foregroundStyle(.primary)
                 metaRow
                 if !message.reactions.isEmpty {
                     reactionsRow
@@ -84,7 +90,7 @@ struct MessageBubbleView: View {
             }
             .padding(.leading, YoohTheme.Spacing.s)
             .overlay(alignment: .leading) {
-                Capsule().fill(message.isOutgoing ? .white.opacity(0.7) : Color.accentColor).frame(width: 2)
+                Capsule().fill(message.isOutgoing ? .white.opacity(0.7) : YoohTheme.TG.badge).frame(width: 2)
             }
             .padding(.bottom, 2)
         }
@@ -134,7 +140,7 @@ struct MessageBubbleView: View {
             if message.isOutgoing {
                 Image(systemName: isRead ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.caption2)
-                    .foregroundStyle(isRead ? Color.accentColor : .secondary)
+                    .foregroundStyle(isRead ? YoohTheme.TG.checksRead : YoohTheme.TG.checksSent)
                     .accessibilityLabel(Text(isRead ? "Read" : "Sent"))
             }
         }
@@ -154,7 +160,7 @@ struct MessageBubbleView: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(r.mine ? Color.accentColor.opacity(0.2) : Color(.tertiarySystemFill),
+                        .background(r.mine ? YoohTheme.TG.badge.opacity(0.25) : Color(.tertiarySystemFill),
                                     in: .capsule)
                 }
                 .buttonStyle(.plain)

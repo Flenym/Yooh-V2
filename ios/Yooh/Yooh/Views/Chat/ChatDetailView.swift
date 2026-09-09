@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Conversation screen: history (paginated), realtime updates, composer,
-/// reactions, replies, edits, forwards, polls, locations, attachments,
-/// typing indicator and read receipts.
+/// Conversation screen in the reference style: floating glass header
+/// (back circle, centered title pill, avatar), wallpaper, day chips,
+/// Telegram-family bubbles and a circular composer.
 struct ChatDetailView: View {
     @Environment(AppState.self) private var app
+    @Environment(\.dismiss) private var dismiss
     @State private var vm: ChatViewModel
     @State private var showInfo = false
     @State private var showPoll = false
@@ -16,107 +17,83 @@ struct ChatDetailView: View {
 
     var body: some View {
         @Bindable var vm = vm
-        VStack(spacing: 0) {
-            if vm.chat.isChannel {
-                Picker("Stream", selection: Binding(
-                    get: { vm.stream },
-                    set: { vm.setStream($0) }
-                )) {
-                    Text("Posts").tag(MessageStream.main)
-                    Text("Comments").tag(MessageStream.comment)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, YoohTheme.Spacing.l)
-                .padding(.vertical, YoohTheme.Spacing.xs)
-            }
-
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: YoohTheme.Spacing.s) {
-                        if vm.hasMore, !vm.messages.isEmpty {
-                            ProgressView()
-                                .onAppear { vm.loadMore() }
-                        }
-                        ForEach(vm.messages, id: \.id) { m in
-                            MessageBubbleView(message: m, vm: vm)
-                                .id(m.id)
-                        }
-                        Color.clear
-                            .frame(height: 1)
-                            .id("bottom")
-                            .onAppear { isNearBottom = true }
-                            .onDisappear { isNearBottom = false }
+        ZStack {
+            wallpaper
+            VStack(spacing: 0) {
+                header(vm)
+                if vm.chat.isChannel {
+                    Picker("Stream", selection: Binding(
+                        get: { vm.stream },
+                        set: { vm.setStream($0) }
+                    )) {
+                        Text("Posts").tag(MessageStream.main)
+                        Text("Comments").tag(MessageStream.comment)
                     }
-                    .padding(.horizontal, YoohTheme.Spacing.m)
-                    .padding(.vertical, YoohTheme.Spacing.s)
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, YoohTheme.Spacing.l)
+                    .padding(.vertical, YoohTheme.Spacing.xs)
                 }
-                .onChange(of: vm.messages.count) {
-                    if isNearBottom {
-                        withAnimation(.snappy) {
-                            proxy.scrollTo("bottom", anchor: .bottom)
+
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: YoohTheme.Spacing.s) {
+                            if vm.hasMore, !vm.messages.isEmpty {
+                                ProgressView()
+                                    .tint(.secondary)
+                                    .onAppear { vm.loadMore() }
+                            }
+                            ForEach(vm.messages.indices, id: \.self) { i in
+                                let m = vm.messages[i]
+                                if isNewDay(i) {
+                                    dayChip(for: m)
+                                }
+                                MessageBubbleView(message: m, vm: vm)
+                                    .id(m.id)
+                            }
+                            Color.clear
+                                .frame(height: 1)
+                                .id("bottom")
+                                .onAppear { isNearBottom = true }
+                                .onDisappear { isNearBottom = false }
                         }
+                        .padding(.horizontal, YoohTheme.Spacing.m)
+                        .padding(.vertical, YoohTheme.Spacing.s)
                     }
-                }
-                .onAppear {
-                    // Initial jump without animation.
-                    proxy.scrollTo("bottom", anchor: .bottom)
-                }
-                .refreshable {
-                    vm.loadInitial()
-                }
-            }
-
-            if let typing = vm.typingText {
-                HStack {
-                    Text(typing)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .padding(.horizontal, YoohTheme.Spacing.l)
-                .padding(.bottom, 2)
-                .transition(.opacity)
-            }
-
-            if let error = vm.error {
-                ErrorBanner(message: error, onDismiss: { vm.clearError() })
-            }
-
-            ComposerView(vm: vm, onPoll: { showPoll = true })
-        }
-        .navigationTitle(chatTitle)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Button { showInfo = true } label: {
-                    HStack(spacing: YoohTheme.Spacing.s) {
-                        AvatarView(dataURL: headerAvatar, name: chatTitle,
-                                   size: 30, isOnline: headerOnline)
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(chatTitle).font(.headline).lineLimit(1)
-                            Text(chatSubtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    .onChange(of: vm.messages.count) {
+                        if isNearBottom {
+                            withAnimation(.snappy) {
+                                proxy.scrollTo("bottom", anchor: .bottom)
+                            }
                         }
                     }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Chat info for \(chatTitle)"))
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button { showInfo = true } label: {
-                        Label("Info", systemImage: "info.circle")
+                    .onAppear {
+                        proxy.scrollTo("bottom", anchor: .bottom)
                     }
-                    Button {
-                        app.callsViewModel.unavailableNotice()
-                    } label: {
-                        Label("Call", systemImage: "phone")
+                    .refreshable {
+                        vm.loadInitial()
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
                 }
-                .accessibilityLabel(Text("Chat actions"))
+
+                if let typing = vm.typingText {
+                    HStack {
+                        Text(typing)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, YoohTheme.Spacing.l)
+                    .padding(.bottom, 2)
+                    .transition(.opacity)
+                }
+
+                if let error = vm.error {
+                    ErrorBanner(message: error, onDismiss: { vm.clearError() })
+                }
+
+                ComposerView(vm: vm, onPoll: { showPoll = true })
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showInfo) {
             NavigationStack {
                 ChatInfoView(chatId: vm.chatId)
@@ -137,7 +114,95 @@ struct ChatDetailView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Wallpaper + header
+
+    private var wallpaper: some View {
+        LinearGradient(colors: [YoohTheme.TG.wallpaperTop, YoohTheme.TG.wallpaperBottom],
+                       startPoint: .top, endPoint: .bottom)
+            .ignoresSafeArea()
+    }
+
+    private func header(_ vm: ChatViewModel) -> some View {
+        HStack(spacing: YoohTheme.Spacing.s) {
+            Button {
+                Haptics.selection()
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 40, height: 40)
+            }
+            .yoohGlass(.interactive, cornerRadius: 20)
+            .accessibilityLabel(Text("Back"))
+
+            Spacer()
+
+            Button { showInfo = true } label: {
+                VStack(spacing: 0) {
+                    Text(chatTitle)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    Text(chatSubtitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 7)
+            }
+            .buttonStyle(.plain)
+            .yoohGlass(.regular, cornerRadius: 20)
+            .accessibilityLabel(Text("Chat info for \(chatTitle)"))
+
+            Spacer()
+
+            Button { showInfo = true } label: {
+                AvatarView(dataURL: headerAvatar, name: chatTitle, size: 40, isOnline: headerOnline)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Open chat info"))
+        }
+        .padding(.horizontal, YoohTheme.Spacing.m)
+        .padding(.top, YoohTheme.Spacing.xs)
+        .padding(.bottom, YoohTheme.Spacing.xs)
+    }
+
+    // MARK: - Day chips
+
+    private func isNewDay(_ index: Int) -> Bool {
+        guard index < vm.messages.count else { return false }
+        guard index > 0 else { return true }
+        let cal = Calendar.current
+        guard let a = YoohDates.parse(vm.messages[index].createdAt),
+              let b = YoohDates.parse(vm.messages[index - 1].createdAt) else { return false }
+        return !cal.isDate(a, inSameDayAs: b)
+    }
+
+    private func dayChip(for m: YoohMessage) -> some View {
+        Text(dayTitle(m.createdAt))
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 5)
+            .background(YoohTheme.TG.dayChip, in: .capsule)
+            .padding(.vertical, 4)
+            .accessibilityLabel(Text(dayTitle(m.createdAt)))
+    }
+
+    private func dayTitle(_ iso: String?) -> String {
+        guard let date = YoohDates.parse(iso) else { return "" }
+        let cal = Calendar.current
+        if cal.isDateInToday(date) { return "Today" }
+        if cal.isDateInYesterday(date) { return "Yesterday" }
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        return f.string(from: date)
+    }
+
+    // MARK: - Titles
 
     private var chatTitle: String {
         if vm.chat.type == .direct,
