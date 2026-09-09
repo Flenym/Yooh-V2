@@ -18,6 +18,7 @@ struct ChatInfoView: View {
     @State private var isSaving = false
     @State private var confirmDelete = false
     @State private var showAddMember = false
+    @State private var sharedImages: [YoohMessage] = []
 
     private var chat: YoohChat? {
         app.chatsViewModel.chats.first(where: { $0.id == chatId })
@@ -28,12 +29,14 @@ struct ChatInfoView: View {
             if let chat {
                 Form {
                     headerSection(chat)
+                    quickActions(chat)
                     if chat.type != .direct {
                         detailsSection(chat)
                         membersSection(chat)
                     } else {
                         directSection(chat)
                     }
+                    sharedMedia(chat)
                     optionsSection(chat)
                     dangerSection(chat)
                 }
@@ -218,6 +221,102 @@ struct ChatInfoView: View {
                 Label(chat.type == .direct ? "Delete conversation" : "Delete and leave",
                       systemImage: "trash")
             }
+        }
+    }
+
+    // MARK: - Quick actions (call / video / mute / more)
+
+    private func quickActions(_ chat: YoohChat) -> some View {
+        Section {
+            HStack(spacing: YoohTheme.Spacing.s) {
+                if chat.type == .direct {
+                    quickCell(symbol: "phone.fill", title: "Call") {
+                        app.callsViewModel.unavailableNotice()
+                    }
+                    quickCell(symbol: "video.fill", title: "Video") {
+                        app.callsViewModel.unavailableNotice()
+                    }
+                }
+                quickCell(symbol: app.chatsViewModel.isMuted(chat.id) ? "bell.slash.fill" : "bell.fill",
+                          title: "Mute") {
+                    app.chatsViewModel.toggleMute(chat.id)
+                }
+                Menu {
+                    Button { Task { await app.chatsViewModel.clearHistory(chat) } } label: {
+                        Label("Clear history", systemImage: "eraser")
+                    }
+                    Button(role: .destructive) {
+                        Task {
+                            await app.chatsViewModel.deleteChat(chat)
+                            dismiss()
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                } label: {
+                    quickCellLabel(symbol: "ellipsis", title: "More")
+                }
+                .accessibilityLabel(Text("More actions"))
+            }
+            .buttonStyle(.plain)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+        }
+    }
+
+    private func quickCell(symbol: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            quickCellLabel(symbol: symbol, title: title)
+        }
+        .accessibilityLabel(Text(title))
+    }
+
+    private func quickCellLabel(symbol: String, title: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: symbol)
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 14))
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Shared media (recent image attachments)
+
+    private func sharedMedia(_ chat: YoohChat) -> some View {
+        Section("Shared media") {
+            if sharedImages.isEmpty {
+                Text("No photos yet.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
+                    ForEach(sharedImages.prefix(30), id: \.id) { m in
+                        if let fileId = m.file?.id {
+                            CachedFileImage(fileId: fileId, token: app.session.token, height: 110)
+                                .clipShape(.rect(cornerRadius: 8))
+                        }
+                    }
+                }
+            }
+        }
+        .task {
+            await loadSharedMedia(chat)
+        }
+    }
+
+    private func loadSharedMedia(_ chat: YoohChat) async {
+        do {
+            let history = try await app.messageService.history(chatId: chat.id, limit: 100)
+            sharedImages = history.filter {
+                $0.type == .file && ($0.file?.mimeType?.hasPrefix("image/") ?? false)
+            }
+        } catch {
+            // Shared media is best-effort; the info screen stays usable.
         }
     }
 

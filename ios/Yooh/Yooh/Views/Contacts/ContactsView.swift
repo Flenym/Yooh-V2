@@ -5,12 +5,11 @@ import SwiftUI
 struct ContactsView: View {
     @Environment(AppState.self) private var app
     @State private var search = ""
-    @State private var openedChat: YoohChat?
     @State private var onlineFirst = false
 
     var body: some View {
         @Bindable var contacts = app.contactsViewModel
-        NavigationStack {
+        NavigationStack(path: Bindable(app).contactsPath) {
             ZStack {
                 YoohTheme.TG.background.ignoresSafeArea()
                 VStack(spacing: 0) {
@@ -20,8 +19,10 @@ struct ContactsView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(item: $openedChat) { chat in
-                ChatDetailView(chat: chat, app: app)
+            .navigationDestination(for: String.self) { chatId in
+                if let chat = app.chatsViewModel.chats.first(where: { $0.id == chatId }) {
+                    ChatDetailView(chat: chat, app: app)
+                }
             }
             .overlay(alignment: .top) {
                 if let error = contacts.error {
@@ -118,7 +119,7 @@ struct ContactsView: View {
                 Button {
                     Task {
                         if let chat = await contacts.openDirect(with: user) {
-                            openedChat = chat
+                            app.contactsPath.append(chat.id)
                         }
                     }
                 } label: {
@@ -153,13 +154,13 @@ struct ContactsView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button(dc.joined == true ? "Open" : "Join") {
-                            Task {
-                                if let chat = await contacts.joinPublic(dc) {
-                                    openedChat = chat
+                            Button(dc.joined == true ? "Open" : "Join") {
+                                Task {
+                                    if let chat = await contacts.joinPublic(dc) {
+                                        app.contactsPath.append(chat.id)
+                                    }
                                 }
                             }
-                        }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     }

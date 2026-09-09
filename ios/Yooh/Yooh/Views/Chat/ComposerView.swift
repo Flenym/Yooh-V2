@@ -12,6 +12,7 @@ struct ComposerView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var showCamera = false
     @State private var showFiles = false
+    @State private var showStickers = false
     @State private var isLocating = false
     @State private var recorder = VoiceRecorder()
 
@@ -75,6 +76,17 @@ struct ComposerView: View {
                     .onSubmit { vm.send() }
                     .accessibilityLabel(Text("Message text"))
 
+                Button {
+                    Haptics.selection()
+                    showStickers = true
+                } label: {
+                    Image(systemName: "face.smiling")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 40, height: 40)
+                }
+                .accessibilityLabel(Text("Stickers"))
+
                 if vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, vm.editing == nil {
                     Button {
                         if recorder.isRecording {
@@ -115,12 +127,14 @@ struct ComposerView: View {
             photoItem = nil
             Task { await uploadPhotoItem(item) }
         }
-        .sheet(isPresented: $showCamera) {
-            CameraPicker { image in
+        .sheet(isPresented: $showCamera) {            CameraPicker { image in
                 if let data = image.jpegData(compressionQuality: 0.85) {
                     vm.upload(data: data, filename: "photo.jpg", mimeType: "image/jpeg")
                 }
             }
+        }
+        .sheet(isPresented: $showStickers) {
+            StickerSheetView(vm: vm)
         }
         .fileImporter(isPresented: $showFiles, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result {

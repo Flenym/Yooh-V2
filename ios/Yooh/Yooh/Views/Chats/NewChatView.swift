@@ -115,14 +115,31 @@ struct ContactsSearchBody: View {
     var onPickUser: (PublicUser) -> Void
     var onJoinPublic: (DiscoveredChat) -> Void
 
+    enum Scope: String, CaseIterable {
+        case all = "All"
+        case people = "People"
+        case groups = "Groups"
+    }
+
+    @State private var scope: Scope = .all
+
+    private var showPeople: Bool { scope != .groups }
+    private var showGroups: Bool { scope != .people }
+
     var body: some View {
         @Bindable var contacts = app.contactsViewModel
         List {
+            Section {
+                scopeChips
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+            }
             if let error = contacts.error {
                 ErrorBanner(message: error, onDismiss: { contacts.clearError() })
                     .listRowSeparator(.hidden)
             }
-            if !contacts.users.isEmpty {
+            if showPeople, !contacts.users.isEmpty {
                 Section {
                     ForEach(contacts.users, id: \.id) { user in
                         Button { onPickUser(user) } label: {
@@ -153,7 +170,7 @@ struct ContactsSearchBody: View {
                     Text("People").foregroundStyle(.secondary)
                 }
             }
-            if !contacts.publicChats.isEmpty {
+            if showGroups, !contacts.publicChats.isEmpty {
                 Section {
                     ForEach(contacts.publicChats, id: \.id) { dc in
                         HStack(spacing: YoohTheme.Spacing.m) {
@@ -196,6 +213,27 @@ struct ContactsSearchBody: View {
         .onChange(of: search) { _, q in contacts.search(q) }
         .overlay {
             if contacts.isSearching { ProgressView().padding(.top, 40) }
+        }
+    }
+
+    private var scopeChips: some View {
+        HStack(spacing: YoohTheme.Spacing.s) {
+            ForEach(Scope.allCases, id: \.self) { s in
+                let active = (scope == s)
+                Button {
+                    Haptics.selection()
+                    scope = s
+                } label: {
+                    Text(s.rawValue)
+                        .font(.system(size: 14, weight: active ? .semibold : .regular))
+                        .foregroundStyle(active ? .white : .primary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(active ? YoohTheme.TG.badge : YoohTheme.TG.field, in: .capsule)
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
         }
     }
 }

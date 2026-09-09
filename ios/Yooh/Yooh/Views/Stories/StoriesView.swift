@@ -272,9 +272,9 @@ private struct StoryPageView: View {
     }
 }
 
-// MARK: - Creator
+// MARK: - Creator (shared with the Chats stories strip)
 
-private struct StoryCreatorView: View {
+struct StoryCreatorView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss
 

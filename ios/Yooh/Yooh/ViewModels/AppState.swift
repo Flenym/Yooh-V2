@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 /// Per-user typing peer info for the typing indicator.
 struct TypingPeer: Hashable {
@@ -56,6 +57,16 @@ final class AppState {
 
     /// Outgoing typing throttle timestamps by chat id.
     private var lastTypingSent: [String: Date] = [:]
+
+    /// Navigation depth per tab. The bottom shell hides whenever a
+    /// conversation is pushed, so it never covers the composer.
+    var chatsPath = NavigationPath()
+    var contactsPath = NavigationPath()
+
+    /// True while any chat is open (list or contacts tab).
+    var isChatOpen: Bool {
+        !chatsPath.isEmpty || !contactsPath.isEmpty
+    }
 
     init() {
         chatsService = ChatService()

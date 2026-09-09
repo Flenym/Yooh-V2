@@ -25,9 +25,17 @@ final class ChatsViewModel {
         case personal = "Personal"
         case groups = "Groups"
         case channels = "Channels"
+        case archived = "Archived"
     }
 
     var folder: Folder = .all
+
+    /// Folder chips drive both the type filter and the archive view.
+    func setFolder(_ f: Folder) {
+        folder = f
+        showArchived = (f == .archived)
+        Haptics.selection()
+    }
 
     var app: AppState! = nil
     private var prefs: LocalPreferences?

@@ -16,6 +16,7 @@ struct MainTabView: View {
     @State private var showSearch = false
 
     var body: some View {
+        @Bindable var appState = app
         ZStack(alignment: .bottom) {
             Group {
                 switch tab {
@@ -31,8 +32,12 @@ struct MainTabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            bottomShell
+            if appState.isChatOpen == false {
+                bottomShell
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.snappy, value: appState.isChatOpen)
         .background(YoohTheme.TG.background.ignoresSafeArea())
         .overlay(alignment: .top) {
             if let call = app.incomingCall {

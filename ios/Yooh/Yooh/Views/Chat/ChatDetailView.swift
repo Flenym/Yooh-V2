@@ -149,7 +149,7 @@ struct ChatDetailView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                .padding(.horizontal, 18)
+                .padding(.horizontal, 14)
                 .padding(.vertical, 7)
             }
             .buttonStyle(.plain)
@@ -157,6 +157,28 @@ struct ChatDetailView: View {
             .accessibilityLabel(Text("Chat info for \(chatTitle)"))
 
             Spacer()
+
+            Button {
+                app.callsViewModel.unavailableNotice()
+            } label: {
+                Image(systemName: "phone.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+            }
+            .yoohGlass(.interactive, cornerRadius: 18)
+            .accessibilityLabel(Text("Voice call"))
+
+            Button {
+                app.callsViewModel.unavailableNotice()
+            } label: {
+                Image(systemName: "video.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+            }
+            .yoohGlass(.interactive, cornerRadius: 18)
+            .accessibilityLabel(Text("Video call"))
 
             Button { showInfo = true } label: {
                 AvatarView(dataURL: headerAvatar, name: chatTitle, size: 40, isOnline: headerOnline)
