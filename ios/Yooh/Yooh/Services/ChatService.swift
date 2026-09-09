@@ -61,6 +61,11 @@ final class ChatService {
         let _: Res = try await api.send(.addMember(chatId: chatId, memberId: memberId))
     }
 
+    func addBot(chatId: String, memberId: String) async throws {
+        struct Res: Decodable { let member: AnyCodable? }
+        let _: Res = try await api.send(.addBot(chatId: chatId, memberId: memberId))
+    }
+
     func setRole(chatId: String, memberId: String, role: String) async throws {
         struct Res: Decodable { let member: AnyCodable? }
         let _: Res = try await api.send(.setRole(chatId: chatId, memberId: memberId, role: role))

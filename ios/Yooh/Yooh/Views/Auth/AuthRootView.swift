@@ -58,9 +58,7 @@ struct AuthRootView: View {
         VStack(spacing: YoohTheme.Spacing.s) {
             ZStack {
                 RoundedRectangle(cornerRadius: 28)
-                    .fill(LinearGradient(colors: [Color(red: 0.35, green: 0.3, blue: 0.95),
-                                                  Color(red: 0.15, green: 0.1, blue: 0.5)],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(ThemeStore.brandGradient)
                     .frame(width: 96, height: 96)
                 Image(systemName: "bubble.left.and.bubble.right.fill")
                     .font(.system(size: 44))

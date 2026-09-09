@@ -105,7 +105,7 @@ struct MainTabView: View {
                         .background {
                             if active {
                                 Capsule()
-                                    .fill(ThemeStore.shared.accent)
+                                    .fill(ThemeStore.brandGradient)
                                     .frame(width: 56, height: 30)
                                     .matchedGeometryEffect(id: "tabActive", in: tabGlow)
                             }

@@ -27,6 +27,12 @@ final class ChatViewModel {
     var editing: YoohMessage?
     var forwardTarget: YoohMessage?
 
+    private var prefs: LocalPreferences? {
+        let id = myUserId
+        guard !id.isEmpty else { return nil }
+        return LocalPreferences(userId: id)
+    }
+
     private let app: AppState
     private var loadTask: Task<Void, Never>?
     private var readTask: Task<Void, Never>?
@@ -52,11 +58,17 @@ final class ChatViewModel {
         app.messageHandler = { [weak self] event in
             Task { @MainActor in self?.handle(event) }
         }
+        // Restore the unsent draft (local, per chat + stream).
+        if draft.isEmpty, let saved = prefs?.draft(chatId: chatId, stream: stream.rawValue), !saved.isEmpty {
+            draft = saved
+        }
         loadInitial()
     }
 
     func disappear() {
         app.sendTyping(chatId: chatId, active: false)
+        // Persist the unsent draft so it survives navigation.
+        prefs?.setDraft(editing == nil ? draft : "", chatId: chatId, stream: stream.rawValue)
         if app.messageHandler != nil {
             app.messageHandler = nil
         }
@@ -66,11 +78,14 @@ final class ChatViewModel {
 
     func setStream(_ s: MessageStream) {
         guard s != stream else { return }
+        // Keep each stream's draft separately.
+        prefs?.setDraft(editing == nil ? draft : "", chatId: chatId, stream: stream.rawValue)
         stream = s
         messages.removeAll()
         hasMore = true
         replyTo = nil
         editing = nil
+        draft = prefs?.draft(chatId: chatId, stream: s.rawValue) ?? ""
         loadInitial()
     }
 
@@ -82,6 +97,28 @@ final class ChatViewModel {
 
     func showError(_ message: String) { error = message }
     func clearError() { error = nil }
+
+    // MARK: - Local pin
+
+    /// The pinned message if it is currently loaded (pins are local,
+    /// mirroring the web client's local pinned messages).
+    var pinnedMessage: YoohMessage? {
+        guard let id = prefs?.pinnedMessageId(chatId: chatId) else { return nil }
+        return messages.first(where: { $0.id == id })
+    }
+
+    func isPinned(_ m: YoohMessage) -> Bool {
+        prefs?.pinnedMessageId(chatId: chatId) == m.id
+    }
+
+    func togglePin(_ m: YoohMessage) {
+        Haptics.selection()
+        if isPinned(m) {
+            prefs?.setPinned(messageId: nil, chatId: chatId)
+        } else {
+            prefs?.setPinned(messageId: m.id, chatId: chatId)
+        }
+    }
 
     // MARK: - History
 
@@ -131,6 +168,7 @@ final class ChatViewModel {
         }
         guard Validation.validateMessage(text) else { return }
         draft = ""
+        prefs?.setDraft("", chatId: chatId, stream: stream.rawValue)
         let replyId = replyTo?.id
         replyTo = nil
         app.sendTyping(chatId: chatId, active: false)

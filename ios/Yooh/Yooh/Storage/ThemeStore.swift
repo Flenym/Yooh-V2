@@ -25,12 +25,21 @@ final class ThemeStore {
     }
 
     static let accents: [Accent] = [
-        Accent(id: "pulse", name: "Pulse", color: Color(red: 0.20, green: 0.57, blue: 0.93)),
-        Accent(id: "violet", name: "Violet", color: Color(red: 0.62, green: 0.42, blue: 0.98)),
+        Accent(id: "pulse", name: "Pulse", color: Color(red: 0.46, green: 0.34, blue: 1.0)),
+        Accent(id: "telegram", name: "Sky", color: Color(red: 0.20, green: 0.57, blue: 0.93)),
         Accent(id: "emerald", name: "Emerald", color: Color(red: 0.18, green: 0.83, blue: 0.49)),
         Accent(id: "amber", name: "Amber", color: Color(red: 1.0, green: 0.62, blue: 0.15)),
         Accent(id: "crimson", name: "Crimson", color: Color(red: 1.0, green: 0.30, blue: 0.40)),
     ]
+
+    /// Brand gradient (deep violet family): logo, primary CTAs, active nav.
+    static let brandGradient = LinearGradient(
+        colors: [Color(red: 0.22, green: 0.23, blue: 0.75),
+                 Color(red: 0.18, green: 0.09, blue: 0.58),
+                 Color(red: 0.46, green: 0.34, blue: 1.0)],
+        startPoint: .bottomLeading,
+        endPoint: .topTrailing
+    )
 
     static let wallpapers: [Wallpaper] = [
         Wallpaper(id: "system", name: "System",

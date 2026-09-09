@@ -33,6 +33,8 @@ struct ChatDetailView: View {
                 }
 
                 ScrollViewReader { proxy in
+                    VStack(spacing: 0) {
+                        pinnedStrip(proxy: proxy)
                     ZStack(alignment: .bottomTrailing) {
                         ScrollView {
                             LazyVStack(spacing: 0) {
@@ -78,6 +80,7 @@ struct ChatDetailView: View {
                             .transition(.scale.combined(with: .opacity))
                             .accessibilityLabel(Text("Scroll to latest messages"))
                         }
+                    }
                     }
                     .onChange(of: vm.messages.count) {
                         if isNearBottom {
@@ -184,6 +187,56 @@ struct ChatDetailView: View {
                 .offset(x: 150, y: 300)
         }
         .ignoresSafeArea()
+    }
+
+    // MARK: - Pinned strip (local pin, like the web client)
+
+    @ViewBuilder
+    private func pinnedStrip(proxy: ScrollViewProxy) -> some View {
+        if let pinned = vm.pinnedMessage {
+            HStack(spacing: YoohTheme.Spacing.s) {
+                Button {
+                    Haptics.selection()
+                    withAnimation(.snappy) {
+                        proxy.scrollTo(pinned.id, anchor: .center)
+                    }
+                } label: {
+                    HStack(spacing: YoohTheme.Spacing.s) {
+                        Capsule()
+                            .fill(ThemeStore.shared.accent)
+                            .frame(width: 2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Pinned message")
+                                .font(.caption.bold())
+                                .foregroundStyle(ThemeStore.shared.accent)
+                            Text(pinned.text ?? pinned.file?.originalName ?? "Message")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                        Spacer()
+                    }
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Go to pinned message"))
+                Button {
+                    vm.togglePin(pinned)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                }
+                .accessibilityLabel(Text("Unpin message"))
+            }
+            .padding(.horizontal, YoohTheme.Spacing.m)
+            .padding(.vertical, YoohTheme.Spacing.s)
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .padding(.horizontal, YoohTheme.Spacing.m)
+            .padding(.vertical, 4)
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
     }
 
     // MARK: - Day chips

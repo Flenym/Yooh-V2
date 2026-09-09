@@ -17,7 +17,6 @@
 - [x] Docs (README-iOS.md)
 
 ### iOS v1.1 candidates (in priority order)
-
 1. **Call media (WebRTC)**: vendor WebRTC.xcframework, drive it with the
    existing `YoohSocket.callStart/accept/decline/hangup/signal` hooks and
    `GET /api/webrtc/config` TURN/STUN. In-call UI + CallKit + background
@@ -56,3 +55,20 @@ in `ios/README-iOS.md` §6 — same endpoints, same events.
 - No backend rewrite to suit a client; backend changes only for real
   bugs or genuinely missing APIs, staying web-compatible.
 - No WebView shells presented as "native".
+
+## Honestly not portable without backend work
+
+Studied against Luxora-scale references; each item below has NO Yooh
+server API today, so shipping a client UI for it would be theater:
+
+- Message requests / stranger gating (no API)
+- Communities/Spaces, boosts, levels (no API)
+- Gifts/Stars transfers, commerce (balances exist, transfers don't)
+- In-chat message search (no search API; only users/discovery)
+- Translation, voice-to-text (no API)
+- Scheduled messages (no API)
+- Secret chats with real E2E (web's are device-local only)
+- Contact notes/birthdays (no API)
+
+Ported instead as real local features: drafts, pins, app lock,
+chat folders filter, archived view, themes/wallpapers/accents.

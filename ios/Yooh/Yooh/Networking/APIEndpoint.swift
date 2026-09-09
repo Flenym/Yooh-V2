@@ -106,6 +106,12 @@ struct APIEndpoint {
         APIEndpoint(method: .delete, path: "/api/auth/sessions/\(id)")
     }
 
+    /// Authorizes another device's pending QR login (scan its QR code).
+    static func linkDevice(token: String) -> APIEndpoint {
+        APIEndpoint(method: .post, path: "/api/auth/sessions/link-device",
+                    jsonBody: ["token": token])
+    }
+
     // MARK: - Me
 
     static var me: APIEndpoint { APIEndpoint(path: "/api/me") }
@@ -169,6 +175,11 @@ struct APIEndpoint {
 
     static func addMember(chatId: String, memberId: String) -> APIEndpoint {
         APIEndpoint(method: .post, path: "/api/chats/\(chatId)/members",
+                    jsonBody: ["memberId": memberId])
+    }
+
+    static func addBot(chatId: String, memberId: String) -> APIEndpoint {
+        APIEndpoint(method: .post, path: "/api/chats/\(chatId)/bots",
                     jsonBody: ["memberId": memberId])
     }
 

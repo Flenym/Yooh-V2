@@ -61,4 +61,45 @@ final class LocalPreferences: @unchecked Sendable {
         if s.contains(id) { s.remove(id) } else { s.insert(id) }
         mutedChatIds = s
     }
+
+    // MARK: - Drafts (unsent composer text, per chat + stream)
+
+    private func draftsMap() -> [String: String] {
+        (defaults.dictionary(forKey: key("drafts")) as? [String: String]) ?? [:]
+    }
+
+    func draft(chatId: String, stream: String) -> String {
+        draftsMap()["\(chatId):\(stream)"] ?? ""
+    }
+
+    func setDraft(_ text: String, chatId: String, stream: String) {
+        var map = draftsMap()
+        let k = "\(chatId):\(stream)"
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            map.removeValue(forKey: k)
+        } else {
+            map[k] = text
+        }
+        defaults.set(map, forKey: key("drafts"))
+    }
+
+    // MARK: - Pinned messages (message id per chat)
+
+    private func pinsMap() -> [String: String] {
+        (defaults.dictionary(forKey: key("pins")) as? [String: String]) ?? [:]
+    }
+
+    func pinnedMessageId(chatId: String) -> String? {
+        pinsMap()[chatId]
+    }
+
+    func setPinned(messageId: String?, chatId: String) {
+        var map = pinsMap()
+        if let messageId {
+            map[chatId] = messageId
+        } else {
+            map.removeValue(forKey: chatId)
+        }
+        defaults.set(map, forKey: key("pins"))
+    }
 }

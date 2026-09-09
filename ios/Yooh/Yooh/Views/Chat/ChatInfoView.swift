@@ -156,8 +156,13 @@ struct ChatInfoView: View {
                     AvatarView(dataURL: m.avatar, name: m.displayName ?? m.username ?? "?",
                                size: YoohTheme.Layout.avatarS)
                     VStack(alignment: .leading) {
-                        Text(m.displayName ?? (m.username.map { "@\($0)" } ?? "User"))
-                            .font(.subheadline)
+                        HStack(spacing: 6) {
+                            Text(m.displayName ?? (m.username.map { "@\($0)" } ?? "User"))
+                                .font(.subheadline)
+                            if m.isBot {
+                                BotTag()
+                            }
+                        }
                         if let role = m.role {
                             Text(role.capitalized).font(.caption).foregroundStyle(.secondary)
                         }
@@ -425,13 +430,14 @@ struct ChatInfoView: View {
     }
 }
 
-/// Member picker reusing global user search.
+/// Member picker reusing global user search (people or bots).
 private struct AddMemberView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss
     let chatId: String
 
     @State private var search = ""
+    @State private var botsOnly = false
     @State private var error: String?
 
     var body: some View {
@@ -440,7 +446,11 @@ private struct AddMemberView: View {
             onPickUser: { user in
                 Task {
                     do {
-                        try await app.chatsService.addMember(chatId: chatId, memberId: user.id)
+                        if botsOnly {
+                            try await app.chatsService.addBot(chatId: chatId, memberId: user.id)
+                        } else {
+                            try await app.chatsService.addMember(chatId: chatId, memberId: user.id)
+                        }
                         await app.chatsViewModel.refresh()
                         dismiss()
                     } catch {
@@ -448,13 +458,20 @@ private struct AddMemberView: View {
                     }
                 }
             },
-            onJoinPublic: { _ in }
+            onJoinPublic: { _ in },
+            botsOnly: botsOnly
         )
-        .navigationTitle("Add member")
+        .navigationTitle(botsOnly ? "Add bot" : "Add member")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Close") { dismiss() }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(botsOnly ? "People" : "Bots") {
+                    Haptics.selection()
+                    botsOnly.toggle()
+                }
             }
         }
         .overlay(alignment: .top) {

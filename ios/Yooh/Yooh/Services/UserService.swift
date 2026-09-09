@@ -35,4 +35,9 @@ final class UserService {
         let res: UserSearchResponse = try await api.send(.searchUsers(query: query))
         return res.users ?? []
     }
+
+    func searchBots(query: String) async throws -> [PublicUser] {
+        let res: UserSearchResponse = try await api.send(.searchUsers(query: query, botsOnly: true))
+        return res.users ?? []
+    }
 }

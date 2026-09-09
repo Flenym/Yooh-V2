@@ -16,7 +16,7 @@ final class ContactsViewModel {
 
     func clearError() { error = nil }
 
-    func search(_ text: String) {
+    func search(_ text: String, botsOnly: Bool = false) {
         query = text
         searchTask?.cancel()
         let q = text.trimmingCharacters(in: .whitespaces)
@@ -30,10 +30,17 @@ final class ContactsViewModel {
             guard !Task.isCancelled else { return }
             isSearching = true
             defer { isSearching = false }
-            async let u = app.userService.searchUsers(query: q)
-            async let d = app.chatsService.discover(query: q)
             do {
-                let (found, discovered) = try await (u, d)
+                let found: [PublicUser]
+                let discovered: [DiscoveredChat]
+                if botsOnly {
+                    found = try await app.userService.searchBots(query: q)
+                    discovered = []
+                } else {
+                    async let u = app.userService.searchUsers(query: q)
+                    async let d = app.chatsService.discover(query: q)
+                    (found, discovered) = try await (u, d)
+                }
                 guard !Task.isCancelled else { return }
                 users = found
                 publicChats = discovered

@@ -30,6 +30,8 @@
 	<string>Yooh uses your location only when you choose to share it in a chat.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Yooh uses the microphone to record voice messages.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Yooh uses Face ID to lock the app when App Lock is enabled.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- Dev servers run on plain HTTP (localhost/LAN). Release builds

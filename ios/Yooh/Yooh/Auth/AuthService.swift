@@ -117,4 +117,32 @@ final class AuthService {
         struct Res: Decodable { let removed: Bool? }
         let _: Res = try await api.send(.deleteSession(id))
     }
+
+    /// Extracts a QR login token from a scanned QR payload: either a bare
+    /// token or a URL carrying `?yooh_qr_login=<token>` (web parity).
+    static func extractQRLoginToken(_ raw: String) -> String? {
+        let v = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !v.isEmpty else { return nil }
+        if let url = URL(string: v),
+           let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
+           let t = items.first(where: { $0.name == "yooh_qr_login" })?.value,
+           !t.isEmpty
+        {
+            return t
+        }
+        // Bare token: UUID-ish, accept anything plausible the server validates.
+        if v.count >= 16, v.count <= 200, v.rangeOfCharacter(from: .whitespacesAndNewlines) == nil {
+            return v
+        }
+        return nil
+    }
+
+    /// Authorizes a pending QR login shown on another device.
+    func linkDevice(rawValue: String) async throws {
+        guard let token = Self.extractQRLoginToken(rawValue) else {
+            throw APIError.validation(message: "This QR code is not a Yooh login code.")
+        }
+        struct Res: Decodable { let linked: Bool? }
+        let _: Res = try await api.send(.linkDevice(token: token))
+    }
 }

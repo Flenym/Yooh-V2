@@ -44,6 +44,18 @@ struct PrivacyView: View {
                     save(["readReceipts": $0])
                 }
             }
+            Section("App lock") {
+                SettingToggleRow(title: "Lock with \(AppLockStore.shared.biometryName)",
+                                 subtitle: "Require authentication on launch and return",
+                                 isOn: Binding(
+                                     get: { AppLockStore.shared.isEnabled },
+                                     set: { v in
+                                         AppLockStore.shared.isEnabled = v
+                                         if v { AppLockStore.shared.lock() }
+                                         Haptics.selection()
+                                     }
+                                 )) { _ in }
+            }
             if let error {
                 Text(error).font(.footnote).foregroundStyle(.red)
             }

@@ -114,6 +114,7 @@ struct ContactsSearchBody: View {
     @Binding var search: String
     var onPickUser: (PublicUser) -> Void
     var onJoinPublic: (DiscoveredChat) -> Void
+    var botsOnly: Bool = false
 
     enum Scope: String, CaseIterable {
         case all = "All"
@@ -148,8 +149,13 @@ struct ContactsSearchBody: View {
                                            size: 52,
                                            isOnline: app.isOnline(user.id))
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(user.title)
-                                        .font(.system(size: 17))
+                                    HStack(spacing: 6) {
+                                        Text(user.title)
+                                            .font(.system(size: 17))
+                                        if user.isBot {
+                                            BotTag()
+                                        }
+                                    }
                                     if let u = user.username {
                                         Text("@\(u)").font(.system(size: 15)).foregroundStyle(.secondary)
                                     } else {
@@ -210,7 +216,8 @@ struct ContactsSearchBody: View {
         .scrollContentBackground(.hidden)
         .background(YoohTheme.TG.background)
         .searchable(text: $search, prompt: "Name or @username")
-        .onChange(of: search) { _, q in contacts.search(q) }
+        .onChange(of: search) { _, q in contacts.search(q, botsOnly: botsOnly) }
+        .onChange(of: botsOnly) { contacts.search(search, botsOnly: botsOnly) }
         .overlay {
             if contacts.isSearching { ProgressView().padding(.top, 40) }
         }

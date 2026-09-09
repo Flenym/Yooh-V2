@@ -134,12 +134,15 @@ struct ChatMember: Decodable, Identifiable {
     let displayName: String?
     let avatar: String?
     let about: String?
+    let isBot: Bool
+    let isSystemBot: Bool
     let isPremium: Bool
     let premiumBadge: PremiumBadge?
     let role: String?
 
     enum CodingKeys: String, CodingKey {
-        case userId, chatId, username, displayName, avatar, about, isPremium, premiumBadge, role
+        case userId, chatId, username, displayName, avatar, about,
+             isBot, isSystemBot, isPremium, premiumBadge, role
     }
 
     init(from decoder: Decoder) throws {
@@ -150,6 +153,8 @@ struct ChatMember: Decodable, Identifiable {
         displayName = try c.decodeIfPresent(String.self, forKey: .displayName)
         avatar = try c.decodeIfPresent(String.self, forKey: .avatar)
         about = try c.decodeIfPresent(String.self, forKey: .about)
+        isBot = try c.decodeIfPresent(Bool.self, forKey: .isBot) ?? false
+        isSystemBot = try c.decodeIfPresent(Bool.self, forKey: .isSystemBot) ?? false
         isPremium = try c.decodeIfPresent(Bool.self, forKey: .isPremium) ?? false
         premiumBadge = try c.decodeIfPresent(PremiumBadge.self, forKey: .premiumBadge)
         role = try c.decodeIfPresent(String.self, forKey: .role)

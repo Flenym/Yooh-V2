@@ -18,6 +18,9 @@ struct ChatRowView: View {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
                         .lineLimit(1)
+                    if peer?.isBot == true {
+                        BotTag()
+                    }
                     if isMuted {
                         Image(systemName: "bell.slash.fill")
                             .font(.system(size: 12))

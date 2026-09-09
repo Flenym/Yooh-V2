@@ -106,3 +106,16 @@ struct AsyncButton: View {
         .disabled(isBusy)
     }
 }
+
+/// Small "bot" marker next to bot names (Telegram-style).
+struct BotTag: View {
+    var body: some View {
+        Text("bot")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(ThemeStore.shared.accent)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(ThemeStore.shared.accent.opacity(0.15), in: .capsule)
+            .accessibilityLabel(Text("Bot account"))
+    }
+}

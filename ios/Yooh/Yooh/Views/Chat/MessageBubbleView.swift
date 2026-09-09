@@ -54,6 +54,11 @@ struct MessageBubbleView: View {
                 }
             }
             Button {
+                vm.togglePin(message)
+            } label: {
+                Label(vm.isPinned(message) ? "Unpin" : "Pin", systemImage: "pin")
+            }
+            Button {
                 // Forward sheet is presented by the parent from the
                 // view-model-owned pending forward slot.
                 vm.forwardTarget = message
@@ -61,7 +66,9 @@ struct MessageBubbleView: View {
                 Label("Forward", systemImage: "arrowshape.turn.up.right")
             }
             Button(role: .destructive) { vm.delete(message) } label: {
-                Label("Delete", systemImage: "trash")
+                // Server delete removes the shared record; in a 1:1 chat that
+                // is inherently "for everyone".
+                Label(vm.chat.type == .direct ? "Delete for everyone" : "Delete", systemImage: "trash")
             }
             Button { vm.report(message) } label: {
                 Label("Report", systemImage: "flag")

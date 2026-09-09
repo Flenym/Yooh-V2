@@ -9,6 +9,7 @@ import SwiftUI
 struct YoohApp: App {
     @State private var app = AppState()
     @State private var theme = ThemeStore.shared
+    @State private var appLock = AppLockStore.shared
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -17,12 +18,20 @@ struct YoohApp: App {
                 .environment(app)
                 .environment(theme)
                 .preferredColorScheme(theme.colorScheme)
+                .overlay {
+                    if appLock.isLocked, app.session.isAuthenticated {
+                        LockScreenView()
+                            .transition(.opacity)
+                    }
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, app.session.isAuthenticated {
                 // Re-sync after background: the socket auto-reconnects,
                 // and the list refresh covers anything missed.
                 Task { await app.chatsViewModel.refresh() }
+            } else if phase == .background {
+                appLock.lock()
             }
         }
     }
@@ -52,16 +61,13 @@ private struct RootView: View {
             }
         }
     }
-
     private var splash: some View {
         ZStack {
             YoohTheme.TG.background.ignoresSafeArea()
             VStack(spacing: YoohTheme.Spacing.m) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 22)
-                        .fill(LinearGradient(colors: [ThemeStore.shared.accent,
-                                                      ThemeStore.shared.accent.opacity(0.55)],
-                                             startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .fill(ThemeStore.brandGradient)
                         .frame(width: 84, height: 84)
                     Image(systemName: "bubble.left.and.bubble.right.fill")
                         .font(.system(size: 38))
@@ -73,5 +79,59 @@ private struct RootView: View {
             }
         }
         .accessibilityLabel(Text("Loading Yooh"))
+    }
+}
+
+/// Biometric lock screen overlay (App Lock feature).
+private struct LockScreenView: View {
+    @State private var lock = AppLockStore.shared
+    @State private var isBusy = false
+
+    var body: some View {
+        @Bindable var lock = lock
+        ZStack {
+            YoohTheme.TG.background.ignoresSafeArea()
+            VStack(spacing: YoohTheme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(ThemeStore.brandGradient)
+                        .frame(width: 84, height: 84)
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 34))
+                        .foregroundStyle(.white)
+                }
+                Text("Yooh is locked")
+                    .font(.title3.bold())
+                Button {
+                    Task {
+                        isBusy = true
+                        defer { isBusy = false }
+                        _ = await lock.unlock()
+                    }
+                } label: {
+                    HStack {
+                        if isBusy { ProgressView().tint(.white) }
+                        Text("Unlock with \(lock.biometryName)")
+                            .bold()
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: 260)
+                    .frame(height: 50)
+                    .background(ThemeStore.shared.accent, in: .capsule)
+                }
+                .disabled(isBusy)
+                if let error = lock.error {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+        .task {
+            // Try silent unlock once (device may already be authenticated).
+            _ = await lock.unlock()
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("Yooh is locked"))
     }
 }

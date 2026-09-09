@@ -57,8 +57,8 @@ enum YoohTheme {
             })
         }
 
-        /// App/chat-list background: pure black (dark) / white (light).
-        static let background = dynamic(.white, .black)
+        /// App/chat-list background: deep ink (dark) / white (light).
+        static let background = dynamic(.white, UIColor(red: 0.035, green: 0.035, blue: 0.08, alpha: 1))
         /// Grouped cards (settings, menus): system grays.
         static let card = Color(.secondarySystemBackground)
         /// Search fields, folder chips, composer field.
