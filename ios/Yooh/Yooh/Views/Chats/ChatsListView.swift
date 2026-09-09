@@ -19,6 +19,10 @@ struct ChatsListView: View {
         NavigationStack(path: Bindable(app).chatsPath) {
             ZStack {
                 YoohTheme.TG.background.ignoresSafeArea()
+                // Faint ambient wash: depth without touching the rows.
+                RadialGradient(colors: [ThemeStore.shared.accent.opacity(0.08), .clear],
+                               center: .topTrailing, startRadius: 10, endRadius: 420)
+                    .ignoresSafeArea()
                 VStack(spacing: 0) {
                     foldersStrip(folder: chats.folder)
                     storiesStrip

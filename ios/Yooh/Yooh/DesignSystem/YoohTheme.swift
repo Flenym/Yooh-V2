@@ -167,15 +167,21 @@ struct YoohGlass: ViewModifier {
 
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
+            // Accent-tinted system glass: depth without impurity.
+            let tint = ThemeStore.shared.accent.opacity(style == .interactive ? 0.10 : 0.06)
             switch style {
             case .regular:
-                content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius))
+                content.glassEffect(.regular.tint(tint), in: RoundedRectangle(cornerRadius: cornerRadius))
             case .interactive:
-                content.glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: cornerRadius))
+                content.glassEffect(.regular.tint(tint).interactive(), in: RoundedRectangle(cornerRadius: cornerRadius))
             }
         } else {
             content
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(.white.opacity(0.10), lineWidth: 0.7)
+                }
         }
     }
 }
