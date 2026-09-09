@@ -69,6 +69,8 @@ final class ChatsViewModel {
                 list = list.filter { $0.type == .group }
             case .channels:
                 list = list.filter { $0.isChannel }
+            case .archived:
+                break // archive view is driven by showArchived above
             }
         }
         let q = searchText.trimmingCharacters(in: .whitespaces).lowercased()
