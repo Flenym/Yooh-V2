@@ -52,8 +52,7 @@ struct EmptyStateView: View {
 }
 
 /// Inline error banner with retry/dismiss.
-struct ErrorBanner: View {
-    let message: String
+struct ErrorBanner: View {    let message: String
     var onRetry: (() -> Void)?
     var onDismiss: (() -> Void)?
 
@@ -81,5 +80,29 @@ struct ErrorBanner: View {
         .padding(YoohTheme.Spacing.s)
         .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: YoohTheme.Radius.m))
         .padding(.horizontal, YoohTheme.Spacing.l)
+    }
+}
+
+/// Button that runs an async action with a spinner and double-tap guard.
+struct AsyncButton: View {
+    let title: String
+    var isBusy: Bool
+    var action: () async -> Void
+
+    var body: some View {
+        Button {
+            guard !isBusy else { return }
+            Task { await action() }
+        } label: {
+            HStack {
+                Spacer()
+                if isBusy { ProgressView().tint(.white) }
+                Text(title).bold()
+                Spacer()
+            }
+            .frame(minHeight: YoohTheme.Layout.minTouch)
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(isBusy)
     }
 }

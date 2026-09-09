@@ -23,7 +23,7 @@ struct SettingsView: View {
                         securityCard(settings)
                         stickersCard
                         feedbackCard(settings)
-                        serverCard(settings)
+                        serverCard(url: $settings.serverURL, onApply: { settings.applyServerURL() })
                         aboutCard
                         logoutCard
                     }
@@ -262,9 +262,9 @@ struct SettingsView: View {
         }
     }
 
-    private func serverCard(_ settings: SettingsViewModel) -> some View {
+    private func serverCard(url: Binding<String>, onApply: @escaping () -> Void) -> some View {
         card {
-            TextField("Server URL (empty = test server)", text: $settings.serverURL)
+            TextField("Server URL (empty = test server)", text: url)
                 .keyboardType(.URL)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
@@ -273,10 +273,8 @@ struct SettingsView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 4)
-            Button("Apply server URL") {
-                settings.applyServerURL()
-            }
-            .font(.system(size: 17))
+            Button("Apply server URL", action: onApply)
+                .font(.system(size: 17))
             .foregroundStyle(YoohTheme.TG.badge)
             .padding(.bottom, 4)
         }

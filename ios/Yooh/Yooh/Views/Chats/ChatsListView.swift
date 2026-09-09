@@ -19,8 +19,8 @@ struct ChatsListView: View {
                 YoohTheme.TG.background.ignoresSafeArea()
                 VStack(spacing: 0) {
                     topBar(chats)
-                    searchPill(chats)
-                    foldersStrip(chats)
+                    searchPill(text: $chats.searchText)
+                    foldersStrip(folder: $chats.folder)
                     storiesStrip
                     chatList(chats)
                 }
@@ -133,16 +133,16 @@ struct ChatsListView: View {
 
     // MARK: - Search + folders
 
-    private func searchPill(_ chats: ChatsViewModel) -> some View {
+    private func searchPill(text: Binding<String>) -> some View {
         HStack(spacing: YoohTheme.Spacing.s) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Search", text: $chats.searchText)
+            TextField("Search", text: text)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
-            if !chats.searchText.isEmpty {
+            if !text.wrappedValue.isEmpty {
                 Button {
-                    chats.searchText = ""
+                    text.wrappedValue = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
@@ -157,14 +157,14 @@ struct ChatsListView: View {
         .padding(.vertical, YoohTheme.Spacing.xs)
     }
 
-    private func foldersStrip(_ chats: ChatsViewModel) -> some View {
+    private func foldersStrip(folder: Binding<ChatsViewModel.Folder>) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: YoohTheme.Spacing.s) {
                 ForEach(ChatsViewModel.Folder.allCases, id: \.self) { f in
-                    let active = (chats.folder == f)
+                    let active = (folder.wrappedValue == f)
                     Button {
                         Haptics.selection()
-                        withAnimation(.snappy) { chats.folder = f }
+                        withAnimation(.snappy) { folder.wrappedValue = f }
                     } label: {
                         Text(f.rawValue)
                             .font(.system(size: 15, weight: active ? .semibold : .regular))
