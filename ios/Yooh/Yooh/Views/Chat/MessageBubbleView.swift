@@ -195,7 +195,7 @@ private struct FileContentView: View {
                 CachedFileImage(fileId: fileId, token: app.session.token, height: 180)
                     .clipShape(.rect(cornerRadius: YoohTheme.Radius.m))
             } else if isAudio, let fileId = message.file?.id {
-                VoicePlayerView(fileId: fileId)
+                VoicePlayerView(fileId: fileId, token: app.session.token)
             }
             Button {
                 Task { await prepareShare() }
@@ -234,7 +234,7 @@ private struct FileContentView: View {
 
     private var mime: String { message.file?.mimeType ?? "" }
     private var isImage: Bool { mime.hasPrefix("image/") }
-    private var isAudio: Bool { mime.hasPrefix("audio/") || (message.file?.originalName.hasSuffix(".m4a") ?? false) }
+    private var isAudio: Bool { mime.hasPrefix("audio/") || (message.file?.originalName?.hasSuffix(".m4a") ?? false) }
     private var icon: String {
         if mime.hasPrefix("video/") { return "video.fill" }
         if isAudio { return "waveform" }
@@ -316,7 +316,7 @@ private struct PollContentView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            if opt.mine {
+                            if opt.mine == true {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(Color.accentColor)
                             }

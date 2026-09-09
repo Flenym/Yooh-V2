@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import Observation
+import SwiftUI
 
 /// Voice note recording (m4a/AAC) for the composer.
 @Observable
@@ -137,5 +138,41 @@ private actor AudioFileCache {
         let data = try await MediaService().downloadData(fileId: fileId, inline: true, token: token)
         try data.write(to: url, options: .atomic)
         return url
+    }
+}
+
+// MARK: - Playback bubble
+
+/// Play/pause row for voice-message attachments (disk-cached by file id).
+struct VoicePlayerView: View {
+    let fileId: String
+    let token: String?
+
+    @State private var player = VoicePlayer()
+
+    var body: some View {
+        HStack(spacing: YoohTheme.Spacing.s) {
+            Button {
+                if let token { player.toggle(fileId: fileId, token: token) }
+            } label: {
+                Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                    .font(.title2)
+            }
+            .buttonStyle(.plain)
+            .disabled(token == nil)
+            .accessibilityLabel(Text(player.isPlaying ? "Pause voice message" : "Play voice message"))
+            if player.duration > 0 {
+                Text("\(Int(player.progress)) / \(Int(player.duration)) s")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Voice message")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .onDisappear { player.stop() }
     }
 }
