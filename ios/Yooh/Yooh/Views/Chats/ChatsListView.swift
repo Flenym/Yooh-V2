@@ -229,6 +229,7 @@ struct ChatsListView: View {
                     .accessibilityLabel(Text("Create story"))
                     ForEach(groups.indices, id: \.self) { i in
                         let g = groups[i]
+                        let seen = isGroupSeen(g.stories)
                         Button {
                             Haptics.selection()
                             showStories = true
@@ -239,7 +240,7 @@ struct ChatsListView: View {
                                            size: 56)
                                 .overlay {
                                     Circle()
-                                        .stroke(YoohTheme.TG.badge, lineWidth: 2)
+                                        .stroke(seen ? Color(.systemGray3) : YoohTheme.TG.badge, lineWidth: 2)
                                         .frame(width: 62, height: 62)
                                 }
                                 Text(g.author?.title ?? "")
@@ -255,6 +256,13 @@ struct ChatsListView: View {
                 .padding(.horizontal, YoohTheme.Spacing.l)
                 .padding(.vertical, YoohTheme.Spacing.xs)
             }
+        }
+    }
+
+    private func isGroupSeen(_ stories: [YoohStory]) -> Bool {
+        guard let me = app.session.currentUser?.id, !stories.isEmpty else { return true }
+        return stories.allSatisfy { s in
+            (s.viewers ?? []).contains(where: { $0.userId == me })
         }
     }
 
@@ -371,7 +379,11 @@ struct ChatsListView: View {
     // MARK: - Bulk edit bar
 
     private func editBar(_ chats: ChatsViewModel) -> some View {
-        HStack(spacing: 0) {
+        VStack(spacing: 6) {
+            Text(selection.isEmpty ? "Select chats" : "\(selection.count) selected")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+            HStack(spacing: 0) {
             editAction(symbol: "pin.fill", title: "Pin") {
                 for id in selection { chats.togglePin(id) }
                 doneEditing()
@@ -401,6 +413,7 @@ struct ChatsListView: View {
         .padding(.horizontal, YoohTheme.Spacing.l)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("\(selection.count) chats selected"))
+        }
     }
 
     private func editAction(symbol: String, title: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {

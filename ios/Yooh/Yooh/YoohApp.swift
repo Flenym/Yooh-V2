@@ -54,11 +54,23 @@ private struct RootView: View {
     }
 
     private var splash: some View {
-        VStack(spacing: YoohTheme.Spacing.m) {
-            Image(systemName: "bubble.left.and.bubble.right.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(Color.accentColor)
-            ProgressView()
+        ZStack {
+            YoohTheme.TG.background.ignoresSafeArea()
+            VStack(spacing: YoohTheme.Spacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(LinearGradient(colors: [ThemeStore.shared.accent,
+                                                      ThemeStore.shared.accent.opacity(0.55)],
+                                             startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 84, height: 84)
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 38))
+                        .foregroundStyle(.white)
+                }
+                Text("Yooh")
+                    .font(.system(size: 28, weight: .bold))
+                ProgressView()
+            }
         }
         .accessibilityLabel(Text("Loading Yooh"))
     }

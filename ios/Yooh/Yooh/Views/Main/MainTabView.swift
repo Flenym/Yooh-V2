@@ -14,6 +14,7 @@ struct MainTabView: View {
 
     @State private var tab: Tab = .chats
     @State private var showSearch = false
+    @Namespace private var tabGlow
 
     var body: some View {
         @Bindable var appState = app
@@ -99,8 +100,16 @@ struct MainTabView: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: active ? activeSymbol : symbol)
                         .font(.system(size: 22))
-                        .foregroundStyle(active ? YoohTheme.TG.badge : .primary)
+                        .foregroundStyle(active ? .white : .primary)
                         .frame(width: 56, height: 30)
+                        .background {
+                            if active {
+                                Capsule()
+                                    .fill(ThemeStore.shared.accent)
+                                    .frame(width: 56, height: 30)
+                                    .matchedGeometryEffect(id: "tabActive", in: tabGlow)
+                            }
+                        }
                     if badge > 0 {
                         Text(badge > 99 ? "99+" : "\(badge)")
                             .font(.system(size: 11, weight: .bold))
@@ -114,7 +123,7 @@ struct MainTabView: View {
                 }
                 Text(title)
                     .font(.system(size: 10, weight: active ? .semibold : .regular))
-                    .foregroundStyle(active ? YoohTheme.TG.badge : .secondary)
+                    .foregroundStyle(active ? ThemeStore.shared.accent : .secondary)
             }
             .frame(maxWidth: .infinity)
             .contentShape(.rect)

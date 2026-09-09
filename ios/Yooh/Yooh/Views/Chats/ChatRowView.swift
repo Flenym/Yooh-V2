@@ -30,7 +30,7 @@ struct ChatRowView: View {
                         .foregroundStyle(.secondary)
                 }
                 HStack(alignment: .top, spacing: YoohTheme.Spacing.s) {
-                    Text(preview)
+                    previewText
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
@@ -99,6 +99,29 @@ struct ChatRowView: View {
     }
 
     private var preview: String {
+        previewPlain
+    }
+
+    /// Colored sender prefix for group previews (name in the sender color).
+    private var previewText: Text {
+        guard let m = chat.lastMessage else {
+            return Text(chat.description)
+        }
+        if let t = m.text, !t.isEmpty {
+            if m.senderId == myUserId {
+                return Text("You: ") + Text(t)
+            }
+            if chat.type != .direct,
+               let name = m.sender?.displayName ?? m.sender?.username, !name.isEmpty
+            {
+                return Text("\(name): ").foregroundColor(YoohTheme.TG.senderColor(for: m.senderId)) + Text(t)
+            }
+            return Text(t)
+        }
+        return Text(previewPlain)
+    }
+
+    private var previewPlain: String {
         guard let m = chat.lastMessage else { return chat.description }
         if let t = m.text, !t.isEmpty {
             let prefix = m.senderId == myUserId ? "You: " : senderPrefix(m)
@@ -114,12 +137,4 @@ struct ChatRowView: View {
         }
     }
 
-    /// Sender name prefix for group previews (own color per user).
-    private func senderPrefix(_ m: YoohMessage) -> String {
-        guard chat.type != .direct else { return "" }
-        if let name = m.sender?.displayName ?? m.sender?.username, !name.isEmpty {
-            return "\(name): "
-        }
-        return ""
-    }
 }

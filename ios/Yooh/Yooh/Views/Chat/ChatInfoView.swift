@@ -80,17 +80,28 @@ struct ChatInfoView: View {
 
     private func headerSection(_ chat: YoohChat) -> some View {
         Section {
-            HStack(spacing: YoohTheme.Spacing.m) {
-                AvatarView(dataURL: chat.avatar, name: chat.displayTitle, size: YoohTheme.Layout.avatarL)
-                VStack(alignment: .leading) {
-                    Text(chat.displayTitle).font(.title3.bold())
-                    Text(typeLabel(chat)).font(.caption).foregroundStyle(.secondary)
-                    if let h = chat.handle, !h.isEmpty {
-                        Text("@\(h)").font(.caption).foregroundStyle(Color.accentColor)
+            VStack(spacing: 8) {
+                ProfileStyle.banner(dataURL: nil, height: 96)
+                    .clipShape(.rect(cornerRadius: 14))
+                    .overlay(alignment: .bottomLeading) {
+                        AvatarView(dataURL: chat.avatar, name: chat.displayTitle, size: 68)
+                            .padding(.leading, 12)
+                            .offset(y: 18)
                     }
+                    .padding(.bottom, 18)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(chat.displayTitle).font(.title3.bold())
+                        Text(typeLabel(chat)).font(.caption).foregroundStyle(.secondary)
+                        if let h = chat.handle, !h.isEmpty {
+                            Text("@\(h)").font(.caption).foregroundStyle(ThemeStore.shared.accent)
+                        }
+                    }
+                    Spacer()
                 }
             }
-            .padding(.vertical, YoohTheme.Spacing.s)
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
         }
     }
 

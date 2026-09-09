@@ -35,29 +35,51 @@ struct ChatDetailView: View {
                 }
 
                 ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: YoohTheme.Spacing.s) {
-                            if vm.hasMore, !vm.messages.isEmpty {
-                                ProgressView()
-                                    .tint(.secondary)
-                                    .onAppear { vm.loadMore() }
-                            }
-                            ForEach(vm.messages.indices, id: \.self) { i in
-                                let m = vm.messages[i]
-                                if isNewDay(i) {
-                                    dayChip(for: m)
+                    ZStack(alignment: .bottomTrailing) {
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                if vm.hasMore, !vm.messages.isEmpty {
+                                    ProgressView()
+                                        .tint(.secondary)
+                                        .padding(.vertical, 8)
+                                        .onAppear { vm.loadMore() }
                                 }
-                                MessageBubbleView(message: m, vm: vm)
-                                    .id(m.id)
+                                ForEach(vm.messages.indices, id: \.self) { i in
+                                    let m = vm.messages[i]
+                                    if isNewDay(i) {
+                                        dayChip(for: m)
+                                    }
+                                    MessageBubbleView(message: m, vm: vm)
+                                        .id(m.id)
+                                        .padding(.top, bubbleTopSpacing(i))
+                                }
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("bottom")
+                                    .onAppear { isNearBottom = true }
+                                    .onDisappear { isNearBottom = false }
                             }
-                            Color.clear
-                                .frame(height: 1)
-                                .id("bottom")
-                                .onAppear { isNearBottom = true }
-                                .onDisappear { isNearBottom = false }
+                            .padding(.horizontal, YoohTheme.Spacing.m)
+                            .padding(.vertical, YoohTheme.Spacing.s)
                         }
-                        .padding(.horizontal, YoohTheme.Spacing.m)
-                        .padding(.vertical, YoohTheme.Spacing.s)
+                        if !isNearBottom, !vm.messages.isEmpty {
+                            Button {
+                                Haptics.selection()
+                                withAnimation(.snappy) {
+                                    proxy.scrollTo("bottom", anchor: .bottom)
+                                }
+                            } label: {
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .frame(width: 40, height: 40)
+                            }
+                            .yoohGlass(.interactive, cornerRadius: 20)
+                            .padding(.trailing, YoohTheme.Spacing.m)
+                            .padding(.bottom, YoohTheme.Spacing.m)
+                            .transition(.scale.combined(with: .opacity))
+                            .accessibilityLabel(Text("Scroll to latest messages"))
+                        }
                     }
                     .onChange(of: vm.messages.count) {
                         if isNearBottom {
@@ -117,9 +139,22 @@ struct ChatDetailView: View {
     // MARK: - Wallpaper + header
 
     private var wallpaper: some View {
-        LinearGradient(colors: [YoohTheme.TG.wallpaperTop, YoohTheme.TG.wallpaperBottom],
-                       startPoint: .top, endPoint: .bottom)
-            .ignoresSafeArea()
+        ZStack {
+            LinearGradient(colors: [YoohTheme.TG.wallpaperTop, YoohTheme.TG.wallpaperBottom],
+                           startPoint: .top, endPoint: .bottom)
+            // Whisper-quiet accent glows: premium texture, theme-aware.
+            Circle()
+                .fill(ThemeStore.shared.accent.opacity(0.10))
+                .frame(width: 320, height: 320)
+                .blur(radius: 90)
+                .offset(x: -140, y: -260)
+            Circle()
+                .fill(ThemeStore.shared.accent.opacity(0.07))
+                .frame(width: 380, height: 380)
+                .blur(radius: 110)
+                .offset(x: 150, y: 300)
+        }
+        .ignoresSafeArea()
     }
 
     private func header(_ vm: ChatViewModel) -> some View {
@@ -192,6 +227,17 @@ struct ChatDetailView: View {
     }
 
     // MARK: - Day chips
+
+    /// Tight spacing inside same-sender chains, airy gaps between them.
+    private func bubbleTopSpacing(_ index: Int) -> CGFloat {
+        guard index > 0, index < vm.messages.count else { return YoohTheme.Spacing.s }
+        let cur = vm.messages[index]
+        let prev = vm.messages[index - 1]
+        if cur.senderId == prev.senderId, !isNewDay(index) {
+            return 2
+        }
+        return YoohTheme.Spacing.s
+    }
 
     private func isNewDay(_ index: Int) -> Bool {
         guard index < vm.messages.count else { return false }

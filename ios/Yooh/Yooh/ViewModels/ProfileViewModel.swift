@@ -95,6 +95,7 @@ final class ProfileViewModel {
             let updated = try await app.userService.updateProfile(fields: fields)
             app.session.updateUser(updated)
             notice = successNotice
+            Haptics.send()
             return true
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription

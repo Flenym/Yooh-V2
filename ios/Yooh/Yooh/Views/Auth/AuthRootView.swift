@@ -29,6 +29,16 @@ struct AuthRootView: View {
                                         Color(red: 0.03, green: 0.03, blue: 0.06)],
                                startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
+                Circle()
+                    .fill(ThemeStore.shared.accent.opacity(0.16))
+                    .frame(width: 340, height: 340)
+                    .blur(radius: 100)
+                    .offset(x: -140, y: -320)
+                Circle()
+                    .fill(Color.purple.opacity(0.12))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 100)
+                    .offset(x: 150, y: 340)
                 ScrollView {
                     VStack(spacing: YoohTheme.Spacing.l) {
                         brandHeader

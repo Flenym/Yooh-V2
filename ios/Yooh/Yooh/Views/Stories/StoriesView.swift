@@ -137,6 +137,7 @@ private struct StoryViewerView: View {
                     }
             }
             VStack {
+                progressSegments
                 HStack {
                     AvatarView(dataURL: groups[groupIdx].author?.avatar,
                                name: groups[groupIdx].author?.title ?? "?",
@@ -183,8 +184,29 @@ private struct StoryViewerView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private var current: YoohStory? {
-        guard groups.indices.contains(groupIdx) else { return nil }
+    private var progressSegments: some View {
+        HStack(spacing: 4) {
+            ForEach(groups[groupIdx].stories.indices, id: \.self) { i in
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.3))
+                        if i < storyIdx {
+                            Capsule().fill(Color.white)
+                        } else if i == storyIdx {
+                            Capsule()
+                                .fill(Color.white)
+                                .frame(width: geo.size.width * min(max(progress, 0), 1))
+                        }
+                    }
+                }
+                .frame(height: 3)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    private var current: YoohStory? {        guard groups.indices.contains(groupIdx) else { return nil }
         let list = groups[groupIdx].stories
         guard list.indices.contains(storyIdx) else { return nil }
         return list[storyIdx]
