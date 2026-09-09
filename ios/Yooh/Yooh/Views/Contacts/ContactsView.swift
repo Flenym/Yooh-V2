@@ -12,13 +12,29 @@ struct ContactsView: View {
         NavigationStack(path: Bindable(app).contactsPath) {
             ZStack {
                 YoohTheme.TG.background.ignoresSafeArea()
-                VStack(spacing: 0) {
-                    header
-                    searchPill(contacts)
-                    contactsList(contacts)
+                contactsList(contacts)
+            }
+            .navigationTitle("Contacts")
+            .navigationBarTitleDisplayMode(.large)
+            .searchable(text: $search, prompt: "Name or @username")
+            .onChange(of: search) { _, q in contacts.search(q) }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(onlineFirst ? "Online" : "Sort") {
+                        Haptics.selection()
+                        onlineFirst.toggle()
+                    }
+                    .accessibilityLabel(Text("Toggle sort order"))
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        NewChatView()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel(Text("New chat"))
                 }
             }
-            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: String.self) { chatId in
                 if let chat = app.chatsViewModel.chats.first(where: { $0.id == chatId }) {
                     ChatDetailView(chat: chat, app: app)
@@ -30,69 +46,6 @@ struct ContactsView: View {
                 }
             }
         }
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack {
-            Button {
-                Haptics.selection()
-                onlineFirst.toggle()
-            } label: {
-                Text(onlineFirst ? "Online" : "Sort")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 72, height: 40)
-            }
-            .yoohGlass(.interactive, cornerRadius: 20)
-            .accessibilityLabel(Text("Toggle sort order"))
-
-            Spacer()
-            Text("Contacts")
-                .font(.system(size: 20, weight: .bold))
-            Spacer()
-
-            NavigationLink {
-                NewChatView()
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
-            }
-            .yoohGlass(.interactive, cornerRadius: 20)
-            .accessibilityLabel(Text("New chat"))
-        }
-        .padding(.horizontal, YoohTheme.Spacing.l)
-        .padding(.top, YoohTheme.Spacing.s)
-        .padding(.bottom, YoohTheme.Spacing.xs)
-    }
-
-    private func searchPill(_ contacts: ContactsViewModel) -> some View {
-        HStack(spacing: YoohTheme.Spacing.s) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-            TextField("Search", text: $search)
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
-            if !search.isEmpty {
-                Button {
-                    search = ""
-                    contacts.search("")
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityLabel(Text("Clear search"))
-            }
-        }
-        .padding(.horizontal, YoohTheme.Spacing.m)
-        .frame(height: 44)
-        .background(YoohTheme.TG.field, in: .rect(cornerRadius: 22))
-        .padding(.horizontal, YoohTheme.Spacing.l)
-        .padding(.vertical, YoohTheme.Spacing.xs)
-        .onChange(of: search) { _, q in contacts.search(q) }
     }
 
     // MARK: - List

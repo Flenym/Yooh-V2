@@ -5,7 +5,6 @@ import SwiftUI
 /// Telegram-family bubbles and a circular composer.
 struct ChatDetailView: View {
     @Environment(AppState.self) private var app
-    @Environment(\.dismiss) private var dismiss
     @State private var vm: ChatViewModel
     @State private var showInfo = false
     @State private var showPoll = false
@@ -20,7 +19,6 @@ struct ChatDetailView: View {
         ZStack {
             wallpaper
             VStack(spacing: 0) {
-                header(vm)
                 if vm.chat.isChannel {
                     Picker("Stream", selection: Binding(
                         get: { vm.stream },
@@ -115,7 +113,38 @@ struct ChatDetailView: View {
                 ComposerView(vm: vm, onPoll: { showPoll = true })
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(chatTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Button { showInfo = true } label: {
+                    HStack(spacing: YoohTheme.Spacing.s) {
+                        AvatarView(dataURL: headerAvatar, name: chatTitle,
+                                   size: 30, isOnline: headerOnline)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(chatTitle).font(.headline).lineLimit(1)
+                            Text(chatSubtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Chat info for \(chatTitle)"))
+            }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    app.callsViewModel.unavailableNotice()
+                } label: {
+                    Image(systemName: "phone.fill")
+                }
+                .accessibilityLabel(Text("Voice call"))
+                Button {
+                    app.callsViewModel.unavailableNotice()
+                } label: {
+                    Image(systemName: "video.fill")
+                }
+                .accessibilityLabel(Text("Video call"))
+            }
+        }
         .sheet(isPresented: $showInfo) {
             NavigationStack {
                 ChatInfoView(chatId: vm.chatId)
@@ -136,7 +165,7 @@ struct ChatDetailView: View {
         }
     }
 
-    // MARK: - Wallpaper + header
+    // MARK: - Wallpaper
 
     private var wallpaper: some View {
         ZStack {
@@ -155,75 +184,6 @@ struct ChatDetailView: View {
                 .offset(x: 150, y: 300)
         }
         .ignoresSafeArea()
-    }
-
-    private func header(_ vm: ChatViewModel) -> some View {
-        HStack(spacing: YoohTheme.Spacing.s) {
-            Button {
-                Haptics.selection()
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
-            }
-            .yoohGlass(.interactive, cornerRadius: 20)
-            .accessibilityLabel(Text("Back"))
-
-            Spacer()
-
-            Button { showInfo = true } label: {
-                VStack(spacing: 0) {
-                    Text(chatTitle)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    Text(chatSubtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-            }
-            .buttonStyle(.plain)
-            .yoohGlass(.regular, cornerRadius: 20)
-            .accessibilityLabel(Text("Chat info for \(chatTitle)"))
-
-            Spacer()
-
-            Button {
-                app.callsViewModel.unavailableNotice()
-            } label: {
-                Image(systemName: "phone.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-            }
-            .yoohGlass(.interactive, cornerRadius: 18)
-            .accessibilityLabel(Text("Voice call"))
-
-            Button {
-                app.callsViewModel.unavailableNotice()
-            } label: {
-                Image(systemName: "video.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-            }
-            .yoohGlass(.interactive, cornerRadius: 18)
-            .accessibilityLabel(Text("Video call"))
-
-            Button { showInfo = true } label: {
-                AvatarView(dataURL: headerAvatar, name: chatTitle, size: 40, isOnline: headerOnline)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text("Open chat info"))
-        }
-        .padding(.horizontal, YoohTheme.Spacing.m)
-        .padding(.top, YoohTheme.Spacing.xs)
-        .padding(.bottom, YoohTheme.Spacing.xs)
     }
 
     // MARK: - Day chips
