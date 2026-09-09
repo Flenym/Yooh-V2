@@ -311,7 +311,7 @@ private struct PollContentView: View {
                             Text(opt.text ?? "")
                                 .font(.subheadline)
                             Spacer()
-                            if !poll.anonymous {
+                            if poll.anonymous != true {
                                 Text("\(opt.count)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
