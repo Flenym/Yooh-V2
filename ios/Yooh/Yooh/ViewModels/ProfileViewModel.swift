@@ -71,12 +71,30 @@ final class ProfileViewModel {
             error = "Couldn't process the image."
             return false
         }
+        return await saveFields(["avatar": dataURL], notice: "Photo updated.")
+    }
+
+    func saveBanner(_ image: UIImage) async -> Bool {
+        error = nil
+        guard let dataURL = Self.bannerDataURL(image) else {
+            error = "Couldn't process the image."
+            return false
+        }
+        return await saveFields(["banner": dataURL], notice: "Banner updated.")
+    }
+
+    /// Generic profile save (name/username/about/emojiStatus/premiumBadge/...).
+    /// Keys mirror PATCH /api/me/profile exactly.
+    @discardableResult
+    func saveFields(_ fields: [String: Any], notice successNotice: String = "Profile updated.") async -> Bool {
+        error = nil
+        notice = nil
         isSaving = true
         defer { isSaving = false }
         do {
-            let updated = try await app.userService.updateProfile(fields: ["avatar": dataURL])
+            let updated = try await app.userService.updateProfile(fields: fields)
             app.session.updateUser(updated)
-            notice = "Photo updated."
+            notice = successNotice
             return true
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
@@ -89,6 +107,12 @@ final class ProfileViewModel {
     /// Downscales to ≤512px and JPEG-compresses to fit the 2MB avatar cap.
     static func avatarDataURL(_ image: UIImage) -> String? {
         guard let data = downscaledJPEG(image, maxDimension: 512, quality: 0.8, maxBytes: 1_900_000) else { return nil }
+        return "data:image/jpeg;base64,\(data.base64EncodedString())"
+    }
+
+    /// Banner art (server cap 2MB): wider, still compressed to fit.
+    static func bannerDataURL(_ image: UIImage) -> String? {
+        guard let data = downscaledJPEG(image, maxDimension: 1024, quality: 0.8, maxBytes: 1_900_000) else { return nil }
         return "data:image/jpeg;base64,\(data.base64EncodedString())"
     }
 

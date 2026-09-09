@@ -33,10 +33,11 @@ enum YoohTheme {
     // MARK: - Colors
 
     enum Colors {
-        /// Primary brand accent (iMessage-like blue, adaptive).
-        static let accent = Color.accentColor
+        /// Primary brand accent — follows the theme accent (Settings → Appearance).
+        /// Read inside view bodies so accent changes refresh the UI.
+        static var accent: Color { ThemeStore.shared.accent }
         static let incomingBubble = Color(.secondarySystemBackground)
-        static let outgoingBubble = Color.accentColor
+        static var outgoingBubble: Color { ThemeStore.shared.accent }
         static let outgoingText = Color.white
         static let destructive = Color.red
         static let online = Color.green
@@ -79,8 +80,8 @@ enum YoohTheme {
             UIColor(white: 0, alpha: 0.06),
             UIColor(white: 1, alpha: 0.10)
         )
-        /// Unread badge / links / active states (messenger blue).
-        static let badge = Color(red: 0.20, green: 0.57, blue: 0.93)
+        /// Unread badge / links / active states — the theme accent.
+        static var badge: Color { ThemeStore.shared.accent }
         /// Muted badge.
         static let badgeMuted = Color(.systemGray)
         /// Read checkmarks on outgoing messages.
@@ -93,15 +94,27 @@ enum YoohTheme {
             UIColor(red: 0.90, green: 0.90, blue: 0.93, alpha: 1),
             UIColor(red: 0.16, green: 0.16, blue: 0.18, alpha: 1)
         )
-        /// Chat wallpaper: subtle original gradient, adaptive.
-        static let wallpaperTop = dynamic(
-            UIColor(red: 0.93, green: 0.92, blue: 0.88, alpha: 1),
-            UIColor(red: 0.07, green: 0.07, blue: 0.12, alpha: 1)
-        )
-        static let wallpaperBottom = dynamic(
-            UIColor(red: 0.85, green: 0.87, blue: 0.84, alpha: 1),
-            UIColor.black
-        )
+        /// Chat wallpaper: theme choice, or the adaptive default.
+        static var wallpaperTop: Color {
+            let w = ThemeStore.shared.wallpaper
+            if w.id == "system" {
+                return dynamic(
+                    UIColor(red: 0.93, green: 0.92, blue: 0.88, alpha: 1),
+                    UIColor(red: 0.07, green: 0.07, blue: 0.12, alpha: 1)
+                )
+            }
+            return w.top
+        }
+        static var wallpaperBottom: Color {
+            let w = ThemeStore.shared.wallpaper
+            if w.id == "system" {
+                return dynamic(
+                    UIColor(red: 0.85, green: 0.87, blue: 0.84, alpha: 1),
+                    UIColor.black
+                )
+            }
+            return w.bottom
+        }
 
         /// Sender-name colors for group chats (hash-picked, like classic messengers).
         static func senderColor(for userId: String) -> Color {

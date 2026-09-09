@@ -138,8 +138,22 @@ engine.io-parser v6 — polling bodies are packets joined by ASCII RS
 handshake is one bare `0{...}` packet. `PacketCodec` implements exactly
 this; `scripts/ios-smoke.mjs` proves it against the real backend.
 
-## 7. How-to
+## Design, themes & identity
 
+- Visual style: dark premium by default, full light-mode support.
+- **Settings → Appearance**: interface mode (System/Dark/Light), 5 accent
+  colors, 4 chat wallpapers (+ System). Presentation-only, stored
+  on-device (`ThemeStore`); accent recolors badges, send buttons, links.
+- **Profile** (Discord-style, all server-backed via PATCH /api/me/profile):
+  banner art, avatar, bio, emoji status (≤32 chars), avatar decoration —
+  star emblem or photo frame (`premiumBadge`), profile color (`bgColor`).
+- **Settings → Privacy**: last-seen, profile photo, calls, forwards
+  audiences (everyone/contacts/nobody) + read receipts — enforced by
+  the server (privacyRules.js). **Notifications** and **Data** sections
+  persist via PATCH settings (deep-merged server-side).
+- No mocks: every toggle/photo/status above hits the real backend.
+
+## 7. How-to
 **Add a screen**: View in `Views/<Area>/` + ViewModel in `ViewModels/`
 (owns a service, never URLSession) + wire into `MainTabView` or a
 `navigationDestination`. Reuse `AvatarView`, `ErrorBanner`,

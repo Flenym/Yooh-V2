@@ -8,12 +8,15 @@ import SwiftUI
 @main
 struct YoohApp: App {
     @State private var app = AppState()
+    @State private var theme = ThemeStore.shared
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(app)
+                .environment(theme)
+                .preferredColorScheme(theme.colorScheme)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, app.session.isAuthenticated {

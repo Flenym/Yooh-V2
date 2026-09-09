@@ -1,104 +1,316 @@
 import PhotosUI
 import SwiftUI
 
-/// Own profile: view + edit (name, username, about, avatar photo).
+/// Own profile, Discord-style: banner art, decorated avatar, emoji status,
+/// bio and identity rows — all stored server-side via PATCH /api/me/profile.
 struct ProfileView: View {
     @Environment(AppState.self) private var app
-    @State private var isEditing = false
-    @State private var avatarItem: PhotosPickerItem?
+    @State private var showEditor = false
 
     var body: some View {
         @Bindable var profile = app.profileViewModel
         Group {
             if let user = profile.user {
-                Form {
-                    Section {
-                        HStack(spacing: YoohTheme.Spacing.l) {
-                            AvatarView(dataURL: user.avatar,
-                                       name: user.displayName,
-                                       size: YoohTheme.Layout.avatarXL)
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: 4) {
-                                    Text(user.displayName).font(.title3.bold())
-                                    if user.isPremium {
-                                        Image(systemName: "star.fill")
-                                            .font(.caption)
-                                            .foregroundStyle(.yellow)
-                                            .accessibilityLabel(Text("Premium"))
-                                    }
-                                }
-                                Text("@\(user.username)")
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ProfileStyle.banner(dataURL: user.banner.isEmpty ? nil : user.banner)
+
+                        VStack(alignment: .leading, spacing: YoohTheme.Spacing.m) {
+                            HStack(alignment: .bottom) {
+                                ProfileStyle.decoratedAvatar(
+                                    avatarURL: user.avatar.isEmpty ? nil : user.avatar,
+                                    name: user.displayName,
+                                    badge: user.premiumBadge,
+                                    size: 96
+                                )
+                                .offset(y: -30)
+                                .padding(.bottom, -30)
+                                Spacer()
+                                Button("Edit profile") { showEditor = true }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                            }
+
+                            nameBlock(user)
+
+                            if !user.about.isEmpty {
+                                Text(user.about)
                                     .font(.subheadline)
-                                    .foregroundStyle(Color.accentColor)
-                                Text(user.phone)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .padding(YoohTheme.Spacing.m)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(YoohTheme.TG.card, in: .rect(cornerRadius: 16))
                             }
+
+                            infoCard(user)
                         }
-                        .padding(.vertical, YoohTheme.Spacing.s)
-                        if !user.about.isEmpty {
-                            Text(user.about).font(.subheadline)
-                        }
-                    }
-                    if isEditing {
-                        Section("Edit profile") {
-                            TextField("Name", text: $profile.displayName)
-                            TextField("username", text: $profile.username)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                            TextField("About", text: $profile.about, axis: .vertical)
-                            PhotosPicker(selection: $avatarItem, matching: .images) {
-                                Label("Change photo", systemImage: "photo")
-                            }
-                            AsyncButton(title: "Save", isBusy: profile.isSaving) {
-                                if await profile.save() { isEditing = false }
-                            }
-                        }
-                    }
-                    Section("Account") {
-                        LabeledContent("Stars", value: "\(user.starsBalance)")
-                        if user.cloudPasswordEnabled {
-                            Label("Two-step verification on", systemImage: "lock.fill")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    if let error = profile.error {
-                        ErrorBanner(message: error, onDismiss: { profile.clearError() })
-                    }
-                    if let notice = profile.notice {
-                        Text(notice).font(.footnote).foregroundStyle(.green)
+                        .padding(.horizontal, YoohTheme.Spacing.l)
+                        .padding(.bottom, YoohTheme.Spacing.xl)
                     }
                 }
+                .background(YoohTheme.TG.background)
             } else {
                 ProgressView()
             }
         }
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(isEditing ? "Done" : "Edit") {
-                    if isEditing {
-                        profile.clearError()
-                    } else {
-                        profile.beginEditing()
-                    }
-                    isEditing.toggle()
-                }
+        .overlay(alignment: .top) {
+            if let error = profile.error {
+                ErrorBanner(message: error, onDismiss: { profile.clearError() })
             }
         }
-        .onChange(of: avatarItem) { _, item in
-            guard let item else { return }
-            avatarItem = nil
-            Task {
-                guard let data = try? await item.loadTransferable(type: Data.self),
-                      let img = UIImage(data: data) else { return }
-                await profile.saveAvatar(img)
+        .sheet(isPresented: $showEditor) {
+            NavigationStack {
+                ProfileEditorView()
             }
         }
         .task {
             await profile.reload()
+        }
+    }
+
+    private func nameBlock(_ user: YoohUser) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(user.displayName)
+                    .font(.system(size: 24, weight: .bold))
+                if !user.emojiStatus.isEmpty {
+                    Text(user.emojiStatus)
+                        .font(.title3)
+                        .accessibilityLabel(Text("Status"))
+                }
+                if user.isPremium {
+                    Image(systemName: "star.fill")
+                        .font(.caption)
+                        .foregroundStyle(.yellow)
+                        .accessibilityLabel(Text("Premium"))
+                }
+            }
+            Text("@\(user.username) · \(user.phone)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func infoCard(_ user: YoohUser) -> some View {
+        VStack(spacing: 0) {
+            infoRow(icon: "star.fill", color: .yellow, title: "Stars", value: "\(user.starsBalance)")
+            Divider().opacity(0.4)
+            infoRow(icon: user.cloudPasswordEnabled ? "lock.fill" : "lock.open.fill",
+                    color: .green,
+                    title: "Two-step verification",
+                    value: user.cloudPasswordEnabled ? "On" : "Off")
+            Divider().opacity(0.4)
+            infoRow(icon: "calendar", color: YoohTheme.TG.badge,
+                    title: "Member since",
+                    value: YoohDates.fullDateTime(user.createdAt))
+        }
+        .padding(.horizontal, YoohTheme.Spacing.m)
+        .padding(.vertical, YoohTheme.Spacing.s)
+        .background(YoohTheme.TG.card, in: .rect(cornerRadius: 16))
+    }
+
+    private func infoRow(icon: String, color: Color, title: String, value: String) -> some View {
+        HStack(spacing: YoohTheme.Spacing.m) {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+                .frame(width: 24)
+            Text(title).font(.subheadline)
+            Spacer()
+            Text(value).font(.subheadline).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Editor
+
+/// Full identity editor. Every control maps to a PATCH /api/me/profile key
+/// (single save call, no mocks).
+private struct ProfileEditorView: View {
+    @Environment(AppState.self) private var app
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var displayName = ""
+    @State private var username = ""
+    @State private var about = ""
+    @State private var status = ""
+    @State private var badgeStyle = "none"
+    @State private var star = "⭐"
+    @State private var badgeColor = "#f4c84c"
+    @State private var avatarItem: PhotosPickerItem?
+    @State private var bannerItem: PhotosPickerItem?
+    @State private var decorItem: PhotosPickerItem?
+    @State private var avatarPreview: UIImage?
+    @State private var bannerPreview: UIImage?
+    @State private var decorPreview: UIImage?
+    @State private var error: String?
+
+    var body: some View {
+        @Bindable var profile = app.profileViewModel
+        Form {
+            Section("Photo & banner") {
+                if let avatarPreview {
+                    Image(uiImage: avatarPreview)
+                        .resizable().scaledToFill()
+                        .frame(width: 72, height: 72).clipShape(Circle())
+                }
+                ProfilePhotoPicker(item: $avatarItem, title: "Change avatar", symbol: "person.crop.circle")
+                if let bannerPreview {
+                    Image(uiImage: bannerPreview)
+                        .resizable().scaledToFill()
+                        .frame(height: 90).clipShape(.rect(cornerRadius: 12))
+                }
+                ProfilePhotoPicker(item: $bannerItem, title: "Change banner", symbol: "photo")
+            }
+            Section("Identity") {
+                TextField("Display name", text: $displayName)
+                TextField("username", text: $username)
+                    .autocapitalization(.none).disableAutocorrection(true)
+                TextField("About", text: $about, axis: .vertical)
+            }
+            Section("Status emoji") {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))]) {
+                    ForEach(ProfileStyle.statusPresets, id: \.self) { e in
+                        Button {
+                            Haptics.selection()
+                            status = e
+                        } label: {
+                            Text(e.isEmpty ? "✕" : e)
+                                .font(.title2)
+                                .frame(width: 44, height: 44)
+                                .background(status == e ? YoohTheme.TG.badge.opacity(0.25) : Color.clear,
+                                            in: .circle)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(e.isEmpty ? "Clear status" : "Status \(e)"))
+                    }
+                }
+            }
+            Section("Avatar decoration") {
+                Picker("Style", selection: $badgeStyle) {
+                    Text("None").tag("none")
+                    Text("Star emblem").tag("star")
+                    Text("Photo frame").tag("photo")
+                }
+                .pickerStyle(.segmented)
+                if badgeStyle == "star" {
+                    TextField("Star emoji", text: $star)
+                }
+                if badgeStyle == "photo" {
+                    if let decorPreview {
+                        Image(uiImage: decorPreview)
+                            .resizable().scaledToFill()
+                            .frame(width: 72, height: 72).clipShape(Circle())
+                    }
+                    ProfilePhotoPicker(item: $decorItem, title: "Decoration image", symbol: "sparkles")
+                }
+                if badgeStyle != "none" {
+                    HStack {
+                        ForEach(ProfileStyle.colorPresets, id: \.self) { hex in
+                            Button {
+                                badgeColor = hex
+                            } label: {
+                                Circle()
+                                    .fill(Color(hex: hex))
+                                    .frame(width: 30, height: 30)
+                                    .overlay {
+                                        if badgeColor == hex {
+                                            Circle().stroke(Color.white, lineWidth: 2)
+                                        }
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Color \(hex)"))
+                        }
+                    }
+                }
+            }
+            if let error {
+                Text(error).font(.footnote).foregroundStyle(.red)
+            }
+            AsyncButton(title: "Save", isBusy: profile.isSaving) {
+                await save(profile)
+            }
+        }
+        .navigationTitle("Edit profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Cancel") { dismiss() }
+            }
+        }
+        .onAppear(perform: prefill)
+        .onChange(of: avatarItem) { _, v in loadImage(v, into: $avatarPreview) }
+        .onChange(of: bannerItem) { _, v in loadImage(v, into: $bannerPreview) }
+        .onChange(of: decorItem) { _, v in loadImage(v, into: $decorPreview) }
+    }
+
+    private func prefill() {
+        guard let u = app.session.currentUser else { return }
+        displayName = u.displayName
+        username = u.username
+        about = u.about
+        status = u.emojiStatus
+        if let b = u.premiumBadge {
+            badgeStyle = (b.type == "star" || b.type == "photo") ? (b.type ?? "none") : "none"
+            if let s = b.star, !s.isEmpty { star = s }
+            if let c = b.bgColor, !c.isEmpty { badgeColor = c }
+        }
+        error = nil
+    }
+
+    private func loadImage(_ item: PhotosPickerItem?, into binding: Binding<UIImage?>) {
+        guard let item else { return }
+        Task {
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let img = UIImage(data: data)
+            {
+                binding.wrappedValue = img
+            }
+        }
+    }
+
+    private func save(_ profile: ProfileViewModel) async {
+        error = nil
+        guard Validation.validateDisplayName(displayName) else { error = "Enter your name."; return }
+        guard Validation.validateUsername(username) else { error = "Username: 5–32 letters, digits or _."; return }
+        var fields: [String: Any] = [
+            "displayName": displayName.trimmingCharacters(in: .whitespaces),
+            "username": username.trimmingCharacters(in: .whitespaces).lowercased(),
+            "about": about,
+            "emojiStatus": status,
+        ]
+        if let img = avatarPreview, let url = ProfileViewModel.avatarDataURL(img) {
+            fields["avatar"] = url
+        }
+        if let img = bannerPreview, let url = ProfileViewModel.bannerDataURL(img) {
+            fields["banner"] = url
+        }
+        switch badgeStyle {
+        case "star":
+            fields["premiumBadge"] = ["type": "star", "star": star.isEmpty ? "⭐" : star,
+                                      "photo": "", "svg": "", "bgColor": badgeColor,
+                                      "size": 16, "offsetX": 0, "offsetY": 0] as [String: Any]
+        case "photo":
+            if let img = decorPreview, let url = ProfileViewModel.avatarDataURL(img) {
+                fields["premiumBadge"] = ["type": "photo", "star": "", "photo": url,
+                                          "svg": "", "bgColor": badgeColor,
+                                          "size": 16, "offsetX": 0, "offsetY": 0] as [String: Any]
+            } else {
+                error = "Pick a decoration image or choose another style."
+                return
+            }
+        default:
+            fields["premiumBadge"] = ["type": "none", "star": "", "photo": "",
+                                      "svg": "", "bgColor": badgeColor,
+                                      "size": 16, "offsetX": 0, "offsetY": 0] as [String: Any]
+        }
+        if await profile.saveFields(fields) {
+            dismiss()
+        } else {
+            error = profile.error
         }
     }
 }

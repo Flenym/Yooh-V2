@@ -170,16 +170,47 @@ struct ChatInfoView: View {
     }
 
     private func directSection(_ chat: YoohChat) -> some View {
-        Section("Contact") {
+        Section {
             if let me = app.session.currentUser?.id,
                let peer = chat.peer(myUserId: me)
             {
-                if let about = peer.about, !about.isEmpty {
-                    Text(about)
+                VStack(spacing: 8) {
+                    ProfileStyle.banner(dataURL: nil, height: 110)
+                        .clipShape(.rect(cornerRadius: 14))
+                        .overlay(alignment: .bottomLeading) {
+                            ProfileStyle.decoratedAvatar(
+                                avatarURL: peer.avatar,
+                                name: peer.displayName ?? "?",
+                                badge: peer.premiumBadge,
+                                size: 72
+                            )
+                            .padding(.leading, 12)
+                            .offset(y: 20)
+                        }
+                        .padding(.bottom, 20)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 4) {
+                                Text(peer.displayName ?? "User")
+                                    .font(.title3.bold())
+                                if peer.isPremium {
+                                    Image(systemName: "star.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.yellow)
+                                }
+                            }
+                            if let u = peer.username {
+                                Text("@\(u)").font(.subheadline).foregroundStyle(Color.accentColor)
+                            }
+                            if let about = peer.about, !about.isEmpty {
+                                Text(about).font(.subheadline).foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                    }
                 }
-                if let u = peer.username {
-                    Text("@\(u)").foregroundStyle(Color.accentColor)
-                }
+                .padding(.vertical, 4)
+                .accessibilityElement(children: .combine)
             }
         }
     }

@@ -19,6 +19,10 @@ struct SettingsView: View {
                         hero
                         profileCard
                         generalCard(settings)
+                        appearanceCard
+                        notificationsCard
+                        privacyCard
+                        storageCard
                         sessionsCard(settings)
                         securityCard(settings)
                         stickersCard
@@ -98,6 +102,50 @@ struct SettingsView: View {
     }
 
     // MARK: - Cards
+
+    private var appearanceCard: some View {
+        card {
+            NavigationLink {
+                AppearanceView()
+            } label: {
+                settingRow(tile: "paintpalette.fill", color: .purple, title: "Appearance")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var notificationsCard: some View {
+        card {
+            NavigationLink {
+                NotificationsView()
+            } label: {
+                settingRow(tile: "bell.badge.fill", color: .red, title: "Notifications & Sounds")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var privacyCard: some View {
+        card {
+            NavigationLink {
+                PrivacyView()
+            } label: {
+                settingRow(tile: "lock.shield.fill", color: .gray, title: "Privacy & Security")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var storageCard: some View {
+        card {
+            NavigationLink {
+                StorageView()
+            } label: {
+                settingRow(tile: "internaldrive.fill", color: .green, title: "Data & Storage")
+            }
+            .buttonStyle(.plain)
+        }
+    }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) {
