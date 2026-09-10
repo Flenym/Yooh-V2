@@ -12,7 +12,9 @@ final class SecretChatViewModel {
     var editing: SecretMessage?
 
     private let store: SecretStore
-    private var ticker: Task<Void, Never>?
+    /// Expiry ticker. `nonisolated(unsafe)` so `deinit` can cancel it;
+    /// the Task itself is Sendable and only touches `self` weakly on MainActor.
+    nonisolated(unsafe) private var ticker: Task<Void, Never>?
 
     init(chat: SecretChat, userId: String) {
         self.chat = chat
