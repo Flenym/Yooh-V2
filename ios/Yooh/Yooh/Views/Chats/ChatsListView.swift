@@ -14,6 +14,8 @@ struct ChatsListView: View {
     @State private var confirmClear: YoohChat?
     @State private var isEditing = false
     @State private var selection = Set<String>()
+    @State private var secretChats: [SecretChat] = []
+    @State private var openSecret: SecretChat?
 
     var body: some View {
         @Bindable var chats = app.chatsViewModel
@@ -73,6 +75,16 @@ struct ChatsListView: View {
             }
             .sheet(isPresented: $showFolders) {
                 FolderEditorView()
+            }
+            .sheet(item: $openSecret) { sc in
+                if let me = app.session.currentUser?.id {
+                    SecretChatView(chat: sc, userId: me) {
+                        reloadSecrets()
+                    }
+                }
+            }
+            .onAppear {
+                reloadSecrets()
             }
             .confirmationDialog("Delete this chat?", isPresented: Binding(
                 get: { confirmDelete != nil },
@@ -237,6 +249,70 @@ struct ChatsListView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
+                    if let saved = savedChat {                        NavigationLink(value: saved.id) {
+                            HStack(spacing: YoohTheme.Spacing.m) {
+                                ZStack {
+                                    Circle()
+                                        .fill(ThemeStore.shared.accent.opacity(0.15))
+                                        .frame(width: 60, height: 60)
+                                    Image(systemName: "bookmark.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(ThemeStore.shared.accent)
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Saved Messages")
+                                        .font(.system(size: 17, weight: .semibold))
+                                    Text("Your personal cloud notes")
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
+                    }
+                    if !secretChats.isEmpty {
+                        Section {
+                            ForEach(secretChats) { sc in
+                                Button {
+                                    Haptics.selection()
+                                    openSecret = sc
+                                } label: {
+                                    HStack(spacing: YoohTheme.Spacing.m) {
+                                        AvatarView(dataURL: sc.peerAvatar, name: sc.peerName, size: 60)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            HStack(spacing: 6) {
+                                                Text(sc.peerName)
+                                                    .font(.system(size: 17, weight: .semibold))
+                                                    .lineLimit(1)
+                                                Image(systemName: "lock.fill")
+                                                    .font(.system(size: 12))
+                                                    .foregroundStyle(.green)
+                                            }
+                                            Text("Device-local secret chat")
+                                                .font(.system(size: 15))
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 6)
+                                }
+                                .buttonStyle(.plain)
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
+                            }
+                        } header: {
+                            Text("Secret chats")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     ForEach(chats.visibleChats) { chat in
                         if isEditing {
                             Button {
@@ -424,6 +500,21 @@ struct ChatsListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+    }
+
+    private var savedChat: YoohChat? {
+        guard let me = app.session.currentUser?.id else { return nil }
+        return app.chatsViewModel.chats.first(where: {
+            $0.type == .direct && $0.peer(myUserId: me) == nil
+        })
+    }
+
+    private func reloadSecrets() {
+        guard let me = app.session.currentUser?.id else {
+            secretChats = []
+            return
+        }
+        secretChats = SecretStore(userId: me).chats
     }
 
     private func isPeerOnline(_ chat: YoohChat) -> Bool {

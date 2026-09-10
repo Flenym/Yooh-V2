@@ -145,4 +145,28 @@ final class AuthService {
         struct Res: Decodable { let linked: Bool? }
         let _: Res = try await api.send(.linkDevice(token: token))
     }
+
+    struct QRStatus: Decodable {
+        let status: String?
+        let token: String?
+        let user: YoohUser?
+        let expiresAt: String?
+    }
+
+    /// Creates a login token to DISPLAY as QR (scan it from another device).
+    func createQRToken() async throws -> (token: String, expiresAt: String?) {
+        struct Res: Decodable {
+            let token: String?
+            let expiresAt: String?
+        }
+        let res: Res = try await api.send(.qrCreate())
+        guard let token = res.token else {
+            throw APIError.validation(message: "Couldn't create a QR code.")
+        }
+        return (token, res.expiresAt)
+    }
+
+    func qrStatus(token: String) async throws -> QRStatus {
+        try await api.send(.qrStatus(token: token))
+    }
 }

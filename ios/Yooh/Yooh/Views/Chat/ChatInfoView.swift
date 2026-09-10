@@ -36,6 +36,16 @@ struct ChatInfoView: View {
                         detailsSection(chat)
                         if chat.isChannel {
                             channelSection(chat)
+                        } else {
+                            groupSection(chat)
+                        }
+                        if let link = publicLink(chat) {
+                            Section("Invite link") {
+                                ShareLink(item: link) {
+                                    Label(link.absoluteString, systemImage: "link")
+                                        .lineLimit(1)
+                                }
+                            }
                         }
                         membersSection(chat)
                     } else {
@@ -422,13 +432,16 @@ struct ChatInfoView: View {
         }
     }
 
-    private func saveChatSettings(_ chat: YoohChat, _ settings: [String: Any], avatar: String? = nil) async {
+    private func saveChatSettings(_ chat: YoohChat, _ settings: [String: Any], avatar: String? = nil, permissions: [String: Any]? = nil) async {
         error = nil
         notice = nil
-        var fields: [String: Any] = ["settings": settings]
+        var fields: [String: Any] = [:]
+        var merged = settings
+        if let permissions {
+            merged["permissions"] = permissions
+        }
+        if !merged.isEmpty { fields["settings"] = merged }
         if let avatar { fields["avatar"] = avatar }
-        // Omit empty settings dict (avatar-only save).
-        if settings.isEmpty { fields.removeValue(forKey: "settings") }
         do {
             _ = try await app.chatsService.update(chatId: chat.id, fields: fields)
             await app.chatsViewModel.refresh()
@@ -437,6 +450,99 @@ struct ChatInfoView: View {
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    /// Shareable public link (the server resolves /y.ooh/:handle in web).
+    private func publicLink(_ chat: YoohChat) -> URL? {
+        guard chat.isPublic, let handle = chat.handle, !handle.isEmpty,
+              let host = AppConfig.baseURL.host else { return nil }
+        var c = URLComponents()
+        c.scheme = AppConfig.baseURL.scheme
+        c.host = host
+        c.port = AppConfig.baseURL.port
+        c.path = "/y.ooh/\(handle)"
+        return c.url
+    }
+
+    // MARK: - Group settings (server ChatSettings)
+
+    private func groupSection(_ chat: YoohChat) -> some View {
+        Section("Group") {
+            if canEdit(chat) {
+                PhotosPicker(selection: $avatarItem, matching: .images) {
+                    Label("Change group photo", systemImage: "photo")
+                }
+                Picker("Slow mode", selection: Binding(
+                    get: { chat.settings?.slowModeSeconds ?? 0 },
+                    set: { v in Task { await saveChatPermissions(chat, ["slowModeSeconds": v]) } }
+                )) {
+                    Text("Off").tag(0)
+                    Text("10 sec").tag(10)
+                    Text("30 sec").tag(30)
+                    Text("1 min").tag(60)
+                    Text("5 min").tag(300)
+                    Text("15 min").tag(900)
+                    Text("1 hour").tag(3600)
+                }
+                Picker("Auto-delete", selection: Binding(
+                    get: { chat.settings?.autoDeleteDays ?? 0 },
+                    set: { v in Task { await saveChatSettings(chat, ["autoDeleteDays": v]) } }
+                )) {
+                    Text("Off").tag(0)
+                    Text("1 day").tag(1)
+                    Text("7 days").tag(7)
+                    Text("30 days").tag(30)
+                    Text("1 year").tag(365)
+                }
+                Toggle("Members can post", isOn: Binding(
+                    get: { chat.settings?.membersCanPost ?? true },
+                    set: { v in Task { await saveChatPermissions(chat, ["sendMessages": v]) } }
+                ))
+                Toggle("Members can invite", isOn: Binding(
+                    get: { chat.settings?.allowMemberInvites ?? true },
+                    set: { v in Task { await saveChatSettings(chat, ["allowMemberInvites": v]) } }
+                ))
+            }
+            Picker("Chat wallpaper", selection: Binding(
+                get: { chat.settings?.wallpaperPreset ?? "" },
+                set: { v in Task { await saveChatSettings(chat, ["wallpaperPreset": v]) } }
+            )) {
+                Text("Default").tag("")
+                Text("Midnight").tag("midnight")
+                Text("Ocean").tag("ocean")
+                Text("Royal").tag("royal")
+                Text("Ember").tag("ember")
+            }
+            if let error {
+                Text(error).font(.footnote).foregroundStyle(.red)
+            }
+            if let notice {
+                Text(notice).font(.footnote).foregroundStyle(.green)
+            }
+        }
+        .onChange(of: avatarItem) { _, item in
+            guard canEdit(chat), let item else {
+                if avatarItem != nil { avatarItem = nil }
+                return
+            }
+            avatarItem = nil
+            Task { await uploadChatAvatar(chat, item: item) }
+        }
+    }
+
+    private func saveChatPermissions(_ chat: YoohChat, _ permissions: [String: Any]) async {
+        await saveChatSettings(chat, [:], permissions: permissions)
+    }
+
+    private func uploadChatAvatar(_ chat: YoohChat, item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self),
+              let img = UIImage(data: data),
+              let url = ProfileViewModel.avatarDataURL(img) else
+        {
+            error = "Couldn't process the image."
+            return
+        }
+        await saveChatSettings(chat, [:], avatar: url)
     }
 
     // MARK: - Permissions (mirror server roles)

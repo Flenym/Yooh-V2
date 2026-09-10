@@ -51,9 +51,28 @@ final class ContactsViewModel {
         }
     }
 
-    /// Opens (or finds) a 1:1 chat with a user, then refreshes the list.
-    func openDirect(with user: PublicUser) async -> YoohChat? {
+    /// Saved Messages: the direct chat with yourself (no peer).
+    /// The server dedupes it like any direct chat, so this is find-or-create.
+    func openSaved() async -> YoohChat? {
+        guard let me = app.session.currentUser?.id else { return nil }
+        if let existing = app.chatsViewModel.chats.first(where: {
+            $0.type == .direct && $0.peer(myUserId: me) == nil
+        }) {
+            return existing
+        }
         do {
+            let chat = try await app.chatsService.create(type: "direct", memberId: me)
+            await app.chatsViewModel.refresh()
+            app.socket.joinChat(chat.id)
+            return chat
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            return nil
+        }
+    }
+
+    /// Opens (or finds) a 1:1 chat with a user, then refreshes the list.
+    func openDirect(with user: PublicUser) async -> YoohChat? {        do {
             if let existing = app.chatsViewModel.chats.first(where: {
                 $0.type == .direct && $0.members.contains(where: { $0.userId == user.id })
             }) {

@@ -115,6 +115,20 @@ struct APIEndpoint {
                     jsonBody: ["token": token])
     }
 
+    /// Creates a QR login token to display (another device scans it).
+    static func qrCreate() -> APIEndpoint {
+        struct Body: Encodable {
+            let device: DeviceInfo
+        }
+        return APIEndpoint(method: .post, path: "/api/auth/qr/create",
+                           jsonBody: Body(device: DeviceInfo.current()))
+    }
+
+    static func qrStatus(token: String) -> APIEndpoint {
+        APIEndpoint(path: "/api/auth/qr/status",
+                    query: [URLQueryItem(name: "token", value: token)])
+    }
+
     // MARK: - Me
 
     static var me: APIEndpoint { APIEndpoint(path: "/api/me") }

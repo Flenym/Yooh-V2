@@ -8,6 +8,9 @@ struct NewChatView: View {
     @State private var search = ""
     @State private var showGroupForm = false
     @State private var showChannelForm = false
+    @State private var showSecretPicker = false
+    @State private var secretSearch = ""
+    @State private var openSecret: SecretChat?
     @State private var groupTitle = ""
     @State private var channelTitle = ""
     @State private var pickedMembers: Set<String> = []
@@ -40,6 +43,18 @@ struct NewChatView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button {
+                            Task {
+                                if await app.contactsViewModel.openSaved() != nil {
+                                    dismiss()
+                                }
+                            }
+                        } label: {
+                            Label("Saved Messages", systemImage: "bookmark.fill")
+                        }
+                        Button { showSecretPicker = true } label: {
+                            Label("New secret chat", systemImage: "lock.fill")
+                        }
                         Button { showGroupForm = true } label: {
                             Label("New group", systemImage: "person.3")
                         }
@@ -50,6 +65,37 @@ struct NewChatView: View {
                         Image(systemName: "plus")
                     }
                     .accessibilityLabel(Text("Create group or channel"))
+                }
+            }
+            .sheet(isPresented: $showSecretPicker) {
+                NavigationStack {
+                    ContactsSearchBody(
+                        search: $secretSearch,
+                        onPickUser: { user in
+                            if let me = app.session.currentUser?.id {
+                                let chat = SecretStore(userId: me).createChat(
+                                    peerUserId: user.id,
+                                    peerName: user.title,
+                                    peerAvatar: user.avatar,
+                                    myId: me)
+                                Haptics.send()
+                                openSecret = chat
+                            }
+                        },
+                        onJoinPublic: { _ in }
+                    )
+                    .navigationTitle("New secret chat")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("Close") { showSecretPicker = false }
+                        }
+                    }
+                }
+            }
+            .sheet(item: $openSecret) { sc in
+                if let me = app.session.currentUser?.id {
+                    SecretChatView(chat: sc, userId: me) {}
                 }
             }
             .sheet(isPresented: $showGroupForm) {

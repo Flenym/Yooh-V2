@@ -20,15 +20,19 @@ struct ChatSettings: Decodable {
     let commentsEnabled: Bool?
     let hideParticipants: Bool?
     let signMessages: Bool?
-    let slowModeSeconds: Int?
     let autoDeleteDays: Int?
+    let allowMemberInvites: Bool?
+    let wallpaperPreset: String?
+    let slowModeSeconds: Int?
+    let membersCanPost: Bool?
 
     private enum RootKeys: String, CodingKey {
         case reactionsEnabled, commentsEnabled, hideParticipants,
-             signMessages, autoDeleteDays, permissions
+             signMessages, autoDeleteDays, allowMemberInvites,
+             wallpaperPreset, permissions
     }
     private enum PermissionsKeys: String, CodingKey {
-        case slowModeSeconds
+        case slowModeSeconds, sendMessages
     }
 
     init(from decoder: Decoder) throws {
@@ -38,10 +42,14 @@ struct ChatSettings: Decodable {
         hideParticipants = try c.decodeIfPresent(Bool.self, forKey: .hideParticipants)
         signMessages = try c.decodeIfPresent(Bool.self, forKey: .signMessages)
         autoDeleteDays = try c.decodeIfPresent(Int.self, forKey: .autoDeleteDays)
+        allowMemberInvites = try c.decodeIfPresent(Bool.self, forKey: .allowMemberInvites)
+        wallpaperPreset = try c.decodeIfPresent(String.self, forKey: .wallpaperPreset)
         if let perms = try? c.nestedContainer(keyedBy: PermissionsKeys.self, forKey: .permissions) {
             slowModeSeconds = try perms.decodeIfPresent(Int.self, forKey: .slowModeSeconds)
+            membersCanPost = try perms.decodeIfPresent(Bool.self, forKey: .sendMessages)
         } else {
             slowModeSeconds = nil
+            membersCanPost = nil
         }
     }
 }

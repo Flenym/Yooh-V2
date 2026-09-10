@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Environment(AppState.self) private var app
     @State private var showLogoutConfirm = false
     @State private var showLinkDevice = false
+    @State private var showQR = false
     @State private var cloudPassword = ""
     @State private var feedbackCategory = "improvement"
     @State private var feedbackText = ""
@@ -276,11 +277,20 @@ struct SettingsView: View {
             .font(.system(size: 17))
             .foregroundStyle(YoohTheme.TG.badge)
             .padding(.vertical, 4)
+            Button("Show code for a new device") {
+                showQR = true
+            }
+            .font(.system(size: 17))
+            .foregroundStyle(YoohTheme.TG.badge)
+            .padding(.vertical, 4)
         }
         .sheet(isPresented: $showLinkDevice) {
             NavigationStack {
                 LinkDeviceView()
             }
+        }
+        .sheet(isPresented: $showQR) {
+            ShowQRView()
         }
     }
 
