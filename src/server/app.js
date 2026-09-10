@@ -994,19 +994,43 @@ export async function createAppContext(overrides = {}) {
     }),
   );
 
+  app.get(
+    "/api/chats/:chatId/messages/search",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const messages = await chatService.searchMessages(req.user.id, req.params.chatId, {
+        q: req.query.q,
+        limit: req.query.limit,
+        stream: req.query.stream,
+      });
+      res.status(200).json({ messages });
+    }),
+  );
+
+  app.get(
+    "/api/chats/:chatId/messages/scheduled",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const messages = await chatService.listScheduledMessages(req.user.id, req.params.chatId);
+      res.status(200).json({ messages });
+    }),
+  );
+
   app.post(
     "/api/chats/:chatId/messages",
     requireAuth,
     asyncRoute(async (req, res) => {
       const message = await chatService.sendTextMessage(req.user.id, req.params.chatId, req.body ?? {});
-      notifier({ type: "message", message });
-      const memberIds = await chatService.getChatMemberIds(req.params.chatId);
-      const pushPayload = await buildPushPayloadForMessage(message, req.user.id);
-      if (pushPayload) {
-        await sendPushNotification({
-          userIds: memberIds.filter((id) => String(id) !== String(req.user.id)),
-          payload: pushPayload,
-        });
+      if (!message.scheduledAt) {
+        notifier({ type: "message", message });
+        const memberIds = await chatService.getChatMemberIds(req.params.chatId);
+        const pushPayload = await buildPushPayloadForMessage(message, req.user.id);
+        if (pushPayload) {
+          await sendPushNotification({
+            userIds: memberIds.filter((id) => String(id) !== String(req.user.id)),
+            payload: pushPayload,
+          });
+        }
       }
       res.status(201).json({ message });
     }),
@@ -1743,6 +1767,36 @@ export async function createAppContext(overrides = {}) {
   }, config.cleanupIntervalMs);
   cleanupTimer.unref();
 
+  // Publishes due scheduled messages (realtime + push, like a normal send).
+  const scheduledTimer = setInterval(() => {
+    chatService
+      .collectDueScheduledMessages()
+      .then(async (published) => {
+        for (const entry of published ?? []) {
+          try {
+            notifier({ type: "message", message: entry.message });
+            const memberIds = Array.isArray(entry.memberIds) ? entry.memberIds : [];
+            if (memberIds.length) {
+              notifier({ type: "chat:updated", chatId: entry.message.chatId, userIds: memberIds });
+            }
+            const pushPayload = await buildPushPayloadForMessage(entry.message, entry.message.senderId);
+            if (pushPayload) {
+              await sendPushNotification({
+                userIds: memberIds.filter((id) => String(id) !== String(entry.message.senderId)),
+                payload: pushPayload,
+              });
+            }
+          } catch {
+            // One failed delivery must not block the rest.
+          }
+        }
+      })
+      .catch(() => {
+        // Scheduler should not crash API loop.
+      });
+  }, 30_000);
+  scheduledTimer.unref();
+
   return {
     app,
     config,
@@ -1764,6 +1818,7 @@ export async function createAppContext(overrides = {}) {
     },
     close: async () => {
       clearInterval(cleanupTimer);
+      clearInterval(scheduledTimer);
       await playmodeBridge.close();
     },
   };

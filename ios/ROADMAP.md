@@ -72,3 +72,16 @@ server API today, so shipping a client UI for it would be theater:
 
 Ported instead as real local features: drafts, pins, app lock,
 chat folders filter, archived view, themes/wallpapers/accents.
+
+## Ported in the "move everything" round (backend extended compatibly)
+
+- In-chat message search (`GET .../messages/search`)
+- Delayed messages (`scheduledAt`, 30s publish tick, manage/cancel UI)
+- Contact import via raw phones (server hashes with its salt)
+- Profile birthday field (PATCH + display + editor)
+- Custom local chat folders (CRUD + rules + chips)
+- Group/channel settings UI (slow mode, auto-delete, posting, invites,
+  comments, reactions, signatures, photo, wallpaper, invite links)
+- Chat moderation UI (ban/mute/unban/unmute)
+- Saved Messages, QR display for linking, local secret chats
+- Support tickets UI, FAQ, admin console, message text size

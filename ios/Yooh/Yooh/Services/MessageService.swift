@@ -11,14 +11,25 @@ final class MessageService {
 
     /// Newest-first page. Pass `before` (ISO of oldest loaded) for pagination.
     func history(chatId: String, stream: MessageStream = .main,
-                 limit: Int = AppConfig.messagePageSize, before: String? = nil) async throws -> [YoohMessage] {
-        let endpoint: APIEndpoint = {
+                 limit: Int = AppConfig.messagePageSize, before: String? = nil) async throws -> [YoohMessage] {        let endpoint: APIEndpoint = {
             switch stream {
             case .main: return .messages(chatId: chatId, limit: limit, before: before)
             case .comment: return .comments(chatId: chatId, limit: limit, before: before)
             }
         }()
         let res: MessageListResponse = try await api.send(endpoint)
+        return res.messages
+    }
+
+    /// Full-text search inside one chat (member-only, newest first).
+    func search(chatId: String, query: String, stream: MessageStream = .main) async throws -> [YoohMessage] {
+        let res: MessageListResponse = try await api.send(.searchMessages(chatId: chatId, query: query, stream: stream))
+        return res.messages
+    }
+
+    /// Own pending scheduled messages (manage/cancel UI).
+    func scheduled(chatId: String) async throws -> [YoohMessage] {
+        let res: MessageListResponse = try await api.send(.scheduledMessages(chatId: chatId))
         return res.messages
     }
 

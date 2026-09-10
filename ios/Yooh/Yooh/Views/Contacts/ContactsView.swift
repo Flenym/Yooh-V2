@@ -41,8 +41,29 @@ struct ContactsView: View {
                 }
             }
             .overlay(alignment: .top) {
-                if let error = contacts.error {
-                    ErrorBanner(message: error, onDismiss: { contacts.clearError() })
+                VStack(spacing: YoohTheme.Spacing.s) {
+                    if let error = contacts.error {
+                        ErrorBanner(message: error, onDismiss: { contacts.clearError() })
+                    }
+                    if let notice = contacts.notice {
+                        HStack(spacing: YoohTheme.Spacing.s) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text(notice)
+                                .font(.footnote)
+                            Spacer()
+                            Button(action: { contacts.clearNotice() }) {
+                                Image(systemName: "xmark")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .accessibilityLabel(Text("Dismiss notice"))
+                        }
+                        .padding(YoohTheme.Spacing.s)
+                        .background(Color(.secondarySystemBackground),
+                                    in: .rect(cornerRadius: YoohTheme.Radius.m))
+                        .padding(.horizontal, YoohTheme.Spacing.l)
+                    }
                 }
             }
         }
@@ -52,6 +73,35 @@ struct ContactsView: View {
 
     private func contactsList(_ contacts: ContactsViewModel) -> some View {
         List {
+            Button {
+                Task { await contacts.syncPhoneContacts() }
+            } label: {
+                HStack(spacing: YoohTheme.Spacing.m) {
+                    if contacts.isSyncing {
+                        ProgressView()
+                            .frame(width: 52)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 22))
+                            .foregroundStyle(ThemeStore.shared.accent)
+                            .frame(width: 52)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Sync phone contacts")
+                            .font(.system(size: 17))
+                        Text("Find contacts already on Yooh")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+            .disabled(contacts.isSyncing)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .accessibilityLabel(Text("Sync phone contacts"))
             ShareLink(item: "Join me on Yooh: \(AppConfig.apiURLString)") {
                 HStack(spacing: YoohTheme.Spacing.m) {
                     Image(systemName: "person.badge.plus")

@@ -1,3 +1,4 @@
+import Contacts
 import Foundation
 import Observation
 
@@ -10,11 +11,56 @@ final class ContactsViewModel {
     private(set) var publicChats: [DiscoveredChat] = []
     private(set) var isSearching = false
     private(set) var error: String?
+    private(set) var notice: String?
+    private(set) var isSyncing = false
 
     var app: AppState! = nil
     private var searchTask: Task<Void, Never>?
 
     func clearError() { error = nil }
+    func clearNotice() { notice = nil }
+
+    /// Reads device phone numbers (with permission) and uploads them for
+    /// server-side matching. Mutual matches auto-create direct chats.
+    func syncPhoneContacts() async {
+        error = nil
+        notice = nil
+        let store = CNContactStore()
+        do {
+            let granted = try await store.requestAccess(for: .contacts)
+            guard granted else {
+                error = "Contacts access is required for sync. Allow it in Settings."
+                return
+            }
+        } catch {
+            self.error = "Contacts access is required for sync. Allow it in Settings."
+            return
+        }
+        isSyncing = true
+        defer { isSyncing = false }
+        do {
+            let keys = [CNContactPhoneNumbersKey] as [CNKeyDescriptor]
+            let request = CNContactFetchRequest(keysToFetch: keys)
+            var phones: [String] = []
+            try store.enumerateContacts(with: request) { contact, _ in
+                for labeled in contact.phoneNumbers {
+                    phones.append(labeled.value.stringValue)
+                }
+            }
+            phones = Array(Set(phones)).prefix(2000).map { $0 }
+            guard !phones.isEmpty else {
+                notice = "No phone numbers found on this device."
+                return
+            }
+            let result = try await app.userService.syncContacts(phones: phones)
+            await app.chatsViewModel.refresh()
+            let n = result.matches?.count ?? 0
+            notice = n > 0 ? "Found \(n) contact\(n == 1 ? "" : "s") on Yooh." : "No mutual contacts found yet."
+            Haptics.send()
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
+    }
 
     func search(_ text: String, botsOnly: Bool = false) {
         query = text

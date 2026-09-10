@@ -12,6 +12,7 @@ struct YoohUser: Decodable {
     let about: String
     let avatar: String
     let banner: String
+    let birthday: String
     let locale: String
     let createdAt: String?
     let settings: [String: AnyCodable]?
@@ -29,7 +30,7 @@ struct YoohUser: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case id, chatId, phone, username, displayName, about, avatar, banner,
-             locale, createdAt, settings, cloudPasswordEnabled, isBot,
+             birthday, locale, createdAt, settings, cloudPasswordEnabled, isBot,
              isSystemBot, isPremium, premiumUntil, starsBalance, starsEarned,
              emojiStatus, premiumBadge, feedbackBlocked, sessionId
     }
@@ -44,6 +45,7 @@ struct YoohUser: Decodable {
         about = try c.decodeIfPresent(String.self, forKey: .about) ?? ""
         avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""
         banner = try c.decodeIfPresent(String.self, forKey: .banner) ?? ""
+        birthday = try c.decodeIfPresent(String.self, forKey: .birthday) ?? ""
         locale = try c.decodeIfPresent(String.self, forKey: .locale) ?? "en"
         createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
         settings = try c.decodeIfPresent([String: AnyCodable].self, forKey: .settings)

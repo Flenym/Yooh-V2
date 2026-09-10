@@ -107,12 +107,14 @@ struct YoohMessage: Decodable, Identifiable {
     let editedAt: String?
     let updatedAt: String?
     let createdAt: String?
+    /// Future ISO timestamp: hidden from history/realtime until due.
+    let scheduledAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id, chatId, senderId, type, text, clientMessageId, fileId, stream,
              threadRootId, replyToMessageId, replyTo, sender, file, reactions,
              readByUserIds, location, poll, call, forwardedFrom,
-             editedAt, updatedAt, createdAt
+             editedAt, updatedAt, createdAt, scheduledAt
     }
 
     init(from decoder: Decoder) throws {
@@ -139,6 +141,7 @@ struct YoohMessage: Decodable, Identifiable {
         editedAt = try c.decodeIfPresent(String.self, forKey: .editedAt)
         updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
         createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
+        scheduledAt = try c.decodeIfPresent(String.self, forKey: .scheduledAt)
     }
 
     var isOutgoing: Bool = false // resolved client-side against current user id
@@ -170,6 +173,7 @@ struct YoohMessage: Decodable, Identifiable {
         editedAt = nil
         updatedAt = nil
         createdAt = YoohDates.isoNow()
+        scheduledAt = nil
         isOutgoing = true
     }
 }
@@ -196,9 +200,10 @@ struct SendMessageRequest: Encodable {
     var replyToMessageId: String?
     var threadRootId: String?
     var clientMessageId: String?
+    var scheduledAt: String?
 
     enum CodingKeys: String, CodingKey {
-        case text, kind, location, poll, replyToMessageId, threadRootId, clientMessageId
+        case text, kind, location, poll, replyToMessageId, threadRootId, clientMessageId, scheduledAt
     }
 
     func encode(to encoder: Encoder) throws {
@@ -210,6 +215,7 @@ struct SendMessageRequest: Encodable {
         try c.encodeIfPresent(replyToMessageId, forKey: .replyToMessageId)
         try c.encodeIfPresent(threadRootId, forKey: .threadRootId)
         try c.encodeIfPresent(clientMessageId, forKey: .clientMessageId)
+        try c.encodeIfPresent(scheduledAt, forKey: .scheduledAt)
     }
 
     static func text(_ text: String, replyToMessageId: String? = nil, clientMessageId: String = UUID().uuidString) -> SendMessageRequest {

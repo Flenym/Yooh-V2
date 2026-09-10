@@ -8,6 +8,7 @@ struct ChatDetailView: View {
     @State private var vm: ChatViewModel
     @State private var showInfo = false
     @State private var showPoll = false
+    @State private var showSearch = false
     @State private var isNearBottom = true
 
     init(chat: YoohChat, app: AppState) {
@@ -89,6 +90,14 @@ struct ChatDetailView: View {
                             }
                         }
                     }
+                    .onChange(of: vm.jumpTarget) { _, target in
+                        if let target {
+                            withAnimation(.snappy) {
+                                proxy.scrollTo(target, anchor: .center)
+                            }
+                            vm.jumpTarget = nil
+                        }
+                    }
                     .onAppear {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
@@ -113,6 +122,25 @@ struct ChatDetailView: View {
                     ErrorBanner(message: error, onDismiss: { vm.clearError() })
                 }
 
+                if let notice = vm.notice {
+                    HStack(spacing: YoohTheme.Spacing.s) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text(notice)
+                            .font(.footnote)
+                        Spacer()
+                        Button(action: { vm.clearNotice() }) {
+                            Image(systemName: "xmark")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        .accessibilityLabel(Text("Dismiss notice"))
+                    }
+                    .padding(YoohTheme.Spacing.s)
+                    .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: YoohTheme.Radius.m))
+                    .padding(.horizontal, YoohTheme.Spacing.l)
+                }
+
                 ComposerView(vm: vm, onPoll: { showPoll = true })
             }
         }
@@ -135,6 +163,12 @@ struct ChatDetailView: View {
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
+                    showSearch = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                }
+                .accessibilityLabel(Text("Search in chat"))
+                Button {
                     app.callsViewModel.unavailableNotice()
                 } label: {
                     Image(systemName: "phone.fill")
@@ -155,6 +189,9 @@ struct ChatDetailView: View {
         }
         .sheet(isPresented: $showPoll) {
             PollComposerView(vm: vm)
+        }
+        .sheet(isPresented: $showSearch) {
+            MessageSearchView(vm: vm)
         }
         .sheet(item: $vm.forwardTarget) { m in
             ForwardSheetView(message: m, sourceChatId: vm.chatId)

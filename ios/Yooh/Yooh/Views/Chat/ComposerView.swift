@@ -13,6 +13,8 @@ struct ComposerView: View {
     @State private var showCamera = false
     @State private var showFiles = false
     @State private var showStickers = false
+    @State private var showSchedule = false
+    @State private var scheduleDate = Date().addingTimeInterval(3600)
     @State private var isLocating = false
     @State private var recorder = VoiceRecorder()
 
@@ -55,6 +57,13 @@ struct ComposerView: View {
                     Button { onPoll() } label: {
                         Label("Poll", systemImage: "chart.bar")
                     }
+                    Button {
+                        scheduleDate = Date().addingTimeInterval(3600)
+                        showSchedule = true
+                    } label: {
+                        Label("Schedule message", systemImage: "clock")
+                    }
+                    .disabled(vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 } label: {
                     Image(systemName: "paperclip")
                         .font(.system(size: 18, weight: .semibold))
@@ -135,6 +144,34 @@ struct ComposerView: View {
         }
         .sheet(isPresented: $showStickers) {
             StickerSheetView(vm: vm)
+        }
+        .sheet(isPresented: $showSchedule) {
+            NavigationStack {
+                Form {
+                    Section("Message") {
+                        Text(vm.draft.isEmpty ? "(empty)" : vm.draft)
+                            .foregroundStyle(vm.draft.isEmpty ? .secondary : .primary)
+                    }
+                    Section("Send at") {
+                        DatePicker("Date & time", selection: $scheduleDate,
+                                   in: Date().addingTimeInterval(60)...Date().addingTimeInterval(365 * 24 * 3600),
+                                   displayedComponents: [.date, .hourAndMinute])
+                    }
+                    Button("Schedule send") {
+                        showSchedule = false
+                        vm.sendScheduled(text: vm.draft, at: scheduleDate)
+                    }
+                    .disabled(vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .navigationTitle("Schedule message")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") { showSchedule = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
         .fileImporter(isPresented: $showFiles, allowedContentTypes: [.item]) { result in
             if case .success(let url) = result {

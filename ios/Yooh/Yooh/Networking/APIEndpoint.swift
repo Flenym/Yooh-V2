@@ -290,6 +290,21 @@ struct APIEndpoint {
         return APIEndpoint(method: .post, path: "/api/chats/\(chatId)/\(leaf)", jsonBody: body)
     }
 
+    static func searchMessages(chatId: String, query: String, limit: Int = 20, stream: MessageStream = .main) -> APIEndpoint {
+        var items = [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "limit", value: String(limit)),
+        ]
+        if stream == .comment {
+            items.append(URLQueryItem(name: "stream", value: "comment"))
+        }
+        return APIEndpoint(path: "/api/chats/\(chatId)/messages/search", query: items)
+    }
+
+    static func scheduledMessages(chatId: String) -> APIEndpoint {
+        APIEndpoint(path: "/api/chats/\(chatId)/messages/scheduled")
+    }
+
     static func editMessage(chatId: String, messageId: String, text: String) -> APIEndpoint {
         APIEndpoint(method: .patch, path: "/api/chats/\(chatId)/messages/\(messageId)",
                     jsonBody: ["text": text])

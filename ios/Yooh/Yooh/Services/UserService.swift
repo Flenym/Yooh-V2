@@ -36,6 +36,22 @@ final class UserService {
         return res.users ?? []
     }
 
+    struct ContactSyncResult: Decodable {
+        let matches: [String]?
+        let created: [AnyCodable]?
+    }
+
+    /// Uploads address-book phones (server hashes them with its salt and
+    /// creates mutual direct chats, like the web flow intends).
+    @discardableResult
+    func syncContacts(phones: [String]) async throws -> ContactSyncResult {
+        struct Body: Encodable {
+            let phones: [String]
+        }
+        return try await api.send(APIEndpoint(method: .post, path: "/api/me/contacts",
+                                              jsonBody: Body(phones: phones)))
+    }
+
     func searchBots(query: String) async throws -> [PublicUser] {
         let res: UserSearchResponse = try await api.send(.searchUsers(query: query, botsOnly: true))
         return res.users ?? []

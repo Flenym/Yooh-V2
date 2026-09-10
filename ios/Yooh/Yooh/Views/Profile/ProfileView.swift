@@ -97,6 +97,10 @@ struct ProfileView: View {
         VStack(spacing: 0) {
             infoRow(icon: "star.fill", color: .yellow, title: "Stars", value: "\(user.starsBalance)")
             Divider().opacity(0.4)
+            if !user.birthday.isEmpty {
+                infoRow(icon: "gift.fill", color: .pink, title: "Birthday", value: user.birthday)
+                Divider().opacity(0.4)
+            }
             infoRow(icon: user.cloudPasswordEnabled ? "lock.fill" : "lock.open.fill",
                     color: .green,
                     title: "Two-step verification",
@@ -125,7 +129,6 @@ struct ProfileView: View {
 }
 
 // MARK: - Editor
-
 /// Full identity editor. Every control maps to a PATCH /api/me/profile key
 /// (single save call, no mocks).
 private struct ProfileEditorView: View {
@@ -136,6 +139,8 @@ private struct ProfileEditorView: View {
     @State private var username = ""
     @State private var about = ""
     @State private var status = ""
+    @State private var hasBirthday = false
+    @State private var birthday = Date()
     @State private var badgeStyle = "none"
     @State private var star = "⭐"
     @State private var badgeColor = "#f4c84c"
@@ -169,6 +174,10 @@ private struct ProfileEditorView: View {
                 TextField("username", text: $username)
                     .autocapitalization(.none).disableAutocorrection(true)
                 TextField("About", text: $about, axis: .vertical)
+                Toggle("Birthday", isOn: $hasBirthday)
+                if hasBirthday {
+                    DatePicker("Date of birth", selection: $birthday, displayedComponents: .date)
+                }
             }
             Section("Status emoji") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))]) {
@@ -247,12 +256,25 @@ private struct ProfileEditorView: View {
         .onChange(of: decorItem) { _, v in loadImage(v, into: $decorPreview) }
     }
 
+    private static let birthdayFormat: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        return f
+    }()
+
     private func prefill() {
         guard let u = app.session.currentUser else { return }
         displayName = u.displayName
         username = u.username
         about = u.about
         status = u.emojiStatus
+        if u.birthday.count == 10, let date = Self.birthdayFormat.date(from: u.birthday) {
+            hasBirthday = true
+            birthday = date
+        } else {
+            hasBirthday = false
+        }
         if let b = u.premiumBadge {
             badgeStyle = (b.type == "star" || b.type == "photo") ? (b.type ?? "none") : "none"
             if let s = b.star, !s.isEmpty { star = s }
@@ -281,6 +303,7 @@ private struct ProfileEditorView: View {
             "username": username.trimmingCharacters(in: .whitespaces).lowercased(),
             "about": about,
             "emojiStatus": status,
+            "birthday": hasBirthday ? Self.birthdayFormat.string(from: birthday) : "",
         ]
         if let img = avatarPreview, let url = ProfileViewModel.avatarDataURL(img) {
             fields["avatar"] = url

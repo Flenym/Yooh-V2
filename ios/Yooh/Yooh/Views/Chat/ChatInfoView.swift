@@ -21,6 +21,7 @@ struct ChatInfoView: View {
     @State private var showAddMember = false
     @State private var sharedImages: [YoohMessage] = []
     @State private var avatarItem: PhotosPickerItem?
+    @State private var scheduled: [YoohMessage] = []
 
     private var chat: YoohChat? {
         app.chatsViewModel.chats.first(where: { $0.id == chatId })
@@ -52,6 +53,7 @@ struct ChatInfoView: View {
                         directSection(chat)
                     }
                     sharedMedia(chat)
+                    scheduledSection(chat)
                     optionsSection(chat)
                     dangerSection(chat)
                 }
@@ -543,6 +545,53 @@ struct ChatInfoView: View {
             return
         }
         await saveChatSettings(chat, [:], avatar: url)
+    }
+
+    // MARK: - Scheduled messages (own pending, cancellable)
+
+    private func scheduledSection(_ chat: YoohChat) -> some View {
+        Section("Scheduled") {
+            if scheduled.isEmpty {
+                Text("Nothing scheduled.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(scheduled) { m in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(m.text ?? "")
+                            .font(.subheadline)
+                            .lineLimit(2)
+                        if let at = m.scheduledAt {
+                            Text(YoohDates.fullDateTime(at))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Button("Cancel") {
+                        Task {
+                            do {
+                                try await app.messageService.delete(chatId: chat.id, messageId: m.id)
+                                scheduled.removeAll(where: { $0.id == m.id })
+                            } catch {
+                                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                            }
+                        }
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .accessibilityLabel(Text("Cancel scheduled message"))
+                }
+            }
+        }
+        .task {
+            do {
+                scheduled = try await app.messageService.scheduled(chatId: chat.id)
+            } catch {
+                // Best-effort section; errors surface on explicit actions.
+            }
+        }
     }
 
     // MARK: - Permissions (mirror server roles)

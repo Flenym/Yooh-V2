@@ -112,6 +112,8 @@ const updateProfileSchema = z
     about: z.string().max(280).optional(),
     avatar: z.string().max(2_000_000).optional(),
     banner: z.string().max(2_000_000).optional(),
+    // ISO calendar date (YYYY-MM-DD) or empty string to clear.
+    birthday: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]).optional(),
     premiumBadge: premiumBadgeSchema.optional(),
     locale: z.enum(["ru", "en"]).optional(),
   })
@@ -244,6 +246,7 @@ function toSafeUser(user, options = {}) {
     about: user.about ?? "",
     avatar: user.avatar ?? "",
     banner: user.banner ?? "",
+    birthday: user.birthday ?? "",
     locale: user.locale,
     createdAt: user.createdAt,
     usageMonth: user.usageMonth,
@@ -841,6 +844,11 @@ function ensureUserShape(db, user, config) {
 
   if (typeof user.banner !== "string") {
     user.banner = "";
+    changed = true;
+  }
+
+  if (typeof user.birthday !== "string") {
+    user.birthday = "";
     changed = true;
   }
 
@@ -1652,6 +1660,22 @@ ${buildAuthCodeSecurityHint()}
 
       if (parsed.banner !== undefined) {
         user.banner = trimText(parsed.banner);
+      }
+
+      if (parsed.birthday !== undefined) {
+        const raw = trimText(parsed.birthday);
+        if (raw) {
+          const [y, m, d] = raw.split("-").map((part) => Number.parseInt(part, 10));
+          const valid =
+            Number.isInteger(y) && Number.isInteger(m) && Number.isInteger(d) &&
+            y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+          if (!valid) {
+            throw new HttpError(400, "Birthday is invalid");
+          }
+          user.birthday = raw;
+        } else {
+          user.birthday = "";
+        }
       }
 
       if (parsed.premiumBadge !== undefined) {

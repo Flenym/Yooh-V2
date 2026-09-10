@@ -19,6 +19,7 @@ final class ChatViewModel {
     private(set) var isLoadingMore = false
     private(set) var hasMore = true
     private(set) var error: String?
+    private(set) var notice: String?
     private(set) var uploadState: String?
 
     var stream: MessageStream = .main
@@ -26,6 +27,8 @@ final class ChatViewModel {
     var replyTo: YoohMessage?
     var editing: YoohMessage?
     var forwardTarget: YoohMessage?
+    /// Message id the list should scroll to (set by in-chat search).
+    var jumpTarget: String?
 
     private var prefs: LocalPreferences? {
         let id = myUserId
@@ -97,6 +100,8 @@ final class ChatViewModel {
 
     func showError(_ message: String) { error = message }
     func clearError() { error = nil }
+    func showNotice(_ message: String) { notice = message }
+    func clearNotice() { notice = nil }
 
     // MARK: - Local pin
 
@@ -219,6 +224,63 @@ final class ChatViewModel {
                 appendRealtime(saved)
             } catch {
                 self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            }
+        }
+    }
+
+    /// Schedules a text message for future delivery (server publishes it).
+    func sendScheduled(text: String, at date: Date) {
+        let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard Validation.validateMessage(clean) else { return }
+        draft = ""
+        replyTo = nil
+        Task {
+            do {
+                var req = SendMessageRequest.text(clean)
+                req.scheduledAt = ISO8601DateFormatter().string(from: date)
+                _ = try await app.messageService.send(chatId: chatId, request: req, stream: stream)
+                showNotice("Message scheduled for \(YoohDates.fullDateTime(req.scheduledAt)).")
+                Haptics.send()
+            } catch {
+                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            }
+        }
+    }
+
+    func loadScheduled() async -> [YoohMessage] {
+        do {
+            return try await app.messageService.scheduled(chatId: chatId)
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            return []
+        }
+    }
+
+    func searchMessages(_ query: String) async throws -> [YoohMessage] {
+        try await app.messageService.search(chatId: chatId, query: query, stream: stream)
+    }
+
+    /// Scrolls to a message, paging history until it is loaded.
+    func jumpToMessage(_ id: String) {        Task {
+            var guard_ = 0
+            while !messages.contains(where: { $0.id == id }), hasMore, guard_ < 10 {
+                guard_ += 1
+                guard let oldest = messages.first?.createdAt else { break }
+                do {
+                    let page = try await app.messageService.history(
+                        chatId: chatId, stream: stream, before: oldest)
+                    let stamped = stamp(page).filter { m in !messages.contains(where: { $0.id == m.id }) }
+                    if stamped.isEmpty { break }
+                    messages.insert(contentsOf: stamped, at: 0)
+                    if page.count < AppConfig.messagePageSize { hasMore = false }
+                } catch {
+                    break
+                }
+            }
+            if messages.contains(where: { $0.id == id }) {
+                jumpTarget = id
+            } else {
+                showError("Couldn't load that message.")
             }
         }
     }

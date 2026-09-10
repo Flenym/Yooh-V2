@@ -10,7 +10,7 @@ import {
   canViewerSendVoiceToTarget,
   getPublicUserForViewer,
 } from "./privacyRules.js";
-import { byteLength, isValidGroupTitle, monthKey, normalizePublicHandle, nowIso, trimText } from "../utils.js";
+import { byteLength, hashPhone, isValidGroupTitle, monthKey, normalizePhone, normalizePublicHandle, nowIso, trimText } from "../utils.js";
 
 const chatSettingsSchema = z
   .object({
@@ -99,6 +99,9 @@ const createMessageSchema = z.object({
   replyToMessageId: z.string().min(1).optional(),
   threadRootId: z.string().min(1).optional(),
   clientMessageId: z.string().min(8).max(128).optional(),
+  // Optional future ISO timestamp: the message stays hidden until due,
+  // then a scheduler publishes it (realtime + history). Validated below.
+  scheduledAt: z.string().max(64).optional(),
 });
 
 const pollVoteSchema = z.object({
@@ -1312,8 +1315,16 @@ function hydratePollForViewer(db, rawPoll, viewerUserId = null) {
   };
 }
 
-function resolveMessageReplyReference(db, message, viewerUserId) {
-  const replyToMessageId = trimText(message?.replyToMessageId);
+/// A message scheduled for the future is invisible until due.
+function isMessagePending(entry, nowMs = Date.now()) {
+  if (!entry || !entry.scheduledAt) {
+    return false;
+  }
+  const due = new Date(entry.scheduledAt).getTime();
+  return Number.isFinite(due) && due > nowMs;
+}
+
+function resolveMessageReplyReference(db, message, viewerUserId) {  const replyToMessageId = trimText(message?.replyToMessageId);
   if (!replyToMessageId) {
     return null;
   }
@@ -2120,6 +2131,21 @@ export function createChatService({ store, config }) {
       throw new HttpError(400, "User is required");
     }
     const hashes = normalizeContactHashes(payload?.hashes);
+    // Convenience for clients without the hash salt: raw phone numbers are
+    // normalized and hashed server-side exactly like stored phone hashes.
+    // Additive only — the `hashes` contract is unchanged.
+    if (Array.isArray(payload?.phones)) {
+      const salt = config?.contactHashSalt ?? "";
+      for (const raw of payload.phones.slice(0, 5000)) {
+        const hashed = hashPhone(raw, salt);
+        if (hashed && !hashes.includes(hashed)) {
+          hashes.push(hashed);
+          if (hashes.length >= 5000) {
+            break;
+          }
+        }
+      }
+    }
     return store.transact((db) => {
       const user = db.users.find((entry) => entry.id === safeUserId);
       if (!user) {
@@ -2950,6 +2976,7 @@ export function createChatService({ store, config }) {
       return db.messages
         .filter((entry) => entry.chatId === chatId)
         .filter((entry) => (entry.stream ?? "main") === stream)
+        .filter((entry) => !isMessagePending(entry))
         .filter((entry) => {
           if (stream !== "comment" || !threadRootId) {
             return true;
@@ -2999,6 +3026,24 @@ export function createChatService({ store, config }) {
       throw new HttpError(400, "Poll payload is required");
     }
     const clientMessageId = trimText(parsed.clientMessageId);
+
+    // Optional delayed delivery: hidden from history/realtime until due.
+    // Bounds: must be in the future and at most 365 days out.
+    let scheduledAt = null;
+    const scheduledRaw = trimText(parsed.scheduledAt);
+    if (scheduledRaw) {
+      const scheduledMs = new Date(scheduledRaw).getTime();
+      if (!Number.isFinite(scheduledMs)) {
+        throw new HttpError(400, "Scheduled time is invalid");
+      }
+      if (scheduledMs <= Date.now() + 30_000) {
+        throw new HttpError(400, "Scheduled time must be in the future");
+      }
+      if (scheduledMs > Date.now() + 365 * 24 * 60 * 60 * 1000) {
+        throw new HttpError(400, "Scheduled time is too far in the future");
+      }
+      scheduledAt = new Date(scheduledMs).toISOString();
+    }
 
     const createdAt = nowIso();
     return store.transact((db) => {
@@ -3073,7 +3118,7 @@ export function createChatService({ store, config }) {
         replyToMessageId = replyTarget.id;
       }
 
-      chat.updatedAt = createdAt;
+      chat.updatedAt = scheduledAt ? chat.updatedAt : createdAt;
       const message = {
         id: uuid(),
         chatId,
@@ -3089,16 +3134,18 @@ export function createChatService({ store, config }) {
         replyToMessageId,
         reactions: [],
         readByUserIds: [],
+        scheduledAt,
         createdAt,
       };
       db.messages.push(message);
-      appendSupportTicketMessage(supportTicket, message.id, createdAt);
+      if (!scheduledAt) {
+        appendSupportTicketMessage(supportTicket, message.id, createdAt);
+      }
       return hydrateMessage(db, message, userId);
     });
   }
 
-  async function getMessageForUser(userId, chatId, messageId) {
-    const safeMessageId = trimText(messageId);
+  async function getMessageForUser(userId, chatId, messageId) {    const safeMessageId = trimText(messageId);
     if (!safeMessageId) {
       throw new HttpError(400, "Message id is required");
     }
@@ -3110,6 +3157,78 @@ export function createChatService({ store, config }) {
       }
       return hydrateMessage(db, message, userId);
     });
+  }
+
+  /// Full-text search inside one chat (member-only). Pending scheduled
+  /// messages are excluded; newest first.
+  async function searchMessages(userId, chatId, options = {}) {
+    const query = trimText(options.q).toLowerCase();
+    if (query.length < 2) {
+      return [];
+    }
+    const limitRaw = Number.parseInt(options.limit, 10);
+    const limit = Number.isNaN(limitRaw) ? 20 : Math.min(Math.max(limitRaw, 1), 50);
+    const stream = streamSchema.parse(options.stream ?? "main");
+
+    return store.read((db) => {
+      ensureMembership(db, chatId, userId);
+      const nowMs = Date.now();
+      return db.messages
+        .filter((entry) => entry.chatId === chatId)
+        .filter((entry) => (entry.stream ?? "main") === stream)
+        .filter((entry) => !isMessagePending(entry, nowMs))
+        .filter((entry) => String(entry.text ?? "").toLowerCase().includes(query))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit)
+        .map((entry) => hydrateMessage(db, entry, userId));
+    });
+  }
+
+  /// Own pending scheduled messages (for manage/cancel UI).
+  async function listScheduledMessages(userId, chatId) {
+    return store.read((db) => {
+      ensureMembership(db, chatId, userId);
+      const nowMs = Date.now();
+      return db.messages
+        .filter((entry) => entry.chatId === chatId && entry.senderId === userId)
+        .filter((entry) => isMessagePending(entry, nowMs))
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+        .slice(0, 50)
+        .map((entry) => hydrateMessage(db, entry, userId));
+    });
+  }
+
+  /// Publishes due scheduled messages (called by the scheduler tick).
+  /// Returns sender-hydrated messages plus member lists for fanout.
+  async function collectDueScheduledMessages() {
+    const nowMs = Date.now();
+    const due = await store.transact((db) => {
+      const ready = db.messages.filter(
+        (entry) => entry.scheduledAt && !isMessagePending(entry, nowMs),
+      );
+      const out = [];
+      for (const entry of ready) {
+        entry.scheduledAt = null;
+        const chat = db.chats.find((item) => item.id === entry.chatId);
+        if (chat) {
+          chat.updatedAt = nowIso();
+        }
+        out.push({ chatId: entry.chatId, messageId: entry.id, senderId: entry.senderId });
+      }
+      return out;
+    });
+
+    const published = [];
+    for (const item of due) {
+      try {
+        const memberIds = await getChatMemberIds(item.chatId);
+        const message = await getMessageForUser(item.senderId, item.chatId, item.messageId);
+        published.push({ message, memberIds });
+      } catch {
+        // Chat/member vanished mid-publish; the message itself is already due.
+      }
+    }
+    return published;
   }
 
   async function sendTextMessage(userId, chatId, payload) {
@@ -4501,6 +4620,9 @@ export function createChatService({ store, config }) {
     recordCallStatus,
     createChat,
     listMessages,
+    searchMessages,
+    listScheduledMessages,
+    collectDueScheduledMessages,
     getMessageForUser,
     sendTextMessage,
     sendComment,
