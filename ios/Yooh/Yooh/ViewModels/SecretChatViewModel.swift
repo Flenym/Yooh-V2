@@ -12,19 +12,24 @@ final class SecretChatViewModel {
     var editing: SecretMessage?
 
     private let store: SecretStore
-    private var timer: Timer?
+    private var ticker: Task<Void, Never>?
 
     init(chat: SecretChat, userId: String) {
         self.chat = chat
         self.store = SecretStore(userId: userId)
         reload()
-        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.reload() }
+        // Periodic expiry sweep (Task-based: safe to cancel from deinit).
+        ticker = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self?.reload() }
+            }
         }
     }
 
     deinit {
-        timer?.invalidate()
+        ticker?.cancel()
     }
 
     func reload() {
@@ -95,7 +100,7 @@ final class SecretChatViewModel {
     }
 
     func deleteChat() {
-        timer?.invalidate()
+        ticker?.cancel()
         store.deleteChat(chat.id)
     }
 }
