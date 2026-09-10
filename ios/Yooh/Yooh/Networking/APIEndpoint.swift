@@ -15,6 +15,9 @@ struct APIEndpoint {
     var path: String
     var query: [URLQueryItem] = []
     var jsonBody: (any Encodable)?
+    /// Admin token (`x-admin-token`) instead of the user JWT. Used only
+    /// by the optional Admin console; never mixed with user auth.
+    var adminToken: String?
 
     var isIdempotent: Bool { method == .get }
 
@@ -190,6 +193,67 @@ struct APIEndpoint {
 
     static func removeMember(chatId: String, memberId: String) -> APIEndpoint {
         APIEndpoint(method: .delete, path: "/api/chats/\(chatId)/members/\(memberId)")
+    }
+
+    // MARK: - Chat moderation (owner/admin)
+
+    static func chatBan(chatId: String, userId: String, reason: String? = nil) -> APIEndpoint {
+        struct Body: Encodable {
+            let userId: String
+            let reason: String?
+            enum CodingKeys: String, CodingKey { case userId, reason }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(userId, forKey: .userId)
+                try c.encodeIfPresent(reason, forKey: .reason)
+            }
+        }
+        return APIEndpoint(method: .post, path: "/api/chats/\(chatId)/moderation/bans",
+                           jsonBody: Body(userId: userId, reason: reason))
+    }
+
+    static func chatUnban(chatId: String, userId: String) -> APIEndpoint {
+        APIEndpoint(method: .delete, path: "/api/chats/\(chatId)/moderation/bans/\(userId)")
+    }
+
+    static func chatMute(chatId: String, userId: String, reason: String? = nil) -> APIEndpoint {
+        struct Body: Encodable {
+            let userId: String
+            let reason: String?
+            enum CodingKeys: String, CodingKey { case userId, reason }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(userId, forKey: .userId)
+                try c.encodeIfPresent(reason, forKey: .reason)
+            }
+        }
+        return APIEndpoint(method: .post, path: "/api/chats/\(chatId)/moderation/mutes",
+                           jsonBody: Body(userId: userId, reason: reason))
+    }
+
+    static func chatUnmute(chatId: String, userId: String) -> APIEndpoint {
+        APIEndpoint(method: .delete, path: "/api/chats/\(chatId)/moderation/mutes/\(userId)")
+    }
+
+    // MARK: - Admin console (x-admin-token)
+
+    static func adminStats(token: String) -> APIEndpoint {
+        var e = APIEndpoint(path: "/api/admin/stats")
+        e.adminToken = token
+        return e
+    }
+
+    static func adminAuthCodes(token: String) -> APIEndpoint {
+        var e = APIEndpoint(path: "/api/admin/auth-codes")
+        e.adminToken = token
+        return e
+    }
+
+    static func adminBroadcast(token: String, text: String) -> APIEndpoint {
+        var e = APIEndpoint(method: .post, path: "/api/admin/system-bot/broadcast",
+                            jsonBody: ["text": text])
+        e.adminToken = token
+        return e
     }
 
     // MARK: - Messages

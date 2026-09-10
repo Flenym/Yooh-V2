@@ -30,11 +30,43 @@ final class ChatsViewModel {
 
     var folder: Folder = .all
 
+    /// Active user-defined folder (nil = built-in filter above).
+    var customFolder: LocalPreferences.FolderDef?
+
     /// Folder chips drive both the type filter and the archive view.
     func setFolder(_ f: Folder) {
         folder = f
+        customFolder = nil
         showArchived = (f == .archived)
         Haptics.selection()
+    }
+
+    func setCustomFolder(_ f: LocalPreferences.FolderDef?) {
+        customFolder = f
+        showArchived = false
+        Haptics.selection()
+    }
+
+    var customFolders: [LocalPreferences.FolderDef] = []
+
+    func reloadFolders() {
+        ensurePrefs()
+        customFolders = prefs?.customFolders ?? []
+        if let cf = customFolder, !customFolders.contains(where: { $0.id == cf.id }) {
+            customFolder = nil
+        }
+    }
+
+    func saveCustomFolder(_ f: LocalPreferences.FolderDef) {
+        ensurePrefs()
+        prefs?.saveFolder(f)
+        reloadFolders()
+    }
+
+    func deleteCustomFolder(_ id: String) {
+        ensurePrefs()
+        prefs?.deleteFolder(id)
+        reloadFolders()
     }
 
     var app: AppState! = nil
@@ -58,7 +90,15 @@ final class ChatsViewModel {
         let archived = prefs?.archivedChatIds ?? []
         var list = chats.filter { showArchived ? archived.contains($0.id) : !archived.contains($0.id) }
         if let me = myUserId {
-            switch folder {
+            if let cf = customFolder {
+                list = list.filter { chat in
+                    let kindOK = (chat.type == .direct && cf.includeDirect)
+                        || (chat.type == .group && cf.includeGroups)
+                        || (chat.isChannel && cf.includeChannels)
+                    return kindOK && (!cf.unreadOnly || chat.hasUnread(myUserId: me))
+                }
+            } else {
+                switch folder {
             case .all:
                 break
             case .unread:
@@ -71,6 +111,7 @@ final class ChatsViewModel {
                 list = list.filter { $0.isChannel }
             case .archived:
                 break // archive view is driven by showArchived above
+            }
             }
         }
         let q = searchText.trimmingCharacters(in: .whitespaces).lowercased()
@@ -109,6 +150,7 @@ final class ChatsViewModel {
 
     func refresh() async {
         guard app.session.isAuthenticated else { return }
+        reloadFolders()
         isLoading = true
         error = nil
         defer { isLoading = false }

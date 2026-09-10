@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 /// Group/channel/direct info: members, roles, invites, profile editing,
@@ -19,6 +20,7 @@ struct ChatInfoView: View {
     @State private var confirmDelete = false
     @State private var showAddMember = false
     @State private var sharedImages: [YoohMessage] = []
+    @State private var avatarItem: PhotosPickerItem?
 
     private var chat: YoohChat? {
         app.chatsViewModel.chats.first(where: { $0.id == chatId })
@@ -32,6 +34,9 @@ struct ChatInfoView: View {
                     quickActions(chat)
                     if chat.type != .direct {
                         detailsSection(chat)
+                        if chat.isChannel {
+                            channelSection(chat)
+                        }
                         membersSection(chat)
                     } else {
                         directSection(chat)
@@ -172,6 +177,12 @@ struct ChatInfoView: View {
                         Menu {
                             Button("Make admin") { setRole(chat, member: m, role: "admin") }
                             Button("Make member") { setRole(chat, member: m, role: "member") }
+                            Divider()
+                            Button("Mute") { moderate(chat, member: m, kind: .mute) }
+                            Button("Unmute") { moderate(chat, member: m, kind: .unmute) }
+                            Button("Ban", role: .destructive) { moderate(chat, member: m, kind: .ban) }
+                            Button("Unban") { moderate(chat, member: m, kind: .unban) }
+                            Divider()
                             Button("Remove", role: .destructive) { removeMember(chat, member: m) }
                         } label: {
                             Image(systemName: "ellipsis")
@@ -367,6 +378,67 @@ struct ChatInfoView: View {
         }
     }
 
+    // MARK: - Channel settings (server ChatSettings)
+
+    private func channelSection(_ chat: YoohChat) -> some View {
+        Section("Channel") {
+            Toggle("Comments", isOn: Binding(
+                get: { chat.settings?.commentsEnabled ?? true },
+                set: { v in Task { await saveChatSettings(chat, ["commentsEnabled": v]) } }
+            ))
+            Toggle("Reactions", isOn: Binding(
+                get: { chat.settings?.reactionsEnabled ?? true },
+                set: { v in Task { await saveChatSettings(chat, ["reactionsEnabled": v]) } }
+            ))
+            Toggle("Sign messages", isOn: Binding(
+                get: { chat.settings?.signMessages ?? false },
+                set: { v in Task { await saveChatSettings(chat, ["signMessages": v]) } }
+            ))
+            if canEdit(chat) {
+                PhotosPicker(selection: $avatarItem, matching: .images) {
+                    Label("Change channel photo", systemImage: "photo")
+                }
+            }
+            if let error {
+                Text(error).font(.footnote).foregroundStyle(.red)
+            }
+            if let notice {
+                Text(notice).font(.footnote).foregroundStyle(.green)
+            }
+        }
+        .onChange(of: avatarItem) { _, item in
+            guard let item else { return }
+            avatarItem = nil
+            Task {
+                guard let data = try? await item.loadTransferable(type: Data.self),
+                      let img = UIImage(data: data),
+                      let url = ProfileViewModel.avatarDataURL(img) else
+                {
+                    error = "Couldn't process the image."
+                    return
+                }
+                await saveChatSettings(chat, [:], avatar: url)
+            }
+        }
+    }
+
+    private func saveChatSettings(_ chat: YoohChat, _ settings: [String: Any], avatar: String? = nil) async {
+        error = nil
+        notice = nil
+        var fields: [String: Any] = ["settings": settings]
+        if let avatar { fields["avatar"] = avatar }
+        // Omit empty settings dict (avatar-only save).
+        if settings.isEmpty { fields.removeValue(forKey: "settings") }
+        do {
+            _ = try await app.chatsService.update(chatId: chat.id, fields: fields)
+            await app.chatsViewModel.refresh()
+            notice = "Saved."
+            Haptics.send()
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
     // MARK: - Permissions (mirror server roles)
 
     private func canEdit(_ chat: YoohChat) -> Bool {
@@ -418,8 +490,30 @@ struct ChatInfoView: View {
         }
     }
 
-    private func removeMember(_ chat: YoohChat, member: ChatMember) {
+    private enum ModerationKind {
+        case ban, unban, mute, unmute
+    }
+
+    private func moderate(_ chat: YoohChat, member: ChatMember, kind: ModerationKind) {
+        error = nil
+        notice = nil
         Task {
+            do {
+                switch kind {
+                case .ban: try await app.chatsService.ban(chatId: chat.id, memberId: member.userId)
+                case .unban: try await app.chatsService.unban(chatId: chat.id, memberId: member.userId)
+                case .mute: try await app.chatsService.mute(chatId: chat.id, memberId: member.userId)
+                case .unmute: try await app.chatsService.unmute(chatId: chat.id, memberId: member.userId)
+                }
+                Haptics.send()
+                await app.chatsViewModel.refresh()
+            } catch {
+                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            }
+        }
+    }
+
+    private func removeMember(_ chat: YoohChat, member: ChatMember) {        Task {
             do {
                 try await app.chatsService.removeMember(chatId: chat.id, memberId: member.userId)
                 await app.chatsViewModel.refresh()

@@ -9,6 +9,7 @@ struct ChatsListView: View {
     @State private var showComposer = false
     @State private var showStories = false
     @State private var showStoryCreator = false
+    @State private var showFolders = false
     @State private var confirmDelete: YoohChat?
     @State private var confirmClear: YoohChat?
     @State private var isEditing = false
@@ -70,6 +71,9 @@ struct ChatsListView: View {
             .sheet(isPresented: $showStoryCreator) {
                 StoryCreatorView()
             }
+            .sheet(isPresented: $showFolders) {
+                FolderEditorView()
+            }
             .confirmationDialog("Delete this chat?", isPresented: Binding(
                 get: { confirmDelete != nil },
                 set: { if !$0 { confirmDelete = nil } }
@@ -111,26 +115,47 @@ struct ChatsListView: View {
     private func foldersStrip(folder: ChatsViewModel.Folder) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: YoohTheme.Spacing.s) {
-                ForEach(ChatsViewModel.Folder.allCases, id: \.self) { f in
-                    let active = (folder == f)
-                    Button {
-                        app.chatsViewModel.setFolder(f)
-                    } label: {
-                        Text(f.rawValue)
-                            .font(.system(size: 15, weight: active ? .semibold : .regular))
-                            .foregroundStyle(active ? .white : .primary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(active ? YoohTheme.TG.badge : YoohTheme.TG.field,
-                                        in: .capsule)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("\(f.rawValue) chats"))
+                folderChip(title: "All", active: app.chatsViewModel.customFolder == nil && folder == .all) {
+                    app.chatsViewModel.setFolder(.all)
                 }
+                ForEach(app.chatsViewModel.customFolders) { cf in
+                    folderChip(title: cf.name, active: app.chatsViewModel.customFolder?.id == cf.id) {
+                        app.chatsViewModel.setCustomFolder(cf)
+                    }
+                }
+                folderChip(title: "Archived", active: app.chatsViewModel.customFolder == nil && folder == .archived) {
+                    app.chatsViewModel.setFolder(.archived)
+                }
+                Button {
+                    showFolders = true
+                } label: {
+                    Image(systemName: "folder.badge.plus")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(YoohTheme.TG.field, in: .capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Manage folders"))
             }
             .padding(.horizontal, YoohTheme.Spacing.l)
             .padding(.vertical, YoohTheme.Spacing.xs)
         }
+    }
+
+    private func folderChip(title: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15, weight: active ? .semibold : .regular))
+                .foregroundStyle(active ? .white : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(active ? YoohTheme.TG.badge : YoohTheme.TG.field,
+                            in: .capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("\(title) chats"))
     }
 
     // MARK: - Stories strip

@@ -28,6 +28,8 @@ struct SettingsView: View {
                         securityCard(settings)
                         stickersCard
                         feedbackCard(settings)
+                        helpCard
+                        adminCard
                         serverCard(url: $settings.serverURL, onApply: { settings.applyServerURL() })
                         aboutCard
                         logoutCard
@@ -103,6 +105,34 @@ struct SettingsView: View {
     }
 
     // MARK: - Cards
+
+    private var helpCard: some View {
+        card {
+            NavigationLink {
+                SupportView()
+            } label: {
+                settingRow(tile: "questionmark.circle.fill", color: .blue, title: "Support")
+            }
+            .buttonStyle(.plain)
+            NavigationLink {
+                FAQView()
+            } label: {
+                settingRow(tile: "book.fill", color: .teal, title: "FAQ")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var adminCard: some View {
+        card {
+            NavigationLink {
+                AdminView()
+            } label: {
+                settingRow(tile: "shield.lefthalf.fill", color: .gray, title: "Admin console")
+            }
+            .buttonStyle(.plain)
+        }
+    }
 
     private var appearanceCard: some View {
         card {

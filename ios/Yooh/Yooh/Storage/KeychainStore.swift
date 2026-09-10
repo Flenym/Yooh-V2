@@ -7,6 +7,7 @@ enum KeychainStore {
 
     enum Key: String {
         case authToken = "authToken"
+        case adminToken = "adminToken"
     }
 
     @discardableResult

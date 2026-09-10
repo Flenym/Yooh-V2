@@ -76,6 +76,28 @@ final class ChatService {
         let _: Res = try await api.send(.removeMember(chatId: chatId, memberId: memberId))
     }
 
+    // MARK: - Moderation (owner/admin only, server-enforced)
+
+    func ban(chatId: String, memberId: String, reason: String? = nil) async throws {
+        struct Res: Decodable { let ban: AnyCodable? }
+        let _: Res = try await api.send(.chatBan(chatId: chatId, userId: memberId, reason: reason))
+    }
+
+    func unban(chatId: String, memberId: String) async throws {
+        struct Res: Decodable { let removed: AnyCodable? }
+        let _: Res = try await api.send(.chatUnban(chatId: chatId, userId: memberId))
+    }
+
+    func mute(chatId: String, memberId: String, reason: String? = nil) async throws {
+        struct Res: Decodable { let mute: AnyCodable? }
+        let _: Res = try await api.send(.chatMute(chatId: chatId, userId: memberId, reason: reason))
+    }
+
+    func unmute(chatId: String, memberId: String) async throws {
+        struct Res: Decodable { let removed: AnyCodable? }
+        let _: Res = try await api.send(.chatUnmute(chatId: chatId, userId: memberId))
+    }
+
     // MARK: - Discovery
 
     func discover(query: String) async throws -> [DiscoveredChat] {

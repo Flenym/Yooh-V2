@@ -104,7 +104,7 @@ struct MessageBubbleView: View {
         switch message.type {
         case .text:
             Text(message.text ?? "")
-                .font(YoohTheme.Fonts.message)
+                .font(.system(size: 17 * ThemeStore.shared.fontScale))
                 .textSelection(.enabled)
         case .file:
             FileContentView(message: message)
@@ -120,7 +120,7 @@ struct MessageBubbleView: View {
             }
         case .unknown:
             Text(message.text ?? "")
-                .font(YoohTheme.Fonts.message)
+                .font(.system(size: 17 * ThemeStore.shared.fontScale))
         }
     }
 

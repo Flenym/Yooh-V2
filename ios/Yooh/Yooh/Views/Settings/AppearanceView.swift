@@ -88,6 +88,16 @@ struct AppearanceView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+            Section("Message text size") {
+                HStack {
+                    Text("A").font(.system(size: 14))
+                    Slider(value: $theme.fontScale, in: 0.85...1.3, step: 0.05)
+                    Text("A").font(.system(size: 22, weight: .bold))
+                }
+                Text("The quick brown fox jumps over the lazy dog")
+                    .font(.system(size: 17 * theme.fontScale))
+                    .padding(.vertical, 4)
+            }
         }
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)

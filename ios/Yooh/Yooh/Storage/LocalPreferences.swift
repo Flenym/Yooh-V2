@@ -83,8 +83,52 @@ final class LocalPreferences: @unchecked Sendable {
         defaults.set(map, forKey: key("drafts"))
     }
 
-    // MARK: - Pinned messages (message id per chat)
+    // MARK: - Custom folders (local, like the web client's folder rules)
 
+    /// A user-defined folder: name + which chat kinds it includes.
+    struct FolderDef: Codable, Identifiable, Hashable {
+        var id: String
+        var name: String
+        var includeDirect: Bool
+        var includeGroups: Bool
+        var includeChannels: Bool
+        var unreadOnly: Bool
+
+        static func make(name: String) -> FolderDef {
+            FolderDef(id: UUID().uuidString, name: name,
+                      includeDirect: true, includeGroups: true,
+                      includeChannels: true, unreadOnly: false)
+        }
+    }
+
+    var customFolders: [FolderDef] {
+        get {
+            guard let data = defaults.data(forKey: key("folders")),
+                  let list = try? JSONDecoder().decode([FolderDef].self, from: data) else { return [] }
+            return list
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                defaults.set(data, forKey: key("folders"))
+            }
+        }
+    }
+
+    func saveFolder(_ folder: FolderDef) {
+        var list = customFolders
+        if let i = list.firstIndex(where: { $0.id == folder.id }) {
+            list[i] = folder
+        } else {
+            list.append(folder)
+        }
+        customFolders = list
+    }
+
+    func deleteFolder(_ id: String) {
+        customFolders = customFolders.filter { $0.id != id }
+    }
+
+    // MARK: - Pinned messages (message id per chat)
     private func pinsMap() -> [String: String] {
         (defaults.dictionary(forKey: key("pins")) as? [String: String]) ?? [:]
     }

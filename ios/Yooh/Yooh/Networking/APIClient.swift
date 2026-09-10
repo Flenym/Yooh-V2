@@ -170,7 +170,9 @@ final class APIClient: NSObject, @unchecked Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
         request.timeoutInterval = endpoint.method == .get ? AppConfig.getTimeout : AppConfig.jsonTimeout
-        if let token = tokenProvider?() {
+        if let admin = endpoint.adminToken {
+            request.setValue(admin, forHTTPHeaderField: "x-admin-token")
+        } else if let token = tokenProvider?() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         if let body = endpoint.jsonBody {

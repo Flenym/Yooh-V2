@@ -76,11 +76,19 @@ final class ThemeStore {
         didSet { UserDefaults.standard.set(mode.rawValue, forKey: Keys.mode) }
     }
 
+    /// Message text scale (0.85…1.3). Multiplies bubble body size on top
+    /// of Dynamic Type.
+    var fontScale: Double {
+        didSet { UserDefaults.standard.set(fontScale, forKey: Keys.fontScale) }
+    }
+
     private init() {
         let d = UserDefaults.standard
         accentID = d.string(forKey: Keys.accent) ?? "pulse"
         wallpaperID = d.string(forKey: Keys.wallpaper) ?? "system"
         mode = Mode(rawValue: d.string(forKey: Keys.mode) ?? "System") ?? .system
+        let s = d.double(forKey: Keys.fontScale)
+        fontScale = (s >= 0.85 && s <= 1.3) ? s : 1.0
     }
 
     var accent: Color {
@@ -103,6 +111,7 @@ final class ThemeStore {
         static let accent = "yooh.theme.accent"
         static let wallpaper = "yooh.theme.wallpaper"
         static let mode = "yooh.theme.mode"
+        static let fontScale = "yooh.theme.fontScale"
     }
 }
 
