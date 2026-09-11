@@ -236,6 +236,13 @@ function emitRealtimeEvent(event) {
     return;
   }
 
+  if (event.type === "requests:updated") {
+    for (const userId of event.userIds ?? []) {
+      io.to(`user:${userId}`).emit("requests:updated", { userId });
+    }
+    return;
+  }
+
   if (event.type === "story:updated") {
     const payload = { storyId: event.storyId ?? "" };
     if (event.userIds === "all") {

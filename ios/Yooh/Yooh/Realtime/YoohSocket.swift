@@ -16,6 +16,7 @@ enum YoohSocketEvent {
     case presenceSnapshot(online: [String], lastSeen: [String: String])
     case presenceUpdate(userId: String, online: Bool, lastSeenAt: String?)
     case settingsUpdated
+    case requestsUpdated
     case storyUpdated(storyId: String?)
     case callsUpdated
     case sessionRevoked(sessionIds: [String])
@@ -348,6 +349,8 @@ final class YoohSocket {
                 lastSeenAt: obj?["lastSeenAt"] as? String))
         case "settings:updated":
             delegate?.socket(self, didReceive: .settingsUpdated)
+        case "requests:updated":
+            delegate?.socket(self, didReceive: .requestsUpdated)
         case "story:updated":
             delegate?.socket(self, didReceive: .storyUpdated(storyId: obj?["storyId"] as? String))
         case "calls:updated":

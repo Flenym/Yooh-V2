@@ -7,6 +7,8 @@ struct MessageBubbleView: View {
     let message: YoohMessage
     let vm: ChatViewModel
 
+    @State private var showTranslation = false
+
     var body: some View {
         HStack {
             if message.isOutgoing { Spacer(minLength: 48) }
@@ -47,6 +49,13 @@ struct MessageBubbleView: View {
                 } label: {
                     Label("Copy", systemImage: "doc.on.doc")
                 }
+                if #available(iOS 18, *) {
+                    Button {
+                        showTranslation = true
+                    } label: {
+                        Label("Translate", systemImage: "character.book.closed")
+                    }
+                }
             }
             if message.isOutgoing, message.type == .text {
                 Button { vm.beginEdit(message) } label: {
@@ -76,6 +85,7 @@ struct MessageBubbleView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(accessibilityText))
+        .translateSheet(isPresented: $showTranslation, text: message.text ?? "")
     }
 
     // MARK: - Content
@@ -209,6 +219,7 @@ private struct FileContentView: View {
                     .clipShape(.rect(cornerRadius: YoohTheme.Radius.m))
             } else if isAudio, let fileId = message.file?.id {
                 VoicePlayerView(fileId: fileId, token: app.session.token)
+                TranscribeButton(fileId: fileId)
             }
             Button {
                 Task { await prepareShare() }
@@ -347,8 +358,68 @@ private struct PollContentView: View {
     }
 }
 
-private struct ShareSheet: UIViewControllerRepresentable {
-    let url: URL
+// MARK: - Voice transcription (on-device Speech framework, no server)
+
+/// Transcribes a voice message with Apple's Speech recognizer.
+/// Needs microphone-adjacent speech permission; works on-device when
+/// the dictation language is downloaded, otherwise via Apple servers.
+private struct TranscribeButton: View {
+    @Environment(AppState.self) private var app
+    let fileId: String
+
+    @State private var transcript: String?
+    @State private var isWorking = false
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if transcript == nil, error == nil {
+                Button {
+                    Task { await transcribe() }
+                } label: {
+                    HStack(spacing: 4) {
+                        if isWorking {
+                            ProgressView().controlSize(.small)
+                        }
+                        Text("Transcribe")
+                            .font(.caption)
+                            .foregroundStyle(ThemeStore.shared.accent)
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(isWorking)
+                .accessibilityLabel(Text("Transcribe voice message"))
+            }
+            if let transcript {
+                Text(transcript)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+            if let error {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
+    private func transcribe() async {
+        guard let token = app.session.token else { return }
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            let url = try await AudioFileCache.shared.localURL(fileId: fileId, token: token)
+            let text = try await SpeechTranscriber.transcribe(url: url)
+            transcript = text.isEmpty ? "(no speech detected)" : text
+            Haptics.selection()
+        } catch {
+            self.error = "Couldn't transcribe this message."
+        }
+    }
+}
+
+private struct ShareSheet: UIViewControllerRepresentable {    let url: URL
     func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: [url], applicationActivities: nil)
     }

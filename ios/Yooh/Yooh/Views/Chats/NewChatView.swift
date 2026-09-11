@@ -11,6 +11,7 @@ struct NewChatView: View {
     @State private var showSecretPicker = false
     @State private var secretSearch = ""
     @State private var openSecret: SecretChat?
+    @State private var requestUser: PublicUser?
     @State private var groupTitle = ""
     @State private var channelTitle = ""
     @State private var pickedMembers: Set<String> = []
@@ -21,9 +22,14 @@ struct NewChatView: View {
                 search: $search,
                 onPickUser: { user in
                     Task {
-                        // The new chat lands in the list; the sheet dismisses.
-                        if await app.contactsViewModel.openDirect(with: user) != nil {
+                        switch await app.contactsViewModel.openDirect(with: user) {
+                        case .chat:
+                            // The new chat lands in the list; the sheet dismisses.
                             dismiss()
+                        case .needsRequest(let u):
+                            requestUser = u
+                        case .none:
+                            break
                         }
                     }
                 },
@@ -96,6 +102,11 @@ struct NewChatView: View {
             .sheet(item: $openSecret) { sc in
                 if let me = app.session.currentUser?.id {
                     SecretChatView(chat: sc, userId: me) {}
+                }
+            }
+            .sheet(item: $requestUser) { user in
+                MessageRequestSheet(user: user) {
+                    dismiss()
                 }
             }
             .sheet(isPresented: $showGroupForm) {

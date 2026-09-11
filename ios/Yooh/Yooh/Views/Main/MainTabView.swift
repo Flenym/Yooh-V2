@@ -56,6 +56,7 @@ struct MainTabView: View {
         .task {
             await app.chatsViewModel.refresh()
             await app.storiesViewModel.refresh()
+            await app.requestsViewModel.refresh()
         }
     }
 
@@ -183,14 +184,20 @@ private struct GlobalSearchView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
     @State private var openedChat: YoohChat?
+    @State private var requestUser: PublicUser?
 
     var body: some View {
         ContactsSearchBody(
             search: $search,
             onPickUser: { user in
                 Task {
-                    if let chat = await app.contactsViewModel.openDirect(with: user) {
+                    switch await app.contactsViewModel.openDirect(with: user) {
+                    case .chat(let chat):
                         openedChat = chat
+                    case .needsRequest(let u):
+                        requestUser = u
+                    case .none:
+                        break
                     }
                 }
             },
@@ -209,8 +216,11 @@ private struct GlobalSearchView: View {
                 Button("Close") { dismiss() }
             }
         }
-        .navigationDestination(item: $openedChat) { chat in
-            ChatDetailView(chat: chat, app: app)
-        }
+            .navigationDestination(item: $openedChat) { chat in
+                ChatDetailView(chat: chat, app: app)
+            }
+            .sheet(item: $requestUser) { user in
+                MessageRequestSheet(user: user)
+            }
     }
 }

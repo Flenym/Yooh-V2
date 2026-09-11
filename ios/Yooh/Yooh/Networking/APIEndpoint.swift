@@ -329,8 +329,7 @@ struct APIEndpoint {
                     jsonBody: ["targetChatId": targetChatId])
     }
 
-    static func reportMessage(chatId: String, messageId: String, reason: String? = nil) -> APIEndpoint {
-        struct Body: Encodable {
+    static func reportMessage(chatId: String, messageId: String, reason: String? = nil) -> APIEndpoint {        struct Body: Encodable {
             let reason: String?
             enum CodingKeys: String, CodingKey { case reason }
             func encode(to encoder: Encoder) throws {
@@ -340,6 +339,59 @@ struct APIEndpoint {
         }
         return APIEndpoint(method: .post, path: "/api/chats/\(chatId)/messages/\(messageId)/report",
                            jsonBody: Body(reason: reason))
+    }
+
+    // MARK: - Message requests
+
+    static func createMessageRequest(userId: String, text: String?) -> APIEndpoint {
+        struct Body: Encodable {
+            let text: String?
+            enum CodingKeys: String, CodingKey { case text }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encodeIfPresent(text, forKey: .text)
+            }
+        }
+        return APIEndpoint(method: .post, path: "/api/users/\(userId)/message-requests",
+                           jsonBody: Body(text: text))
+    }
+
+    static var messageRequests: APIEndpoint {
+        APIEndpoint(path: "/api/message-requests")
+    }
+
+    static func acceptRequest(_ id: String) -> APIEndpoint {
+        APIEndpoint(method: .post, path: "/api/message-requests/\(id)/accept")
+    }
+
+    static func declineRequest(_ id: String) -> APIEndpoint {
+        APIEndpoint(method: .post, path: "/api/message-requests/\(id)/decline")
+    }
+
+    // MARK: - Stars
+
+    static func transferStars(target: String, amount: Int) -> APIEndpoint {
+        struct Body: Encodable {
+            let target: String
+            let amount: Int
+        }
+        return APIEndpoint(method: .post, path: "/api/stars/transfer",
+                           jsonBody: Body(target: target, amount: amount))
+    }
+
+    // MARK: - Account
+
+    static func deleteAccount(password: String?) -> APIEndpoint {
+        struct Body: Encodable {
+            let password: String?
+            enum CodingKeys: String, CodingKey { case password }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encodeIfPresent(password, forKey: .password)
+            }
+        }
+        return APIEndpoint(method: .delete, path: "/api/me",
+                           jsonBody: Body(password: password))
     }
 
     // MARK: - Stories

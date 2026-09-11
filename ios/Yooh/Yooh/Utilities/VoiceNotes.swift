@@ -129,8 +129,8 @@ final class VoicePlayer {
     }
 }
 
-private actor AudioFileCache {
-    static let shared = AudioFileCache()
+/// Disk cache for audio attachments (shared by playback + transcription).
+actor AudioFileCache {    static let shared = AudioFileCache()
 
     func localURL(fileId: String, token: String) async throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("audio-\(fileId)")

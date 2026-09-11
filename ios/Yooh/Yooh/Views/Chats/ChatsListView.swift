@@ -16,6 +16,7 @@ struct ChatsListView: View {
     @State private var selection = Set<String>()
     @State private var secretChats: [SecretChat] = []
     @State private var openSecret: SecretChat?
+    @State private var showRequests = false
 
     var body: some View {
         @Bindable var chats = app.chatsViewModel
@@ -49,6 +50,28 @@ struct ChatsListView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Haptics.selection()
+                        showRequests = true
+                    } label: {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "tray.fill")
+                            if app.requestsViewModel.badgeCount > 0 {
+                                Circle()
+                                    .fill(YoohTheme.TG.badge)
+                                    .frame(width: 16, height: 16)
+                                    .overlay {
+                                        Text("\(min(app.requestsViewModel.badgeCount, 9))")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    }
+                                    .offset(x: 6, y: -4)
+                            }
+                        }
+                    }
+                    .accessibilityLabel(Text("Message requests"))
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Haptics.selection()
                         showComposer = true
                     } label: {
                         Image(systemName: "square.and.pencil")
@@ -75,6 +98,9 @@ struct ChatsListView: View {
             }
             .sheet(isPresented: $showFolders) {
                 FolderEditorView()
+            }
+            .sheet(isPresented: $showRequests) {
+                RequestsInboxView()
             }
             .sheet(item: $openSecret) { sc in
                 if let me = app.session.currentUser?.id {

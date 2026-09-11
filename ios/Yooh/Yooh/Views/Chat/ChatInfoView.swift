@@ -22,6 +22,8 @@ struct ChatInfoView: View {
     @State private var sharedImages: [YoohMessage] = []
     @State private var avatarItem: PhotosPickerItem?
     @State private var scheduled: [YoohMessage] = []
+    @State private var sendStarsTo: ChatMember?
+    @State private var noteDraft = ""
 
     private var chat: YoohChat? {
         app.chatsViewModel.chats.first(where: { $0.id == chatId })
@@ -244,6 +246,16 @@ struct ChatInfoView: View {
                             if let about = peer.about, !about.isEmpty {
                                 Text(about).font(.subheadline).foregroundStyle(.secondary)
                             }
+                            Button {
+                                sendStarsTo = peer
+                            } label: {
+                                Label("Send Stars", systemImage: "star.fill")
+                                    .font(.subheadline)
+                                    .foregroundStyle(ThemeStore.shared.accent)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 4)
+                            ContactNoteField(userId: peer.userId)
                         }
                         Spacer()
                     }
@@ -251,6 +263,9 @@ struct ChatInfoView: View {
                 .padding(.vertical, 4)
                 .accessibilityElement(children: .combine)
             }
+        }
+        .sheet(item: $sendStarsTo) { member in
+            SendStarsView(userId: member.userId, name: member.displayName ?? "User")
         }
     }
 

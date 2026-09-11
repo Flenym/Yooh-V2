@@ -118,6 +118,24 @@ final class AuthService {
         let _: Res = try await api.send(.deleteSession(id))
     }
 
+    struct StarsTransferResult: Decodable {
+        let sent: Int?
+        let balance: Int?
+    }
+
+    /// Peer-to-peer Stars transfer (username, id, chat id or phone).
+    @discardableResult
+    func transferStars(target: String, amount: Int) async throws -> StarsTransferResult {
+        try await api.send(.transferStars(target: target, amount: amount))
+    }
+
+    /// Permanent account deletion. With 2FA on, the cloud password is
+    /// required as a second factor (server-enforced).
+    func deleteAccount(password: String?) async throws {
+        struct Res: Decodable { let deleted: Bool? }
+        let _: Res = try await api.send(.deleteAccount(password: password))
+    }
+
     /// Extracts a QR login token from a scanned QR payload: either a bare
     /// token or a URL carrying `?yooh_qr_login=<token>` (web parity).
     static func extractQRLoginToken(_ raw: String) -> String? {

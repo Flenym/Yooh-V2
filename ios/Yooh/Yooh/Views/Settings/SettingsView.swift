@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var showLogoutConfirm = false
     @State private var showLinkDevice = false
     @State private var showQR = false
+    @State private var showDeleteAccount = false
     @State private var cloudPassword = ""
     @State private var feedbackCategory = "improvement"
     @State private var feedbackText = ""
@@ -397,11 +398,27 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Spacer()
-                    Text("Log out").font(.system(size: 17, weight: .semibold))
+                    Label("Log out", systemImage: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 17, weight: .semibold))
                     Spacer()
                 }
                 .padding(.vertical, 8)
             }
+            Divider().opacity(0.4)
+            Button(role: .destructive) {
+                showDeleteAccount = true
+            } label: {
+                HStack {
+                    Spacer()
+                    Label("Delete account", systemImage: "trash.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+            }
+        }
+        .sheet(isPresented: $showDeleteAccount) {
+            DeleteAccountView()
         }
     }
 }

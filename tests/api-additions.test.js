@@ -159,8 +159,7 @@ describe("contacts phones", () => {
   });
 });
 
-describe("profile birthday", () => {
-  it("stores, returns and clears a birthday", async () => {
+describe("profile birthday", () => {  it("stores, returns and clears a birthday", async () => {
     const user = await registerUser("+79990001401", { username: "bday_user1" });
     const auth = (r) => r.set("authorization", `Bearer ${user.token}`);
 
@@ -177,5 +176,118 @@ describe("profile birthday", () => {
     const clear = await auth(api.patch("/api/me/profile")).send({ birthday: "" });
     expect(clear.status).toBe(200);
     expect(clear.body.user.birthday).toBe("");
+  });
+});
+
+describe("message requests", () => {
+  it("creates, lists and accepts requests when DMs are restricted", async () => {
+    const alice = await registerUser("+79990001501", { username: "req_alice1" });
+    const bob = await registerUser("+79990001502", { username: "req_bob1" });
+    const aliceAuth = (r) => r.set("authorization", `Bearer ${alice.token}`);
+    const bobAuth = (r) => r.set("authorization", `Bearer ${bob.token}`);
+
+    // Bob restricts DMs to contacts (legacy string form, like lastSeen).
+    const lock = await bobAuth(api.patch("/api/me/settings")).send({
+      privacy: { messages: "contacts" },
+    });
+    expect(lock.status).toBe(200);
+
+    const req = await aliceAuth(api.post(`/api/users/${bob.user.id}/message-requests`)).send({
+      text: "Hi, it's Alice",
+    });
+    expect(req.status).toBe(201);
+    expect(req.body.accepted).toBe(false);
+    expect(req.body.request.id).toBeTruthy();
+
+    const inbox = await bobAuth(api.get("/api/message-requests"));
+    expect(inbox.status).toBe(200);
+    expect(inbox.body.incoming).toHaveLength(1);
+    expect(inbox.body.incoming[0].user.id).toBe(alice.user.id);
+
+    const accept = await bobAuth(api.post(`/api/message-requests/${req.body.request.id}/accept`)).send({});
+    expect(accept.status).toBe(200);
+    expect(accept.body.chat.id).toBeTruthy();
+
+    const inboxAfter = await bobAuth(api.get("/api/message-requests"));
+    expect(inboxAfter.body.incoming).toHaveLength(0);
+  });
+
+  it("opens direct chats immediately when DMs are open", async () => {
+    const alice = await registerUser("+79990001503", { username: "req_alice2" });
+    const bob = await registerUser("+79990001504", { username: "req_bob2" });
+    const res = await api
+      .post(`/api/users/${bob.user.id}/message-requests`)
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.accepted).toBe(true);
+    expect(res.body.chat.id).toBeTruthy();
+  });
+});
+
+describe("stars transfer", () => {
+  it("moves stars between users with guards", async () => {
+    const alice = await registerUser("+79990001601", { username: "star_alice1" });
+    const bob = await registerUser("+79990001602", { username: "star_bob1" });
+    const grant = await api
+      .post("/api/admin/users/entitlements")
+      .set("x-admin-token", ADMIN_TOKEN)
+      .send({ target: alice.user.id, starsBalance: 100 });
+    expect(grant.status).toBe(200);
+
+    const send = await api
+      .post("/api/stars/transfer")
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ target: bob.user.username, amount: 30 });
+    expect(send.status).toBe(200);
+    expect(send.body.sent).toBe(30);
+    expect(send.body.balance).toBe(70);
+
+    const broke = await api
+      .post("/api/stars/transfer")
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ target: bob.user.username, amount: 1000 });
+    expect(broke.status).toBe(400);
+
+    const self = await api
+      .post("/api/stars/transfer")
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ target: alice.user.username, amount: 1 });
+    expect(self.status).toBe(400);
+
+    const zero = await api
+      .post("/api/stars/transfer")
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ target: bob.user.username, amount: 0 });
+    expect(zero.status).toBe(400);
+  });
+});
+
+describe("delete account", () => {
+  it("removes the user, memberships and sessions", async () => {
+    const user = await registerUser("+79990001701", { username: "gone_user1" });
+    const auth = (r) => r.set("authorization", `Bearer ${user.token}`);
+    const del = await auth(api.delete("/api/me")).send({});
+    expect(del.status).toBe(200);
+    expect(del.body.deleted).toBe(true);
+
+    const me = await auth(api.get("/api/me"));
+    expect(me.status).toBe(401);
+  });
+
+  it("requires the cloud password when 2FA is on", async () => {
+    const user = await registerUser("+79990001702", { username: "gone_user2" });
+    const auth = (r) => r.set("authorization", `Bearer ${user.token}`);
+    const enable = await auth(api.post("/api/auth/cloud-password")).send({ password: "secret-2fa" });
+    expect(enable.status).toBe(200);
+
+    const noPass = await auth(api.delete("/api/me")).send({});
+    expect(noPass.status).toBe(403);
+
+    const wrong = await auth(api.delete("/api/me")).send({ password: "wrong" });
+    expect(wrong.status).toBe(403);
+
+    const ok = await auth(api.delete("/api/me")).send({ password: "secret-2fa" });
+    expect(ok.status).toBe(200);
   });
 });

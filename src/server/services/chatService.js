@@ -3231,6 +3231,107 @@ export function createChatService({ store, config }) {
     return published;
   }
 
+  /// Message requests for users whose DM privacy blocks strangers.
+  /// If the target already accepts DMs from the viewer, no request is
+  /// needed: the direct chat is returned straight away ({accepted:true}).
+  /// Otherwise an open request is created (idempotent per pair).
+  async function createMessageRequest(viewerId, targetUserId, payload = {}) {
+    const safeTarget = trimText(targetUserId);
+    if (!safeTarget) {
+      throw new HttpError(400, "User is required");
+    }
+    if (safeTarget === viewerId) {
+      throw new HttpError(400, "Cannot request yourself");
+    }
+    return store.transact((db) => {
+      const viewer = db.users.find((entry) => entry.id === viewerId);
+      if (!viewer) {
+        throw new HttpError(404, "User not found");
+      }
+      const target = db.users.find((entry) => entry.id === safeTarget);
+      if (!target) {
+        throw new HttpError(404, "User not found");
+      }
+      if (target.isSystemBot) {
+        throw new HttpError(400, "Cannot request the support bot");
+      }
+      if (!Array.isArray(db.messageRequests)) {
+        db.messageRequests = [];
+      }
+      if (canViewerSendDirectMessage(db, target, viewerId)) {
+        const chat = ensureDirectChatBetweenUsers(db, viewerId, target.id);
+        return { accepted: true, chat: chat ? hydrateChatForUser(db, chat, viewerId) : null };
+      }
+      const open = db.messageRequests.filter((entry) => entry.status === "open");
+      if (open.filter((entry) => entry.fromUserId === viewerId).length >= 20) {
+        throw new HttpError(429, "Too many open requests");
+      }
+      const existing = open.find(
+        (entry) => entry.fromUserId === viewerId && entry.toUserId === target.id,
+      );
+      if (existing) {
+        return { request: existing, accepted: false };
+      }
+      const request = {
+        id: uuid(),
+        fromUserId: viewerId,
+        toUserId: target.id,
+        text: trimText(payload?.text).slice(0, 500),
+        status: "open",
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      };
+      db.messageRequests.unshift(request);
+      return { request, accepted: false };
+    });
+  }
+
+  async function listMessageRequests(userId) {
+    return store.read((db) => {
+      const all = Array.isArray(db.messageRequests) ? db.messageRequests : [];
+      const open = all.filter((entry) => entry.status === "open");
+      const hydrateSide = (entry, otherId) => {
+        const other = db.users.find((user) => user.id === otherId);
+        return {
+          ...entry,
+          user: other ? getPublicUserForViewer(db, other, userId, { includePhone: false }) : null,
+        };
+      };
+      return {
+        incoming: open
+          .filter((entry) => entry.toUserId === userId)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .map((entry) => hydrateSide(entry, entry.fromUserId)),
+        outgoing: open
+          .filter((entry) => entry.fromUserId === userId)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .map((entry) => hydrateSide(entry, entry.toUserId)),
+      };
+    });
+  }
+
+  async function respondMessageRequest(userId, requestId, accept) {
+    return store.transact((db) => {
+      if (!Array.isArray(db.messageRequests)) {
+        throw new HttpError(404, "Request not found");
+      }
+      const request = db.messageRequests.find((entry) => entry.id === requestId);
+      if (!request || request.status !== "open") {
+        throw new HttpError(404, "Request not found");
+      }
+      if (request.toUserId !== userId) {
+        throw new HttpError(403, "Not your request to answer");
+      }
+      request.status = accept ? "accepted" : "declined";
+      request.updatedAt = nowIso();
+      if (!accept) {
+        return { request, chat: null };
+      }
+      const chat = ensureDirectChatBetweenUsers(db, request.fromUserId, request.toUserId);
+      return { request, chat: chat ? hydrateChatForUser(db, chat, userId) : null };
+    });
+  }
+
   async function sendTextMessage(userId, chatId, payload) {
     return sendTextToStream(userId, chatId, payload, "main");
   }
@@ -4623,6 +4724,9 @@ export function createChatService({ store, config }) {
     searchMessages,
     listScheduledMessages,
     collectDueScheduledMessages,
+    createMessageRequest,
+    listMessageRequests,
+    respondMessageRequest,
     getMessageForUser,
     sendTextMessage,
     sendComment,

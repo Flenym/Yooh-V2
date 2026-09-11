@@ -117,18 +117,26 @@ final class ContactsViewModel {
         }
     }
 
-    /// Opens (or finds) a 1:1 chat with a user, then refreshes the list.
-    func openDirect(with user: PublicUser) async -> YoohChat? {        do {
+    /// Opens (or finds) a 1:1 chat. When the peer restricts DMs from
+    /// strangers, returns `.needsRequest` instead of an error so the UI
+    /// can offer sending a message request.
+    func openDirect(with user: PublicUser) async -> OpenDirectResult? {
+        do {
             if let existing = app.chatsViewModel.chats.first(where: {
                 $0.type == .direct && $0.members.contains(where: { $0.userId == user.id })
             }) {
-                return existing
+                return .chat(existing)
             }
             let chat = try await app.chatsService.create(type: "direct", memberId: user.id)
             await app.chatsViewModel.refresh()
             app.socket.joinChat(chat.id)
-            return chat
+            return .chat(chat)
         } catch {
+            if case APIError.forbidden(let message) = error,
+               message.localizedCaseInsensitiveContains("restrict")
+            {
+                return .needsRequest(user)
+            }
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
             return nil
         }

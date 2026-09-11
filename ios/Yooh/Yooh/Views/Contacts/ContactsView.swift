@@ -6,6 +6,7 @@ struct ContactsView: View {
     @Environment(AppState.self) private var app
     @State private var search = ""
     @State private var onlineFirst = false
+    @State private var requestUser: PublicUser?
 
     var body: some View {
         @Bindable var contacts = app.contactsViewModel
@@ -39,6 +40,9 @@ struct ContactsView: View {
                 if let chat = app.chatsViewModel.chats.first(where: { $0.id == chatId }) {
                     ChatDetailView(chat: chat, app: app)
                 }
+            }
+            .sheet(item: $requestUser) { user in
+                MessageRequestSheet(user: user)
             }
             .overlay(alignment: .top) {
                 VStack(spacing: YoohTheme.Spacing.s) {
@@ -121,8 +125,13 @@ struct ContactsView: View {
             ForEach(sortedUsers(contacts.users), id: \.id) { user in
                 Button {
                     Task {
-                        if let chat = await contacts.openDirect(with: user) {
+                        switch await contacts.openDirect(with: user) {
+                        case .chat(let chat):
                             app.contactsPath.append(chat.id)
+                        case .needsRequest(let u):
+                            requestUser = u
+                        case .none:
+                            break
                         }
                     }
                 } label: {

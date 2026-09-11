@@ -84,7 +84,6 @@ final class LocalPreferences: @unchecked Sendable {
     }
 
     // MARK: - Custom folders (local, like the web client's folder rules)
-
     /// A user-defined folder: name + which chat kinds it includes.
     struct FolderDef: Codable, Identifiable, Hashable {
         var id: String

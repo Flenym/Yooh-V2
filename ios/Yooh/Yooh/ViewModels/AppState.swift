@@ -34,6 +34,7 @@ final class AppState {
     let settingsService: SettingsService
     let authService: AuthService
     let callService: CallService
+    let requestsService: RequestsService
 
     let chatsViewModel: ChatsViewModel
     let contactsViewModel: ContactsViewModel
@@ -41,6 +42,12 @@ final class AppState {
     let settingsViewModel: SettingsViewModel
     let storiesViewModel: StoriesViewModel
     let callsViewModel: CallsViewModel
+    let requestsViewModel: RequestsViewModel
+
+    /// Private contact notes (per login, device-local).
+    var contactNotes: ContactNotes {
+        ContactNotes(userId: session.currentUser?.id ?? "anon")
+    }
 
     /// Online state by user id (from presence:snapshot/update).
     private(set) var onlineUsers: Set<String> = []
@@ -77,12 +84,14 @@ final class AppState {
         settingsService = SettingsService()
         authService = AuthService()
         callService = CallService(socket: socket)
+        requestsService = RequestsService()
         chatsViewModel = ChatsViewModel()
         contactsViewModel = ContactsViewModel()
         profileViewModel = ProfileViewModel()
         settingsViewModel = SettingsViewModel()
         storiesViewModel = StoriesViewModel()
         callsViewModel = CallsViewModel()
+        requestsViewModel = RequestsViewModel()
         socket.delegate = self
         // Circular refs, wired last: every stored property is set now,
         // so `self` is fully initialized and safe to share.
@@ -92,6 +101,7 @@ final class AppState {
         settingsViewModel.app = self
         storiesViewModel.app = self
         callsViewModel.app = self
+        requestsViewModel.app = self
     }
 
     // MARK: - Lifecycle
@@ -183,6 +193,8 @@ extension AppState: YoohSocketDelegate {
             if online { onlineUsers.insert(userId) } else { onlineUsers.remove(userId) }
         case .settingsUpdated:
             Task { await profileViewModel.reload() }
+        case .requestsUpdated:
+            Task { await requestsViewModel.refresh() }
         case .storyUpdated:
             Task { await storiesViewModel.refresh() }
         case .callsUpdated:

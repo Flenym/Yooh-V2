@@ -30,6 +30,8 @@
 	<string>Yooh uses your location only when you choose to share it in a chat.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Yooh uses the microphone to record voice messages.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Yooh transcribes voice messages on your request.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Yooh uses your contacts only to find which of them are already on Yooh when you tap Sync.</string>
 	<key>NSFaceIDUsageDescription</key>

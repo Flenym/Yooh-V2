@@ -2039,6 +2039,81 @@ async function removeSession(userId, currentSessionId, targetSessionId) {
     });
   }
 
+  /// Peer-to-peer Stars transfer. Additive endpoint: balances were previously
+  /// admin-only. Guarded by integer bounds and sender balance; the whole
+  /// move is one transaction so money is never created or lost.
+  async function transferStars(userId, payload = {}) {
+    const amount = Number.parseInt(payload?.amount, 10);
+    if (!Number.isInteger(amount) || amount < 1 || amount > 10000) {
+      throw new HttpError(400, "Amount must be an integer between 1 and 10000");
+    }
+    return store.transact((db) => {
+      const sender = db.users.find((entry) => entry.id === userId);
+      if (!sender) {
+        throw new HttpError(404, "User not found");
+      }
+      const receiver = findUserByTarget(db, payload?.target);
+      if (receiver.id === sender.id) {
+        throw new HttpError(400, "Cannot send Stars to yourself");
+      }
+      if (receiver.isSystemBot) {
+        throw new HttpError(400, "Cannot send Stars to the support bot");
+      }
+      ensureUserShape(db, sender, config);
+      ensureUserShape(db, receiver, config);
+      const balance = Math.max(0, Number.parseInt(sender.starsBalance ?? 0, 10) || 0);
+      if (balance < amount) {
+        throw new HttpError(400, "Not enough Stars");
+      }
+      sender.starsBalance = balance - amount;
+      receiver.starsBalance = Math.max(0, Number.parseInt(receiver.starsBalance ?? 0, 10) || 0) + amount;
+      return {
+        sent: amount,
+        balance: sender.starsBalance,
+        target: { id: receiver.id, username: receiver.username, displayName: receiver.displayName },
+      };
+    });
+  }
+
+  /// Permanent account deletion. Messages stay (attributed to a removed
+  /// sender, which hydration already tolerates); memberships, sessions,
+  /// stories, requests and tickets are removed. With 2FA on, the cloud
+  /// password is required as a second confirmation factor.
+  async function deleteAccount(userId, payload = {}) {
+    return store.transact((db) => {
+      const user = db.users.find((entry) => entry.id === userId);
+      if (!user) {
+        throw new HttpError(404, "User not found");
+      }
+      if (user.cloudPassword?.hash && !isCloudPasswordValid(user, payload?.password)) {
+        throw new HttpError(403, "Cloud password is required to delete the account");
+      }
+      const uid = user.id;
+      db.users = db.users.filter((entry) => entry.id !== uid);
+      if (Array.isArray(db.memberships)) {
+        db.memberships = db.memberships.filter((entry) => entry.userId !== uid);
+      }
+      if (Array.isArray(db.sessions)) {
+        db.sessions = db.sessions.filter((entry) => entry.userId !== uid);
+      }
+      if (Array.isArray(db.stories)) {
+        db.stories = db.stories.filter((entry) => entry.authorId !== uid);
+      }
+      if (Array.isArray(db.messageRequests)) {
+        db.messageRequests = db.messageRequests.filter(
+          (entry) => entry.fromUserId !== uid && entry.toUserId !== uid,
+        );
+      }
+      if (Array.isArray(db.supportTickets)) {
+        db.supportTickets = db.supportTickets.filter((entry) => entry.userId !== uid);
+      }
+      if (Array.isArray(db.feedbackTickets)) {
+        db.feedbackTickets = db.feedbackTickets.filter((entry) => entry.userId !== uid);
+      }
+      return { deleted: true };
+    });
+  }
+
   return {
     requestRegisterCode,
     requestLoginCode,
@@ -2065,6 +2140,8 @@ async function removeSession(userId, currentSessionId, targetSessionId) {
     getActiveAuthCode,
     listActiveCodes,
     setAdminEntitlements,
+    transferStars,
+    deleteAccount,
     ensureSystemUser,
     migrateUsers,
   };

@@ -708,6 +708,24 @@ export async function createAppContext(overrides = {}) {
     }),
   );
 
+  app.post(
+    "/api/stars/transfer",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const result = await authService.transferStars(req.user.id, req.body ?? {});
+      res.status(200).json(result);
+    }),
+  );
+
+  app.delete(
+    "/api/me",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const result = await authService.deleteAccount(req.user.id, req.body ?? {});
+      res.status(200).json(result);
+    }),
+  );
+
   app.get(
     "/api/auth/sessions",
     requireAuth,
@@ -1420,6 +1438,54 @@ export async function createAppContext(overrides = {}) {
     asyncRoute(async (req, res) => {
       const support = await chatService.getSupportTicketState(req.user.id);
       res.status(200).json({ support });
+    }),
+  );
+
+  app.post(
+    "/api/users/:userId/message-requests",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const result = await chatService.createMessageRequest(req.user.id, req.params.userId, req.body ?? {});
+      if (!result?.accepted) {
+        notifier({ type: "requests:updated", userIds: [req.params.userId] });
+      }
+      res.status(result?.accepted ? 200 : 201).json(result);
+    }),
+  );
+
+  app.get(
+    "/api/message-requests",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const result = await chatService.listMessageRequests(req.user.id);
+      res.status(200).json(result);
+    }),
+  );
+
+  app.post(
+    "/api/message-requests/:requestId/accept",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const result = await chatService.respondMessageRequest(req.user.id, req.params.requestId, true);
+      if (result?.chat) {
+        const peerId = result.request?.fromUserId;
+        if (peerId) {
+          notifier({ type: "chat:updated", chatId: result.chat.id, userIds: [peerId] });
+        }
+      }
+      res.status(200).json(result);
+    }),
+  );
+
+  app.post(
+    "/api/message-requests/:requestId/decline",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const result = await chatService.respondMessageRequest(req.user.id, req.params.requestId, false);
+      if (result?.request) {
+        notifier({ type: "requests:updated", userIds: [result.request.fromUserId] });
+      }
+      res.status(200).json(result);
     }),
   );
 

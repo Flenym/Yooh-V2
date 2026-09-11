@@ -119,3 +119,16 @@ struct BotTag: View {
             .accessibilityLabel(Text("Bot account"))
     }
 }
+
+extension View {
+    /// System translation sheet (iOS 18+, on-device when packs are
+    /// installed — no server or API keys involved).
+    @ViewBuilder
+    func translateSheet(isPresented: Binding<Bool>, text: String) -> some View {
+        if #available(iOS 18, *) {
+            self.translationPresentation(isPresented: isPresented, text: text)
+        } else {
+            self
+        }
+    }
+}

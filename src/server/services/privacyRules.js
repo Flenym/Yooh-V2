@@ -91,7 +91,7 @@ function getUserPrivacyRules(user) {
       alwaysDenyIds: normalizeIdList(raw.voice?.alwaysDenyIds),
     },
     messages: {
-      whoCanSend: normalizeAudience(raw.messages?.whoCanSend, "everyone"),
+      whoCanSend: normalizeAudience(raw.messages?.whoCanSend ?? legacy.messages, "everyone"),
       alwaysAllowIds: normalizeIdList(raw.messages?.alwaysAllowIds),
       alwaysDenyIds: normalizeIdList(raw.messages?.alwaysDenyIds),
     },
