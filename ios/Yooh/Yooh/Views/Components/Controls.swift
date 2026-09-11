@@ -1,4 +1,5 @@
 import SwiftUI
+import Translation
 
 /// Floating circular action button (composer send, attach, viewer close…).
 /// SF Symbols only; glass via YoohTheme.
