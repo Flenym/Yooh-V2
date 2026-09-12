@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   build-ipa:
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -109,7 +109,7 @@ jobs:
           Commit: $GITHUB_SHA
 
           Backend:  start.bat  (HOST=0.0.0.0 PORT=1111 ADMIN_PORT=1112 -> node src/server/index.js)
-          IPA:      GitHub Actions (.github/workflows/ios-ipa.yml) on macos-15 + Xcode 16
+          IPA:      GitHub Actions (.github/workflows/ios-ipa.yml) on macOS + Xcode 26
           EOF
           cat build/BUILD_INFO.txt
 
