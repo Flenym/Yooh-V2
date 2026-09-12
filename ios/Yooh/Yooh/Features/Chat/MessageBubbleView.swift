@@ -198,12 +198,22 @@ struct MessageBubbleView: View {
                 }
                 .buttonStyle(.plain)
             }
-            Button {
-                vm.react(message, emoji: "❤️")
+            Menu {
+                ForEach(["❤️", "👍", "😮", "😢", "🔥", "👏", "🎉", "👎"], id: \.self) { emoji in
+                    Button {
+                        vm.react(message, emoji: emoji)
+                        Haptics.selection()
+                    } label: {
+                        Text(emoji)
+                    }
+                }
             } label: {
                 Image(systemName: "plus")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.tertiarySystemFill), in: .capsule)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Add reaction"))
@@ -334,8 +344,19 @@ private struct PollContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: YoohTheme.Spacing.s) {
-            Text(message.poll?.question ?? "Poll")
-                .font(.subheadline.bold())
+            HStack(spacing: 6) {
+                Text(message.poll?.question ?? "Poll")
+                    .font(.subheadline.bold())
+                if message.poll?.quiz == true {
+                    Text("Quiz")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(ThemeStore.shared.accent, in: .capsule)
+                        .accessibilityLabel(Text("Quiz poll"))
+                }
+            }
             if let poll = message.poll {
                 ForEach(poll.options, id: \.id) { opt in
                     Button {
@@ -350,7 +371,11 @@ private struct PollContentView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            if opt.mine {
+                            if poll.correctOptionId == opt.id {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .foregroundStyle(.green)
+                                    .accessibilityLabel(Text("Correct answer"))
+                            } else if opt.mine {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(ThemeStore.shared.accent)
                             }

@@ -10,6 +10,7 @@ struct ChatDetailView: View {
     @State private var showPoll = false
     @State private var showSearch = false
     @State private var isNearBottom = true
+    @State private var typingStopTask: Task<Void, Never>?
 
     init(chat: YoohChat, app: AppState) {
         _vm = State(initialValue: ChatViewModel(chat: chat))
@@ -187,7 +188,17 @@ struct ChatDetailView: View {
             vm.refreshChatRow()
         }
         .onDisappear {
+            typingStopTask?.cancel()
             vm.disappear()
+        }
+        .onChange(of: vm.draft) {
+            // Web parity: stop the typing signal after 4s idle.
+            typingStopTask?.cancel()
+            typingStopTask = Task {
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                guard !Task.isCancelled else { return }
+                app.sendTyping(chatId: vm.chatId, active: false)
+            }
         }
     }
 
