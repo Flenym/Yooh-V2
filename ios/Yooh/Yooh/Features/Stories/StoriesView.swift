@@ -1,3 +1,4 @@
+import AVKit
 import PhotosUI
 import SwiftUI
 
@@ -392,7 +393,14 @@ private struct StoryPageView: View {
 
     var body: some View {
         VStack {
-            if let dataURL = story.image ?? story.avatar,
+            if story.mediaType == "video",
+               let raw = story.video ?? story.image,
+               let url = StoryVideoCache.url(storyId: story.id, dataURL: raw)
+            {
+                VideoPlayer(player: AVPlayer(url: url))
+                    .frame(maxHeight: 480)
+                    .clipShape(.rect(cornerRadius: YoohTheme.Radius.m))
+            } else if let dataURL = story.image ?? story.avatar,
                let data = MediaService.data(fromDataURL: dataURL),
                let img = UIImage(data: data)
             {
@@ -418,15 +426,35 @@ private struct StoryPageView: View {
     }
 }
 
+/// Caches story video data URLs as temp .mp4 files for AVPlayer.
+private enum StoryVideoCache {
+    static func url(storyId: String, dataURL: String) -> URL? {
+        guard let data = MediaService.data(fromDataURL: dataURL) else { return nil }
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent("yooh-story-\(storyId).mp4")
+        if FileManager.default.fileExists(atPath: file.path) { return file }
+        do {
+            try data.write(to: file, options: .atomic)
+            return file
+        } catch {
+            return nil
+        }
+    }
+}
+
 struct StoryCreatorView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss
 
     @State private var item: PhotosPickerItem?
     @State private var image: UIImage?
+    @State private var videoData: Data?
+    @State private var videoPlayer: AVPlayer?
     @State private var caption = ""
     @State private var error: String?
     @State private var isPublishing = false
+
+    private var hasMedia: Bool { image != nil || videoData != nil }
 
     var body: some View {
         NavigationStack {
@@ -438,9 +466,15 @@ struct StoryCreatorView: View {
                             .scaledToFit()
                             .frame(maxHeight: 280)
                             .clipShape(.rect(cornerRadius: YoohTheme.Radius.m))
+                    } else if let player = videoPlayer {
+                        VideoPlayer(player: player)
+                            .frame(height: 280)
+                            .clipShape(.rect(cornerRadius: YoohTheme.Radius.m))
                     }
-                    PhotosPicker(selection: $item, matching: .images) {
-                        Label(image == nil ? "Choose photo" : "Change photo", systemImage: "photo")
+                    PhotosPicker(selection: $item,
+                                 matching: .any(of: [.images, .videos])) {
+                        Label(hasMedia ? "Change photo or video" : "Choose photo or video",
+                              systemImage: "photo")
                     }
                 }
                 Section("Caption") {
@@ -452,7 +486,7 @@ struct StoryCreatorView: View {
                 AsyncButton(title: "Publish", isBusy: isPublishing) {
                     await publish()
                 }
-                .disabled(image == nil)
+                .disabled(!hasMedia)
             }
             .navigationTitle("New story")
             .navigationBarTitleDisplayMode(.inline)
@@ -464,10 +498,18 @@ struct StoryCreatorView: View {
             .onChange(of: item) { _, new in
                 guard let new else { return }
                 Task {
-                    if let data = try? await new.loadTransferable(type: Data.self),
-                       let img = UIImage(data: data)
-                    {
+                    guard let data = try? await new.loadTransferable(type: Data.self) else { return }
+                    if let img = UIImage(data: data) {
                         image = img
+                        videoData = nil
+                        videoPlayer = nil
+                    } else {
+                        videoData = data
+                        image = nil
+                        let tmp = FileManager.default.temporaryDirectory
+                            .appendingPathComponent("yooh-story-draft.mp4")
+                        try? data.write(to: tmp, options: .atomic)
+                        videoPlayer = AVPlayer(url: tmp)
                     }
                 }
             }
@@ -475,10 +517,18 @@ struct StoryCreatorView: View {
     }
 
     private func publish() async {
-        guard let image else { return }
         isPublishing = true
         defer { isPublishing = false }
-        if await app.storiesViewModel.publishPhoto(image, caption: caption.isEmpty ? nil : caption) {
+        let captionValue: String? = caption.isEmpty ? nil : caption
+        let ok: Bool
+        if let videoData {
+            ok = await app.storiesViewModel.publishVideo(videoData, caption: captionValue)
+        } else if let image {
+            ok = await app.storiesViewModel.publishPhoto(image, caption: captionValue)
+        } else {
+            return
+        }
+        if ok {
             dismiss()
         } else {
             error = app.storiesViewModel.error

@@ -30,7 +30,7 @@ struct GlassIconButton: View {
 struct EmptyStateView: View {
     let symbol: String
     let title: String
-    let subtitle: String?
+    let subtitle: String? = nil
 
     var body: some View {
         VStack(spacing: YoohTheme.Spacing.m) {
@@ -54,8 +54,8 @@ struct EmptyStateView: View {
 /// Inline error banner with retry/dismiss.
 struct ErrorBanner: View {
     let message: String
-    var onRetry: (() -> Void)?
-    var onDismiss: (() -> Void)?
+    var onRetry: (() -> Void)? = nil
+    var onDismiss: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: YoohTheme.Spacing.s) {
@@ -87,7 +87,7 @@ struct ErrorBanner: View {
 /// Inline success/notice banner.
 struct NoticeBanner: View {
     let message: String
-    var onDismiss: (() -> Void)?
+    var onDismiss: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: YoohTheme.Spacing.s) {

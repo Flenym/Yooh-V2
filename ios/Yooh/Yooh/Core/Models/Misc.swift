@@ -97,17 +97,17 @@ struct SingleStoryResponse: Decodable {
 }
 
 struct CreateStoryRequest: Encodable {
-    var title: String?
-    var caption: String?
-    var avatar: String?
-    var image: String?
-    var video: String?
-    var mediaType: String?
-    var background: String?
-    var privacy: String?
-    var expiresHours: Int?
-    var saveToProfile: Bool?
-    var isLive: Bool?
+    var title: String? = nil
+    var caption: String? = nil
+    var avatar: String? = nil
+    var image: String? = nil
+    var video: String? = nil
+    var mediaType: String? = nil
+    var background: String? = nil
+    var privacy: String? = nil
+    var expiresHours: Int? = nil
+    var saveToProfile: Bool? = nil
+    var isLive: Bool? = nil
 
     enum CodingKeys: String, CodingKey {
         case title, caption, avatar, image, video, mediaType, background,

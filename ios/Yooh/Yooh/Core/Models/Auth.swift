@@ -27,7 +27,7 @@ struct DeviceInfo: Encodable {
     var name: String
     var platform: String = "iphone"
     var client: String
-    var userAgent: String?
+    var userAgent: String? = nil
 
     enum CodingKeys: String, CodingKey { case name, platform, client, userAgent }
 

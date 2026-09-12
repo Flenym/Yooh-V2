@@ -187,14 +187,14 @@ struct SingleMessageResponse: Decodable {
 // MARK: - Outgoing payloads (nil keys omitted: zod rejects explicit null)
 
 struct SendMessageRequest: Encodable {
-    var text: String?
-    var kind: String?
-    var location: OutgoingLocation?
-    var poll: OutgoingPoll?
-    var replyToMessageId: String?
-    var threadRootId: String?
-    var clientMessageId: String?
-    var scheduledAt: String?
+    var text: String? = nil
+    var kind: String? = nil
+    var location: OutgoingLocation? = nil
+    var poll: OutgoingPoll? = nil
+    var replyToMessageId: String? = nil
+    var threadRootId: String? = nil
+    var clientMessageId: String? = nil
+    var scheduledAt: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case text, kind, location, poll, replyToMessageId, threadRootId, clientMessageId, scheduledAt
@@ -220,9 +220,9 @@ struct SendMessageRequest: Encodable {
 struct OutgoingLocation: Encodable {
     var lat: Double
     var lng: Double
-    var title: String?
-    var address: String?
-    var mapUrl: String?
+    var title: String? = nil
+    var address: String? = nil
+    var mapUrl: String? = nil
 
     enum CodingKeys: String, CodingKey { case lat, lng, title, address, mapUrl }
 
@@ -239,10 +239,10 @@ struct OutgoingLocation: Encodable {
 struct OutgoingPoll: Encodable {
     var question: String
     var options: [String]
-    var anonymous: Bool?
-    var multiple: Bool?
-    var quiz: Bool?
-    var correctOptionIndex: Int?
+    var anonymous: Bool? = nil
+    var multiple: Bool? = nil
+    var quiz: Bool? = nil
+    var correctOptionIndex: Int? = nil
 
     enum CodingKeys: String, CodingKey {
         case question, options, anonymous, multiple, quiz, correctOptionIndex

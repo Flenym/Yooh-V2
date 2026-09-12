@@ -121,6 +121,25 @@ final class StoriesViewModel {
         }
     }
 
+    func publishVideo(_ data: Data, caption: String?) async -> Bool {
+        guard data.count <= 25 * 1024 * 1024 else {
+            error = "Video is too large (25 MB max)."
+            return false
+        }
+        let dataURL = "data:video/mp4;base64,\(data.base64EncodedString())"
+        do {
+            let created = try await app.storyService.create(
+                CreateStoryRequest(caption: caption, image: nil, video: dataURL,
+                                   mediaType: "video", privacy: "contacts",
+                                   expiresHours: 24))
+            stories.insert(created, at: 0)
+            return true
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            return false
+        }
+    }
+
     private func upsert(_ story: YoohStory) {
         if let idx = stories.firstIndex(where: { $0.id == story.id }) {
             stories[idx] = story

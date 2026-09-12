@@ -33,7 +33,7 @@ enum Audience: String, CaseIterable {
 
 struct SettingToggleRow: View {
     let title: String
-    let subtitle: String?
+    let subtitle: String? = nil
     @Binding var isOn: Bool
     var onChange: (Bool) -> Void
 
@@ -55,7 +55,7 @@ struct SettingToggleRow: View {
 
 struct AudienceRow: View {
     let title: String
-    let subtitle: String?
+    let subtitle: String? = nil
     @Binding var selection: Audience
     var onChange: (Audience) -> Void
 
