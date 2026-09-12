@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Contacts: native nav bar (Sort / add), native search, sync row,
-/// invite row, presence rows opening direct chats (or requests).
+/// Contacts: native nav bar, native search, sync row, invite row,
+/// presence rows (direct chat or message request on 403).
 struct ContactsView: View {
     @Environment(AppState.self) private var app
     @State private var search = ""

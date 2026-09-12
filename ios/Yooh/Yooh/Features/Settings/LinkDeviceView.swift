@@ -1,7 +1,6 @@
 import AVFoundation
 import SwiftUI
 
-/// Links a desktop/web login by scanning its QR code (or pasting it).
 struct LinkDeviceView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss

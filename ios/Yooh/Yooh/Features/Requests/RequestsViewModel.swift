@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 
-/// Message-request inbox (incoming accept/decline, outgoing list).
 @Observable
 @MainActor
 final class RequestsViewModel {

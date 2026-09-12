@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// Permanent account deletion: double confirmation, plus the cloud
-/// password as a second factor when 2FA is on (server-enforced).
 struct DeleteAccountView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss

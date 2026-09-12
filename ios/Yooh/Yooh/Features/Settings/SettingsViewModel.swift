@@ -1,8 +1,6 @@
 import Foundation
 import Observation
 
-/// Settings shell: language, sessions, cloud password, feedback, stickers,
-// support state. Section screens own the rest.
 @Observable
 @MainActor
 final class SettingsViewModel {

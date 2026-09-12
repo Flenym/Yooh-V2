@@ -1,8 +1,6 @@
 import Foundation
 import Observation
 
-/// Call history + incoming-call alerts. Live media needs a WebRTC engine;
-/// history, deletion and alerts are fully real.
 @Observable
 @MainActor
 final class CallsViewModel {

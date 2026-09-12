@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Sends Stars to another user (real ledger transfer).
 struct SendStarsView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss
@@ -72,7 +71,6 @@ struct SendStarsView: View {
     }
 }
 
-/// Private per-contact note (device-local, visible only to you).
 struct ContactNoteField: View {
     @Environment(AppState.self) private var app
     let userId: String

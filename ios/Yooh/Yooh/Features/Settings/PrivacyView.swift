@@ -7,6 +7,7 @@ struct PrivacyView: View {
     @State private var profilePhoto: Audience = .everyone
     @State private var calls: Audience = .contacts
     @State private var forwards: Audience = .contacts
+    @State private var directMessages: Audience = .everyone
     @State private var readReceipts = true
     @State private var error: String?
 
@@ -39,7 +40,7 @@ struct PrivacyView: View {
                 }
                 AudienceRow(title: "Who can message me",
                             subtitle: "Strangers send requests instead",
-                            selection: directMessages)
+                            selection: $directMessages)
                 {
                     saveDirectMessages($0)
                 }
@@ -72,8 +73,6 @@ struct PrivacyView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }
-
-    @State private var directMessages: Audience = .everyone
 
     private func load() async {
         do {

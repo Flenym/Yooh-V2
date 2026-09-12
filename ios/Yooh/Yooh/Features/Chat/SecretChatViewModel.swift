@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import UIKit
 
-/// View-model for one device-local secret chat (no networking at all).
 @Observable
 @MainActor
 final class SecretChatViewModel {

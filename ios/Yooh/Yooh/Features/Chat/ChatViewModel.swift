@@ -1,9 +1,6 @@
 import Foundation
 import Observation
 
-/// One open conversation: history + pagination, optimistic sending,
-/// realtime updates, typing, read receipts, reactions, replies, edits,
-/// forwards, polls, locations, uploads, scheduled sends and search jumps.
 @Observable
 @MainActor
 final class ChatViewModel {
@@ -48,8 +45,6 @@ final class ChatViewModel {
         return LocalPreferences(userId: id)
     }
 
-    // MARK: - Lifecycle
-
     func appear() {
         app.messageHandler = { [weak self] event in
             Task { @MainActor in self?.handle(event) }
@@ -91,8 +86,6 @@ final class ChatViewModel {
     func showNotice(_ message: String) { notice = message }
     func clearNotice() { notice = nil }
 
-    // MARK: - Local pin
-
     var pinnedMessage: YoohMessage? {
         guard let id = prefs?.pinnedMessageId(chatId: chatId) else { return nil }
         return messages.first(where: { $0.id == id })
@@ -110,8 +103,6 @@ final class ChatViewModel {
             prefs?.setPinned(messageId: m.id, chatId: chatId)
         }
     }
-
-    // MARK: - History
 
     func loadInitial() {
         loadTask?.cancel()
@@ -186,8 +177,6 @@ final class ChatViewModel {
             return []
         }
     }
-
-    // MARK: - Sending
 
     func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -287,8 +276,6 @@ final class ChatViewModel {
         }
     }
 
-    // MARK: - Edit / delete / reactions / forward
-
     func saveEdit(text: String) {
         guard let target = editing else { return }
         editing = nil
@@ -370,8 +357,6 @@ final class ChatViewModel {
         }
     }
 
-    // MARK: - Realtime
-
     private func handle(_ event: YoohSocketEvent) {
         switch event {
         case .message(let m):
@@ -397,8 +382,6 @@ final class ChatViewModel {
             break
         }
     }
-
-    // MARK: - Read receipts
 
     private func sendReadForLatest() {
         readTask?.cancel()
@@ -427,8 +410,6 @@ final class ChatViewModel {
             }
         }
     }
-
-    // MARK: - Helpers
 
     private func stamp(_ list: [YoohMessage]) -> [YoohMessage] {
         list.map { m in

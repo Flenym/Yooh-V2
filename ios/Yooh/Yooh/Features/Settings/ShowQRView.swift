@@ -1,8 +1,6 @@
 import CoreImage.CIFilterBuiltins
 import SwiftUI
 
-/// Displays a QR login code for another device to scan. Polls status
-/// until approved or expired.
 struct ShowQRView: View {
     @Environment(AppState.self) private var app
     @Environment(\.dismiss) private var dismiss

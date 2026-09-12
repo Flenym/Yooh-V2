@@ -2,8 +2,6 @@ import Contacts
 import Foundation
 import Observation
 
-/// User search, public discovery, direct/group/channel creation,
-// saved chat and phone-contact sync.
 @Observable
 @MainActor
 final class ContactsViewModel {
@@ -21,8 +19,10 @@ final class ContactsViewModel {
     func clearError() { error = nil }
     func clearNotice() { notice = nil }
 
-    /// Global search with web-style prefix scopes: `@` users, `%` channels,
-    /// `&` groups, `$` servers, `*` bots. Bare text searches users + public.
+    private enum Scope {
+        case all, people, channels, groups, servers
+    }
+
     func search(_ text: String, botsOnly: Bool = false) {
         query = text
         searchTask?.cancel()
@@ -69,18 +69,11 @@ final class ContactsViewModel {
                     case .servers: return (dc.type ?? "") == "server"
                     }
                 }
-                if scope != .all, scope != .people, users.isEmpty {
-                    users = []
-                }
             } catch {
                 guard !Task.isCancelled else { return }
                 self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
             }
         }
-    }
-
-    private enum Scope {
-        case all, people, channels, groups, servers
     }
 
     func openDirect(with user: PublicUser) async -> OpenDirectResult? {

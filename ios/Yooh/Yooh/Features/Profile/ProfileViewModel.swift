@@ -2,8 +2,6 @@ import Foundation
 import Observation
 import UIKit
 
-/// Own profile: view, edit (name/username/bio/birthday/avatar/banner,
-// status, decorations), avatar/banner image prep.
 @Observable
 @MainActor
 final class ProfileViewModel {
@@ -35,7 +33,7 @@ final class ProfileViewModel {
             let me = try await app.userService.me()
             app.session.updateUser(me)
         } catch {
-            // Silent: profile refresh must never log the user out visually.
+            // Silent refresh.
         }
     }
 

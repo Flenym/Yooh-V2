@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// Support tickets: state, creation per category, jumping into the
-/// support conversation.
 struct SupportView: View {
     @Environment(AppState.self) private var app
     @State private var category = "bug"
@@ -97,7 +95,6 @@ struct SupportView: View {
     }
 }
 
-/// Short FAQ compiled from the product docs.
 struct FAQView: View {
     private let items: [(q: String, a: String)] = [
         ("How do I log in?", "Use your phone number or email. Enter the 6-digit code (in dev builds the code is also visible in the admin panel). If cloud password is on, enter it on the second step."),

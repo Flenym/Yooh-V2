@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import UIKit
 
-/// Stories grouped by author + creation, viewing, reactions.
 @Observable
 @MainActor
 final class StoriesViewModel {
@@ -42,7 +41,7 @@ final class StoriesViewModel {
             let updated = try await app.storyService.view(story.id)
             upsert(updated)
         } catch {
-            // Best-effort; never surface viewing errors.
+            // Best-effort.
         }
     }
 

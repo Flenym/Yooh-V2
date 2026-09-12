@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// Optional admin console: server stats, live OTP codes (dev) and
-/// support broadcast. Same `x-admin-token` contract as web admin.
 struct AdminView: View {
     @Environment(AppState.self) private var app
     @State private var service = AdminService()

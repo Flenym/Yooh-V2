@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Settings hub: identity hero plus cards for every section.
 struct SettingsView: View {
     @Environment(AppState.self) private var app
     @State private var showLogoutConfirm = false
