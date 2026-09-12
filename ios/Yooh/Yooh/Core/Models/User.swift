@@ -117,6 +117,33 @@ struct PublicUser: Decodable, Identifiable, Hashable {
         return "Yooh user"
     }
 
+    init(id: String, chatId: String? = nil, username: String? = nil,
+         displayName: String? = nil, avatar: String? = nil, about: String? = nil,
+         isBot: Bool = false, isSystemBot: Bool = false, isPremium: Bool = false,
+         premiumBadge: PremiumBadge? = nil, privacy: [String: AnyCodable]? = nil,
+         role: String? = nil)
+    {
+        self.id = id
+        self.chatId = chatId
+        self.username = username
+        self.displayName = displayName
+        self.avatar = avatar
+        self.about = about
+        self.isBot = isBot
+        self.isSystemBot = isSystemBot
+        self.isPremium = isPremium
+        self.premiumBadge = premiumBadge
+        self.privacy = privacy
+        self.role = role
+    }
+
+    init(peer: ChatMember) {
+        self.init(id: peer.userId, chatId: peer.chatId, username: peer.username,
+                  displayName: peer.displayName, avatar: peer.avatar, about: peer.about,
+                  isBot: peer.isBot, isSystemBot: peer.isSystemBot,
+                  isPremium: peer.isPremium, premiumBadge: peer.premiumBadge)
+    }
+
     static func == (lhs: PublicUser, rhs: PublicUser) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
