@@ -217,9 +217,7 @@ struct SettingsView: View {
                         .frame(width: 28)
                     VStack(alignment: .leading) {
                         Text(s.name ?? s.client ?? "Session").font(.subheadline)
-                        if let seen = s.lastSeenAt {
-                            Text(YoohDates.fullDateTime(seen)).font(.caption).foregroundStyle(.secondary)
-                        }
+                        Text(YoohDates.relative(s.lastSeenAt)).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     if s.isCurrent == true {

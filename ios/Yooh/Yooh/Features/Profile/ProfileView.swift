@@ -295,9 +295,22 @@ private struct ProfileEditorView: View {
         error = nil
         guard Validation.validateDisplayName(displayName) else { error = "Enter your name."; return }
         guard Validation.validateUsername(username) else { error = "Username: 5–32 letters, digits or _."; return }
+        let cleanUsername = username.trimmingCharacters(in: .whitespaces).lowercased()
+        if cleanUsername != app.session.currentUser?.username.lowercased() {
+            do {
+                let verdict = try await app.userService.usernameAvailability(cleanUsername)
+                guard verdict.available || verdict.isCurrent else {
+                    error = "This username is taken."
+                    return
+                }
+            } catch {
+                error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                return
+            }
+        }
         var fields: [String: Any] = [
             "displayName": displayName.trimmingCharacters(in: .whitespaces),
-            "username": username.trimmingCharacters(in: .whitespaces).lowercased(),
+            "username": cleanUsername,
             "about": about,
             "emojiStatus": status,
             "birthday": hasBirthday ? Self.birthdayFormat.string(from: birthday) : "",

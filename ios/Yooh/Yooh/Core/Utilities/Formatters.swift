@@ -45,6 +45,32 @@ enum YoohDates {
         return "\(dateFormatter.string(from: date)) \(timeFormatter.string(from: date))"
     }
 
+    /// Web-style relative time ("just now", "5 min ago", "Yesterday"),
+    /// "last seen recently" fallback for missing/invalid values.
+    static func relative(_ iso: String?) -> String {
+        guard let date = parse(iso) else {
+            return NSLocalizedString("last seen recently", comment: "Presence fallback")
+        }
+        let cal = Calendar.current
+        let mins = cal.dateComponents([.minute], from: date, to: Date()).minute ?? Int.max
+        if mins < 1 { return NSLocalizedString("just now", comment: "Relative time") }
+        if mins < 60 {
+            return String(format: NSLocalizedString("%d min ago", comment: "Relative time"), mins)
+        }
+        let hours = mins / 60
+        if hours < 24 && cal.isDateInToday(date) {
+            return String(format: NSLocalizedString("%d h ago", comment: "Relative time"), hours)
+        }
+        if cal.isDateInYesterday(date) {
+            return NSLocalizedString("Yesterday", comment: "Relative time")
+        }
+        let days = cal.dateComponents([.day], from: cal.startOfDay(for: date), to: cal.startOfDay(for: Date())).day ?? 99
+        if days < 7 {
+            return weekdayFormatter.string(from: date)
+        }
+        return dateFormatter.string(from: date)
+    }
+
     static func isoNow() -> String {
         isoWithFraction.string(from: Date())
     }
