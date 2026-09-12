@@ -34,4 +34,16 @@ final class StoryService {
         let res: SingleStoryResponse = try await api.send(.reactToStory(id, emoji: emoji))
         return res.story
     }
+
+    @discardableResult
+    func comment(_ id: String, text: String) async throws -> YoohStory {
+        let res: SingleStoryResponse = try await api.send(.commentOnStory(id, text: text))
+        return res.story
+    }
+
+    @discardableResult
+    func patch(_ id: String, caption: String? = nil, saveToProfile: Bool? = nil) async throws -> YoohStory {
+        let res: SingleStoryResponse = try await api.send(.patchStory(id, caption: caption, saveToProfile: saveToProfile))
+        return res.story
+    }
 }

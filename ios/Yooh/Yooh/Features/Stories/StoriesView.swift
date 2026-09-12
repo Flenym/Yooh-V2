@@ -114,6 +114,10 @@ private struct StoryViewerView: View {
     @State private var groupIdx: Int
     @State private var storyIdx = 0
     @State private var progress: CGFloat = 0
+    @State private var replyText = ""
+    @State private var showCaptionEditor = false
+    @State private var editCaption = ""
+    @State private var isSendingReply = false
 
     init(groups: [(authorId: String, author: PublicUser?, stories: [YoohStory])], startIndex: Int) {
         self.groups = groups
@@ -124,7 +128,7 @@ private struct StoryViewerView: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            if let story = current {
+            if let story = live ?? current {
                 StoryPageView(story: story)
                     .onAppear {
                         progress = 0
@@ -132,6 +136,9 @@ private struct StoryViewerView: View {
                         withAnimation(.linear(duration: 5)) { progress = 1 }
                     }
                     .id(story.id)
+                    .onChange(of: story.id) { _, _ in
+                        replyText = ""
+                    }
                     .onChange(of: progress) { _, p in
                         if p >= 1 { advance() }
                     }
@@ -171,7 +178,31 @@ private struct StoryViewerView: View {
                 }
                 .padding(.horizontal)
                 Spacer()
+                if let story = live {
+                    commentsPreview(for: story)
+                }
                 reactionBar
+                bottomBar
+            }
+        }
+        .sheet(isPresented: $showCaptionEditor) {
+            NavigationStack {
+                Form {
+                    Section("Caption") {
+                        TextField("Say something…", text: $editCaption, axis: .vertical)
+                    }
+                    AsyncButton(title: "Save", isBusy: false) {
+                        await saveCaption()
+                    }
+                    .disabled(editCaption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .navigationTitle("Edit caption")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") { showCaptionEditor = false }
+                    }
+                }
             }
         }
         .gesture(
@@ -213,6 +244,12 @@ private struct StoryViewerView: View {
         return list[storyIdx]
     }
 
+    /// Fresh copy from the view model (reactions, comments, caption edits).
+    private var live: YoohStory? {
+        guard let story = current else { return nil }
+        return app.storiesViewModel.liveStory(id: story.id) ?? story
+    }
+
     private var isOwnStory: Bool {
         current?.authorId == app.session.currentUser?.id
     }
@@ -234,6 +271,90 @@ private struct StoryViewerView: View {
         .padding()
         .yoohGlass()
         .padding()
+    }
+
+    @ViewBuilder
+    private func commentsPreview(for story: YoohStory) -> some View {
+        if let comments = story.liveComments, !comments.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(comments.suffix(3)) { c in
+                    HStack(alignment: .top, spacing: 6) {
+                        Text(c.text ?? "")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    @ViewBuilder
+    private var bottomBar: some View {
+        if isOwnStory, let story = live {
+            HStack {
+                Button {
+                    Task { await app.storiesViewModel.toggleSaveToProfile(story) }
+                } label: {
+                    Label((story.saveToProfile ?? false) ? "Saved to profile" : "Save to profile",
+                          systemImage: (story.saveToProfile ?? false) ? "bookmark.fill" : "bookmark")
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                Button {
+                    editCaption = story.caption ?? ""
+                    showCaptionEditor = true
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                }
+                .accessibilityLabel(Text("Edit story caption"))
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        } else {
+            HStack(spacing: 8) {
+                TextField("Reply…", text: $replyText, axis: .vertical)
+                    .textFieldStyle(.roundedBorder)
+                    .lineLimit(1...3)
+                Button {
+                    Task { await sendReply() }
+                } label: {
+                    if isSendingReply {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                            .foregroundStyle(.white)
+                    }
+                }
+                .disabled(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSendingReply)
+                .accessibilityLabel(Text("Send reply"))
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+    }
+
+    private func sendReply() async {
+        guard let story = live else { return }
+        isSendingReply = true
+        defer { isSendingReply = false }
+        if await app.storiesViewModel.reply(story, text: replyText) {
+            replyText = ""
+            Haptics.send()
+        }
+    }
+
+    private func saveCaption() async {
+        guard let story = live else { return }
+        if await app.storiesViewModel.saveCaption(story, caption: editCaption) {
+            showCaptionEditor = false
+            Haptics.send()
+        }
     }
 
     private func advance() {

@@ -411,6 +411,27 @@ struct APIEndpoint {
                            jsonBody: Body(emoji: emoji))
     }
 
+    static func commentOnStory(_ id: String, text: String) -> APIEndpoint {
+        struct Body: Encodable { let text: String }
+        return APIEndpoint(method: .post, path: "/api/stories/\(id)/comments",
+                           jsonBody: Body(text: text))
+    }
+
+    static func patchStory(_ id: String, caption: String? = nil, saveToProfile: Bool? = nil) -> APIEndpoint {
+        struct Body: Encodable {
+            let caption: String?
+            let saveToProfile: Bool?
+            enum CodingKeys: String, CodingKey { case caption, saveToProfile }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encodeIfPresent(caption, forKey: .caption)
+                try c.encodeIfPresent(saveToProfile, forKey: .saveToProfile)
+            }
+        }
+        return APIEndpoint(method: .patch, path: "/api/stories/\(id)",
+                           jsonBody: Body(caption: caption, saveToProfile: saveToProfile))
+    }
+
     // MARK: - Calls
 
     static func calls(limit: Int = 200) -> APIEndpoint {

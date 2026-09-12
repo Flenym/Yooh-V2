@@ -63,6 +63,46 @@ final class StoriesViewModel {
         }
     }
 
+    func reply(_ story: YoohStory, text: String) async -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        do {
+            let updated = try await app.storyService.comment(story.id, text: trimmed)
+            upsert(updated)
+            return true
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            return false
+        }
+    }
+
+    func saveCaption(_ story: YoohStory, caption: String) async -> Bool {
+        do {
+            let updated = try await app.storyService.patch(
+                story.id, caption: caption.trimmingCharacters(in: .whitespacesAndNewlines))
+            upsert(updated)
+            return true
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            return false
+        }
+    }
+
+    func toggleSaveToProfile(_ story: YoohStory) async {
+        do {
+            let updated = try await app.storyService.patch(
+                story.id, saveToProfile: !(story.saveToProfile ?? false))
+            upsert(updated)
+            Haptics.selection()
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    func liveStory(id: String) -> YoohStory? {
+        stories.first(where: { $0.id == id })
+    }
+
     func publishPhoto(_ image: UIImage, caption: String?) async -> Bool {
         guard let dataURL = ProfileViewModel.storyImageDataURL(image) else {
             error = "Couldn't process the image."
