@@ -45,6 +45,8 @@ jobs:
       - name: Build (Release, unsigned)
         working-directory: ios/Yooh
         run: |
+          mkdir -p ../../build
+          set +e
           xcodebuild \
             -project Yooh.xcodeproj \
             -scheme Yooh \
@@ -53,7 +55,22 @@ jobs:
             -derivedDataPath ../../build/derived \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            build
+            build > ../../build/xcodebuild.log 2>&1
+          CODE=$?
+          echo "xcodebuild exit: $CODE"
+          grep -E "error:" ../../build/xcodebuild.log | sort -u | head -n 40 || true
+          echo "--- tail ---"
+          tail -n 5 ../../build/xcodebuild.log || true
+          exit $CODE
+
+      - name: Upload build log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: build/xcodebuild.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Unit tests (best effort, never blocks the IPA)
         working-directory: ios/Yooh
