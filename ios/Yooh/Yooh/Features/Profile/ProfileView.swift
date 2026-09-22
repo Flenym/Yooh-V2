@@ -304,7 +304,7 @@ private struct ProfileEditorView: View {
                     return
                 }
             } catch {
-                error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
                 return
             }
         }
