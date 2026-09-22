@@ -29,7 +29,10 @@ struct AuthView: View {
         }
         .animation(.snappy, value: vm.started)
         .animation(.snappy, value: vm.stepHash)
-        .onAppear { vm.app = app }
+        .onAppear {
+            vm.app = app
+            vm.applyUITestStep()
+        }
     }
 }
 

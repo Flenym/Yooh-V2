@@ -68,10 +68,21 @@ jobs:
           APP_PATH="$(find build/derived-sim/Build/Products/Debug-iphonesimulator -maxdepth 1 -name 'Yooh.app' | head -n 1)"
           echo "App: $APP_PATH"
           xcrun simctl install "$DEVICE" "$APP_PATH"
-          xcrun simctl launch "$DEVICE" com.yooh.app
-          sleep 10
           mkdir -p build/shots
-          xcrun simctl io "$DEVICE" screenshot build/shots/auth-start.png
+          shot() {
+            # $1 = png name, $2.. = launch args
+            local name="$1"; shift
+            xcrun simctl terminate "$DEVICE" com.yooh.app || true
+            sleep 1
+            xcrun simctl launch "$DEVICE" com.yooh.app "$@" || true
+            sleep 7
+            xcrun simctl io "$DEVICE" screenshot "build/shots/$name"
+          }
+          shot auth-start.png
+          shot auth-phone.png UITEST_PHONE
+          shot auth-code.png UITEST_CODE
+          shot auth-profile.png UITEST_PROFILE
+          shot auth-cloud.png UITEST_CLOUD
           ls -la build/shots
 
       - name: Upload screenshots

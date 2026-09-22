@@ -225,6 +225,36 @@ final class AuthViewModel {
 
     func clearError() { error = nil }
 
+    /// DEBUG-only visual-QA hook: `simctl launch … UITEST_PHONE`
+    /// jumps straight to a given auth screen. Stripped from Release.
+    func applyUITestStep() {
+#if DEBUG
+        let args = CommandLine.arguments
+        if args.contains("UITEST_PHONE") {
+            started = true
+        } else if args.contains("UITEST_CODE") {
+            started = true
+            mode = .login
+            phoneDigits = "9001234567"
+            step = .code
+        } else if args.contains("UITEST_PROFILE") {
+            started = true
+            mode = .register
+            phoneDigits = "9001234567"
+            code = "123456"
+            displayName = "Иван"
+            username = "ivan_petrov"
+            step = .profile
+        } else if args.contains("UITEST_CLOUD") {
+            started = true
+            mode = .login
+            phoneDigits = "9001234567"
+            code = "123456"
+            step = .cloudPassword
+        }
+#endif
+    }
+
     // MARK: - Private
 
     private func armCodeStep(_ res: OTPRequestResponse) {
