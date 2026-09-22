@@ -405,12 +405,7 @@ struct SettingsView: View {
                 .padding(.vertical, 8)
             }
         }
-        .sheet(isPresented: $showDeleteAccount) {
-            DeleteAccountView()
-        }
     }
-
-    @State private var showDeleteAccount = false
 }
 
 private struct StickerPacksView: View {

@@ -100,9 +100,6 @@ struct ChatsView: View {
             .sheet(isPresented: $showRequests) {
                 RequestsInboxView()
             }
-            .sheet(isPresented: $showRequests) {
-                RequestsInboxView()
-            }
             .sheet(item: $openSecret) { sc in
                 if let me = app.session.currentUser?.id {
                     SecretChatView(chat: sc, userId: me) {
@@ -550,9 +547,5 @@ struct ChatsView: View {
               let me = app.chatsViewModel.myUserId,
               let peer = chat.peer(myUserId: me) else { return false }
         return app.isOnline(peer.userId)
-    }
-
-    private func showRequests() {
-        // Placeholder replaced below by the sheet state.
     }
 }
