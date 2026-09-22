@@ -19,6 +19,69 @@ permissions:
   actions: write
 
 jobs:
+  # Visual QA: boots an iPhone simulator, installs a Debug simulator
+  # build and screenshots the logged-out auth flow (start screen).
+  # PNGs land in the `Yooh-shots` artifact for human review.
+  shots:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode (26 preferred for the iOS 26 SDK)
+        run: |
+          ls /Applications | grep -i xcode || true
+          XCODE_APP="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -z "$XCODE_APP" ]]; then
+            XCODE_APP="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -n 1)"
+          fi
+          if [[ -n "$XCODE_APP" ]]; then
+            echo "Using $XCODE_APP"
+            sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          else
+            echo "No versioned Xcode found, keeping default:"
+            xcode-select -p
+          fi
+          xcodebuild -version
+
+      - name: Build (Debug, simulator)
+        working-directory: ios/Yooh
+        run: |
+          xcodebuild \
+            -project Yooh.xcodeproj \
+            -scheme Yooh \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ../../build/derived-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Boot simulator, launch, screenshot auth
+        run: |
+          DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; ds=[d for r in json.load(sys.stdin)["devices"].values() for d in r if "iPhone" in d.get("name","") and d.get("isAvailable",True)]; print(ds[0]["udid"] if ds else "")')"
+          if [[ -z "$DEVICE" ]]; then echo "No iPhone simulator."; exit 1; fi
+          echo "Device: $DEVICE"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          APP_PATH="$(find build/derived-sim/Build/Products/Debug-iphonesimulator -maxdepth 1 -name 'Yooh.app' | head -n 1)"
+          echo "App: $APP_PATH"
+          xcrun simctl install "$DEVICE" "$APP_PATH"
+          xcrun simctl launch "$DEVICE" com.yooh.app
+          sleep 10
+          mkdir -p build/shots
+          xcrun simctl io "$DEVICE" screenshot build/shots/auth-start.png
+          ls -la build/shots
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: Yooh-shots
+          path: build/shots/
+          if-no-files-found: error
+          retention-days: 30
+
   build-ipa:
     runs-on: macos-15
     timeout-minutes: 30
