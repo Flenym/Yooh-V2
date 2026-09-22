@@ -39,7 +39,7 @@ struct SettingsView: View {
                     .padding(.bottom, 100)
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Настройки")
             .navigationBarTitleDisplayMode(.large)
             .task {
                 await settings.load()
@@ -55,9 +55,9 @@ struct SettingsView: View {
                     }
                 }
             }
-            .confirmationDialog("Log out?", isPresented: $showLogoutConfirm, titleVisibility: .visible) {
-                Button("Log out", role: .destructive) { settings.logout() }
-                Button("Cancel", role: .cancel) {}
+            .confirmationDialog("Выйти из аккаунта?", isPresented: $showLogoutConfirm, titleVisibility: .visible) {
+                Button("Выйти", role: .destructive) { settings.logout() }
+                Button("Отмена", role: .cancel) {}
             }
             .sheet(isPresented: $showLinkDevice) {
                 NavigationStack {
@@ -100,7 +100,7 @@ struct SettingsView: View {
             NavigationLink {
                 ProfileView()
             } label: {
-                settingRow(tile: "person.crop.circle.fill", color: .red, title: "My Profile")
+                settingRow(tile: "person.crop.circle.fill", color: .red, title: "Мой профиль")
             }
             .buttonStyle(.plain)
         }
@@ -147,14 +147,14 @@ struct SettingsView: View {
                     .foregroundStyle(.white)
                     .frame(width: 30, height: 30)
                     .background(Color.blue, in: .rect(cornerRadius: 7))
-                Text("Language")
+                Text("Язык")
                     .font(.system(size: 17))
                 Spacer()
-                Picker("Language", selection: Binding(
+                Picker("Язык", selection: Binding(
                     get: { settings.language },
                     set: { code in Task { await settings.setLanguage(code) } }
                 )) {
-                    Text("English").tag("en")
+                    Text("Английский").tag("en")
                     Text("Русский").tag("ru")
                 }
                 .pickerStyle(.segmented)
@@ -169,7 +169,7 @@ struct SettingsView: View {
             NavigationLink {
                 AppearanceView()
             } label: {
-                settingRow(tile: "paintpalette.fill", color: .purple, title: "Appearance")
+                settingRow(tile: "paintpalette.fill", color: .purple, title: "Оформление")
             }
             .buttonStyle(.plain)
         }
@@ -180,7 +180,7 @@ struct SettingsView: View {
             NavigationLink {
                 NotificationsView()
             } label: {
-                settingRow(tile: "bell.badge.fill", color: .red, title: "Notifications & Sounds")
+                settingRow(tile: "bell.badge.fill", color: .red, title: "Уведомления и звуки")
             }
             .buttonStyle(.plain)
         }
@@ -191,7 +191,7 @@ struct SettingsView: View {
             NavigationLink {
                 PrivacyView()
             } label: {
-                settingRow(tile: "lock.shield.fill", color: .gray, title: "Privacy & Security")
+                settingRow(tile: "lock.shield.fill", color: .gray, title: "Конфиденциальность")
             }
             .buttonStyle(.plain)
         }
@@ -202,7 +202,7 @@ struct SettingsView: View {
             NavigationLink {
                 StorageView()
             } label: {
-                settingRow(tile: "internaldrive.fill", color: .green, title: "Data & Storage")
+                settingRow(tile: "internaldrive.fill", color: .green, title: "Данные и память")
             }
             .buttonStyle(.plain)
         }
@@ -216,37 +216,37 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 28)
                     VStack(alignment: .leading) {
-                        Text(s.name ?? s.client ?? "Session").font(.subheadline)
+                        Text(s.name ?? s.client ?? "Сессия").font(.subheadline)
                         Text(YoohDates.relative(s.lastSeenAt)).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     if s.isCurrent == true {
-                        Text("This device").font(.caption).foregroundStyle(ThemeStore.shared.accent)
+                        Text("Это устройство").font(.caption).foregroundStyle(ThemeStore.shared.accent)
                     } else {
                         Button {
                             Task { await settings.deleteSession(s.id) }
                         } label: {
                             Image(systemName: "xmark").font(.caption).foregroundStyle(.secondary)
                         }
-                        .accessibilityLabel(Text("Terminate session"))
+                        .accessibilityLabel(Text("Завершить сессию"))
                     }
                 }
                 .padding(.vertical, 6)
                 Divider().background(Color(.separator).opacity(0.4))
             }
-            Button("Terminate other sessions") {
+            Button("Завершить другие сессии") {
                 Task { await settings.terminateOthers() }
             }
             .font(.system(size: 17))
             .foregroundStyle(ThemeStore.shared.accent)
             .padding(.vertical, 8)
-            Button("Link a desktop device") {
+            Button("Привязать устройство") {
                 showLinkDevice = true
             }
             .font(.system(size: 17))
             .foregroundStyle(ThemeStore.shared.accent)
             .padding(.vertical, 4)
-            Button("Show code for a new device") {
+            Button("Показать код для нового устройства") {
                 showQR = true
             }
             .font(.system(size: 17))
@@ -266,18 +266,18 @@ struct SettingsView: View {
     private func securityCard(_ settings: SettingsViewModel) -> some View {
         card {
             if app.session.currentUser?.cloudPasswordEnabled == true {
-                Text("Two-step verification is on.")
+                Text("Двухэтапная аутентификация включена.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 4)
-                Button("Disable", role: .destructive) {
+                Button("Отключить", role: .destructive) {
                     Task { _ = await settings.setCloudPassword(nil) }
                 }
                 .padding(.vertical, 4)
             } else {
-                SecureField("New cloud password (min 4 chars)", text: $cloudPassword)
+                SecureField("Новый облачный пароль (мин. 4 символа)", text: $cloudPassword)
                     .padding(.vertical, 8)
-                Button("Enable two-step verification") {
+                Button("Включить двухэтапную аутентификацию") {
                     Task {
                         if await settings.setCloudPassword(cloudPassword) { cloudPassword = "" }
                     }
@@ -295,7 +295,7 @@ struct SettingsView: View {
             NavigationLink {
                 StickerPacksView()
             } label: {
-                settingRow(tile: "face.smiling.fill", color: .orange, title: "Stickers")
+                settingRow(tile: "face.smiling.fill", color: .orange, title: "Стикеры")
             }
             .buttonStyle(.plain)
         }
@@ -303,17 +303,17 @@ struct SettingsView: View {
 
     private func feedbackCard(_ settings: SettingsViewModel) -> some View {
         card {
-            Picker("Category", selection: $feedbackCategory) {
-                Text("Bug").tag("bug")
-                Text("Improvement").tag("improvement")
-                Text("Wish").tag("wish")
+            Picker("Категория", selection: $feedbackCategory) {
+                Text("Ошибка").tag("bug")
+                Text("Улучшение").tag("improvement")
+                Text("Пожелание").tag("wish")
             }
             .pickerStyle(.segmented)
             .padding(.vertical, 4)
-            TextField("Describe the issue or idea…", text: $feedbackText, axis: .vertical)
+            TextField("Опишите проблему или идею…", text: $feedbackText, axis: .vertical)
                 .lineLimit(2...5)
                 .padding(.vertical, 4)
-            AsyncButton(title: "Send feedback", isBusy: false) {
+            AsyncButton(title: "Отправить отзыв", isBusy: false) {
                 guard !feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                 if await settings.sendFeedback(category: feedbackCategory, message: feedbackText) {
                     feedbackText = ""
@@ -328,13 +328,13 @@ struct SettingsView: View {
             NavigationLink {
                 SupportView()
             } label: {
-                settingRow(tile: "questionmark.circle.fill", color: .blue, title: "Support")
+                settingRow(tile: "questionmark.circle.fill", color: .blue, title: "Поддержка")
             }
             .buttonStyle(.plain)
             NavigationLink {
                 FAQView()
             } label: {
-                settingRow(tile: "book.fill", color: .teal, title: "FAQ")
+                settingRow(tile: "book.fill", color: .teal, title: "Вопросы и ответы")
             }
             .buttonStyle(.plain)
         }
@@ -345,7 +345,7 @@ struct SettingsView: View {
             NavigationLink {
                 AdminView()
             } label: {
-                settingRow(tile: "shield.lefthalf.fill", color: .gray, title: "Admin console")
+                settingRow(tile: "shield.lefthalf.fill", color: .gray, title: "Админ-панель")
             }
             .buttonStyle(.plain)
         }
@@ -353,7 +353,7 @@ struct SettingsView: View {
 
     private func serverCard(url: Binding<String>, onApply: @escaping () -> Void) -> some View {
         card {
-            TextField("Server URL (empty = test server)", text: url)
+            TextField("URL сервера (пусто = тестовый)", text: url)
                 .keyboardType(.URL)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
@@ -362,7 +362,7 @@ struct SettingsView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 4)
-            Button("Apply server URL", action: onApply)
+            Button("Применить URL сервера", action: onApply)
                 .font(.system(size: 17))
                 .foregroundStyle(ThemeStore.shared.accent)
                 .padding(.bottom, 4)
@@ -374,7 +374,7 @@ struct SettingsView: View {
         return card {
             LabeledContent("Yooh for iOS", value: version)
                 .padding(.vertical, 4)
-            LabeledContent("Backend", value: "Yooh server API + Socket.IO")
+            LabeledContent("Сервер", value: "Yooh server API + Socket.IO")
                 .padding(.vertical, 4)
         }
     }
@@ -386,7 +386,7 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Spacer()
-                    Label("Log out", systemImage: "rectangle.portrait.and.arrow.right")
+                    Label("Выйти", systemImage: "rectangle.portrait.and.arrow.right")
                         .font(.system(size: 17, weight: .semibold))
                     Spacer()
                 }
@@ -398,7 +398,7 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Spacer()
-                    Label("Delete account", systemImage: "trash.fill")
+                    Label("Удалить аккаунт", systemImage: "trash.fill")
                         .font(.system(size: 17, weight: .semibold))
                     Spacer()
                 }
@@ -417,7 +417,7 @@ private struct StickerPacksView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(pack.coverEmoji ?? "🙂").font(.title2)
-                    Text(pack.title ?? "Pack").font(.headline)
+                    Text(pack.title ?? "Пак").font(.headline)
                     Spacer()
                     Text("\(pack.stickers?.count ?? 0)").font(.caption).foregroundStyle(.secondary)
                 }
@@ -437,15 +437,15 @@ private struct StickerPacksView: View {
             }
             .padding(.vertical, 4)
         }
-        .navigationTitle("Stickers")
+        .navigationTitle("Стикеры")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await settings.loadStickerPacks()
         }
         .overlay {
             if settings.stickerPacks.isEmpty {
-                EmptyStateView(symbol: "face.smiling", title: "No sticker packs",
-                               subtitle: "Packs created on web will appear here.")
+                EmptyStateView(symbol: "face.smiling", title: "Нет стикерпаков",
+                               subtitle: "Паки, созданные в веб-версии, появятся здесь.")
             }
         }
     }

@@ -39,11 +39,11 @@ final class SecretChatViewModel {
 
     var ttlLabel: String {
         switch chat.ttlSeconds {
-        case 0: return "Off"
-        case 1..<60: return "\(chat.ttlSeconds)s"
-        case 60..<3600: return "\(chat.ttlSeconds / 60)m"
-        case 3600..<86400: return "\(chat.ttlSeconds / 3600)h"
-        default: return "\(chat.ttlSeconds / 86400)d"
+        case 0: return "Выкл"
+        case 1..<60: return "\(chat.ttlSeconds) с"
+        case 60..<3600: return "\(chat.ttlSeconds / 60) мин"
+        case 3600..<86400: return "\(chat.ttlSeconds / 3600) ч"
+        default: return "\(chat.ttlSeconds / 86400) дн"
         }
     }
 

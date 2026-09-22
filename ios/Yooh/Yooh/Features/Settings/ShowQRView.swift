@@ -17,9 +17,9 @@ struct ShowQRView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 64))
                         .foregroundStyle(.green)
-                    Text("Device linked!")
+                    Text("Устройство привязано!")
                         .font(.title3.bold())
-                    Text("The other device is now logged in.")
+                    Text("Другое устройство теперь в аккаунте.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else if let token, let img = qrImage(token) {
@@ -30,7 +30,7 @@ struct ShowQRView: View {
                         .frame(width: 240, height: 240)
                         .padding()
                         .background(Color.white, in: .rect(cornerRadius: 20))
-                    Text("Scan with a logged-in Yooh app to authorize this device.")
+                    Text("Отсканируйте вошедшим приложением Yooh, чтобы авторизовать это устройство.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -40,7 +40,7 @@ struct ShowQRView: View {
                 if let error {
                     ErrorBanner(message: error, onDismiss: { self.error = nil })
                         .padding(.horizontal, -YoohTheme.Spacing.l)
-                    Button("Try again") {
+                    Button("Попробовать снова") {
                         Task { await create() }
                     }
                     .buttonStyle(.bordered)
@@ -48,11 +48,11 @@ struct ShowQRView: View {
                 Spacer()
             }
             .padding(YoohTheme.Spacing.xl)
-            .navigationTitle("Link new device")
+            .navigationTitle("Новое устройство")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
             }
             .task {
@@ -84,7 +84,7 @@ struct ShowQRView: View {
                             return
                         }
                         if st.status == "expired" {
-                            error = "Code expired. Create a new one."
+                            error = "Код истёк. Создайте новый."
                             pollTask?.cancel()
                             return
                         }

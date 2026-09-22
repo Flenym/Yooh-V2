@@ -26,7 +26,7 @@ struct ProfileView: View {
                                 .offset(y: -30)
                                 .padding(.bottom, -30)
                                 Spacer()
-                                Button("Edit profile") { showEditor = true }
+                                Button("Изменить профиль") { showEditor = true }
                                     .buttonStyle(.bordered)
                                     .controlSize(.small)
                             }
@@ -52,7 +52,7 @@ struct ProfileView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Profile")
+        .navigationTitle("Профиль")
         .navigationBarTitleDisplayMode(.inline)
         .overlay(alignment: .top) {
             if let error = profile.error {
@@ -77,13 +77,13 @@ struct ProfileView: View {
                 if !user.emojiStatus.isEmpty {
                     Text(user.emojiStatus)
                         .font(.title3)
-                        .accessibilityLabel(Text("Status"))
+                        .accessibilityLabel(Text("Статус"))
                 }
                 if user.isPremium {
                     Image(systemName: "star.fill")
                         .font(.caption)
                         .foregroundStyle(.yellow)
-                        .accessibilityLabel(Text("Premium"))
+                        .accessibilityLabel(Text("Премиум"))
                 }
             }
             Text("@\(user.username) · \(user.phone)")
@@ -95,19 +95,19 @@ struct ProfileView: View {
 
     private func infoCard(_ user: YoohUser) -> some View {
         VStack(spacing: 0) {
-            infoRow(icon: "star.fill", color: .yellow, title: "Stars", value: "\(user.starsBalance)")
+            infoRow(icon: "star.fill", color: .yellow, title: "Звёзды", value: "\(user.starsBalance)")
             Divider().opacity(0.4)
             if !user.birthday.isEmpty {
-                infoRow(icon: "gift.fill", color: .pink, title: "Birthday", value: user.birthday)
+                infoRow(icon: "gift.fill", color: .pink, title: "День рождения", value: user.birthday)
                 Divider().opacity(0.4)
             }
             infoRow(icon: user.cloudPasswordEnabled ? "lock.fill" : "lock.open.fill",
                     color: .green,
-                    title: "Two-step verification",
-                    value: user.cloudPasswordEnabled ? "On" : "Off")
+                    title: "Двухэтапная аутентификация",
+                    value: user.cloudPasswordEnabled ? "Вкл" : "Выкл")
             Divider().opacity(0.4)
             infoRow(icon: "calendar", color: ThemeStore.shared.accent,
-                    title: "Member since",
+                    title: "В Yooh с",
                     value: YoohDates.fullDateTime(user.createdAt))
         }
         .padding(.horizontal, YoohTheme.Spacing.m)
@@ -159,31 +159,31 @@ private struct ProfileEditorView: View {
     var body: some View {
         @Bindable var profile = app.profileViewModel
         Form {
-            Section("Photo & banner") {
+            Section("Фото и баннер") {
                 if let avatarPreview {
                     Image(uiImage: avatarPreview)
                         .resizable().scaledToFill()
                         .frame(width: 72, height: 72).clipShape(Circle())
                 }
-                ProfilePhotoPicker(item: $avatarItem, title: "Change avatar", symbol: "person.crop.circle")
+                ProfilePhotoPicker(item: $avatarItem, title: "Сменить аватар", symbol: "person.crop.circle")
                 if let bannerPreview {
                     Image(uiImage: bannerPreview)
                         .resizable().scaledToFill()
                         .frame(height: 90).clipShape(.rect(cornerRadius: 12))
                 }
-                ProfilePhotoPicker(item: $bannerItem, title: "Change banner", symbol: "photo")
+                ProfilePhotoPicker(item: $bannerItem, title: "Сменить баннер", symbol: "photo")
             }
-            Section("Identity") {
-                TextField("Display name", text: $displayName)
+            Section("Основное") {
+                TextField("Имя", text: $displayName)
                 TextField("username", text: $username)
-                    .autocapitalization(.none).disableAutocorrection(true)
-                TextField("About", text: $about, axis: .vertical)
-                Toggle("Birthday", isOn: $hasBirthday)
+
+                TextField("О себе", text: $about, axis: .vertical)
+                Toggle("День рождения", isOn: $hasBirthday)
                 if hasBirthday {
-                    DatePicker("Date of birth", selection: $birthday, displayedComponents: .date)
+                    DatePicker("Дата рождения", selection: $birthday, displayedComponents: .date)
                 }
             }
-            Section("Status emoji") {
+            Section("Эмодзи-статус") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))]) {
                     ForEach(ProfileStyle.statusPresets, id: \.self) { e in
                         Button {
@@ -197,19 +197,19 @@ private struct ProfileEditorView: View {
                                             in: .circle)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(Text(e.isEmpty ? "Clear status" : "Status \(e)"))
+                        .accessibilityLabel(Text(e.isEmpty ? "Убрать статус" : "Статус \(e)"))
                     }
                 }
             }
-            Section("Avatar decoration") {
-                Picker("Style", selection: $badgeStyle) {
-                    Text("None").tag("none")
-                    Text("Star emblem").tag("star")
-                    Text("Photo frame").tag("photo")
+            Section("Украшение аватара") {
+                Picker("Стиль", selection: $badgeStyle) {
+                    Text("Нет").tag("none")
+                    Text("Звезда").tag("star")
+                    Text("Фоторамка").tag("photo")
                 }
                 .pickerStyle(.segmented)
                 if badgeStyle == "star" {
-                    TextField("Star emoji", text: $star)
+                    TextField("Эмодзи звезды", text: $star)
                 }
                 if badgeStyle == "photo" {
                     if let decorPreview {
@@ -217,7 +217,7 @@ private struct ProfileEditorView: View {
                             .resizable().scaledToFill()
                             .frame(width: 72, height: 72).clipShape(Circle())
                     }
-                    ProfilePhotoPicker(item: $decorItem, title: "Decoration image", symbol: "sparkles")
+                    ProfilePhotoPicker(item: $decorItem, title: "Картинка украшения", symbol: "sparkles")
                 }
                 if badgeStyle != "none" {
                     HStack {
@@ -235,7 +235,7 @@ private struct ProfileEditorView: View {
                                     }
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(Text("Color \(hex)"))
+                            .accessibilityLabel(Text("Цвет \(hex)"))
                         }
                     }
                 }
@@ -243,15 +243,15 @@ private struct ProfileEditorView: View {
             if let error {
                 Text(error).font(.footnote).foregroundStyle(.red)
             }
-            AsyncButton(title: "Save", isBusy: profile.isSaving) {
+            AsyncButton(title: "Сохранить", isBusy: profile.isSaving) {
                 await save(profile)
             }
         }
-        .navigationTitle("Edit profile")
+        .navigationTitle("Изменить профиль")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel") { dismiss() }
+                Button("Отмена") { dismiss() }
             }
         }
         .onAppear(perform: prefill)
@@ -293,14 +293,14 @@ private struct ProfileEditorView: View {
 
     private func save(_ profile: ProfileViewModel) async {
         error = nil
-        guard Validation.validateDisplayName(displayName) else { error = "Enter your name."; return }
+        guard Validation.validateDisplayName(displayName) else { error = "Введите ваше имя."; return }
         guard Validation.validateUsername(username) else { error = "Username: 5–32 letters, digits or _."; return }
         let cleanUsername = username.trimmingCharacters(in: .whitespaces).lowercased()
         if cleanUsername != app.session.currentUser?.username.lowercased() {
             do {
                 let verdict = try await app.userService.usernameAvailability(cleanUsername)
                 guard verdict.available || verdict.isCurrent else {
-                    error = "This username is taken."
+                    error = "Этот username уже занят."
                     return
                 }
             } catch {
@@ -332,7 +332,7 @@ private struct ProfileEditorView: View {
                                           "svg": "", "bgColor": badgeColor,
                                           "size": 16, "offsetX": 0, "offsetY": 0] as [String: Any]
             } else {
-                error = "Pick a decoration image or choose another style."
+                error = "Выберите картинку украшения или другой стиль."
                 return
             }
         default:

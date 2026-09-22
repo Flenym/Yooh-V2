@@ -72,7 +72,7 @@ struct ErrorBanner: View {
                 .foregroundStyle(.primary)
             Spacer()
             if let onRetry {
-                Button("Retry", action: onRetry)
+                Button("Повторить", action: onRetry)
                     .font(.footnote.bold())
             }
             if let onDismiss {
@@ -81,7 +81,7 @@ struct ErrorBanner: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                .accessibilityLabel(Text("Dismiss error"))
+                .accessibilityLabel(Text("Закрыть ошибку"))
             }
         }
         .padding(YoohTheme.Spacing.s)
@@ -109,7 +109,7 @@ struct NoticeBanner: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                .accessibilityLabel(Text("Dismiss notice"))
+                .accessibilityLabel(Text("Закрыть уведомление"))
             }
         }
         .padding(YoohTheme.Spacing.s)
@@ -151,7 +151,7 @@ struct BotTag: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(ThemeStore.shared.accent.opacity(0.15), in: .capsule)
-            .accessibilityLabel(Text("Bot account"))
+            .accessibilityLabel(Text("Бот"))
     }
 }
 

@@ -23,7 +23,7 @@ enum ProfileStyle {
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .clipped()
-        .accessibilityLabel(Text("Profile banner"))
+        .accessibilityLabel(Text("Баннер профиля"))
     }
 
     static func decoratedAvatar(avatarURL: String?, name: String, badge: PremiumBadge?, size: CGFloat) -> some View {
@@ -41,7 +41,7 @@ enum ProfileStyle {
                     .clipShape(Circle())
                     .opacity(0.9)
                     .allowsHitTesting(false)
-                    .accessibilityLabel(Text("Avatar decoration"))
+                    .accessibilityLabel(Text("Украшение аватара"))
             }
             if let badge, badge.type == "star", let star = badge.star, !star.isEmpty {
                 Text(star)
@@ -52,7 +52,7 @@ enum ProfileStyle {
                             .frame(width: size * 0.36, height: size * 0.36)
                     )
                     .offset(x: 2, y: 2)
-                    .accessibilityLabel(Text("Profile badge"))
+                    .accessibilityLabel(Text("Значок профиля"))
             }
         }
     }

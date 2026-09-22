@@ -26,7 +26,7 @@ enum YoohDates {
             return timeFormatter.string(from: date)
         }
         if cal.isDateInYesterday(date) {
-            return NSLocalizedString("Yesterday", comment: "Chat list timestamp")
+            return "вчера"
         }
         let days = cal.dateComponents([.day], from: cal.startOfDay(for: date), to: cal.startOfDay(for: Date())).day ?? 99
         if days < 7 {
@@ -45,24 +45,24 @@ enum YoohDates {
         return "\(dateFormatter.string(from: date)) \(timeFormatter.string(from: date))"
     }
 
-    /// Web-style relative time ("just now", "5 min ago", "Yesterday"),
-    /// "last seen recently" fallback for missing/invalid values.
+    /// Relative time in Russian ("только что", "5 мин назад", "вчера"),
+    /// "был(а) недавно" fallback for missing/invalid values.
     static func relative(_ iso: String?) -> String {
         guard let date = parse(iso) else {
-            return NSLocalizedString("last seen recently", comment: "Presence fallback")
+            return "был(а) недавно"
         }
         let cal = Calendar.current
         let mins = cal.dateComponents([.minute], from: date, to: Date()).minute ?? Int.max
-        if mins < 1 { return NSLocalizedString("just now", comment: "Relative time") }
+        if mins < 1 { return "только что" }
         if mins < 60 {
-            return String(format: NSLocalizedString("%d min ago", comment: "Relative time"), mins)
+            return "\(mins) мин назад"
         }
         let hours = mins / 60
         if hours < 24 && cal.isDateInToday(date) {
-            return String(format: NSLocalizedString("%d h ago", comment: "Relative time"), hours)
+            return "\(hours) ч назад"
         }
         if cal.isDateInYesterday(date) {
-            return NSLocalizedString("Yesterday", comment: "Relative time")
+            return "вчера"
         }
         let days = cal.dateComponents([.day], from: cal.startOfDay(for: date), to: cal.startOfDay(for: Date())).day ?? 99
         if days < 7 {
@@ -75,8 +75,11 @@ enum YoohDates {
         isoWithFraction.string(from: Date())
     }
 
+    private static let ruLocale = Locale(identifier: "ru_RU")
+
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
+        f.locale = ruLocale
         f.timeStyle = .short
         f.dateStyle = .none
         return f
@@ -84,6 +87,7 @@ enum YoohDates {
 
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
+        f.locale = ruLocale
         f.timeStyle = .none
         f.dateStyle = .short
         return f
@@ -91,6 +95,7 @@ enum YoohDates {
 
     private static let weekdayFormatter: DateFormatter = {
         let f = DateFormatter()
+        f.locale = ruLocale
         f.dateFormat = "EEEE"
         return f
     }()

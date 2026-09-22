@@ -61,11 +61,11 @@ struct MainTabView: View {
     private var bottomShell: some View {
         HStack(spacing: YoohTheme.Spacing.m) {
             HStack(spacing: 0) {
-                tabButton(.contacts, symbol: "person.circle", activeSymbol: "person.circle.fill", title: "Contacts")
-                tabButton(.calls, symbol: "phone", activeSymbol: "phone.fill", title: "Calls")
-                tabButton(.chats, symbol: "bubble.left.and.bubble.right", activeSymbol: "bubble.left.and.bubble.right.fill", title: "Chats",
+                tabButton(.contacts, symbol: "person.circle", activeSymbol: "person.circle.fill", title: "Контакты")
+                tabButton(.calls, symbol: "phone", activeSymbol: "phone.fill", title: "Звонки")
+                tabButton(.chats, symbol: "bubble.left.and.bubble.right", activeSymbol: "bubble.left.and.bubble.right.fill", title: "Чаты",
                           badge: app.chatsViewModel.unreadCount)
-                tabButton(.settings, symbol: "person", activeSymbol: "person.fill", title: "Settings")
+                tabButton(.settings, symbol: "person", activeSymbol: "person.fill", title: "Настройки")
             }
             .padding(.horizontal, YoohTheme.Spacing.s)
             .padding(.vertical, YoohTheme.Spacing.xs)
@@ -81,7 +81,7 @@ struct MainTabView: View {
                     .frame(width: 56, height: 56)
             }
             .yoohGlass(.interactive, cornerRadius: 28)
-            .accessibilityLabel(Text("Search"))
+            .accessibilityLabel(Text("Поиск"))
         }
         .padding(.horizontal, YoohTheme.Spacing.l)
         .padding(.bottom, YoohTheme.Spacing.s)
@@ -114,8 +114,8 @@ struct MainTabView: View {
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
                             .background(YoohTheme.TG.badge, in: .capsule)
-                            .offset(x: 6, y: -6)
-                            .accessibilityLabel(Text("\(badge) unread chats"))
+                                .offset(x: 6, y: -6)
+                                .accessibilityLabel(Text("Непрочитанных чатов: \(badge)"))
                     }
                 }
                 Text(title)
@@ -139,9 +139,9 @@ private struct IncomingCallBanner: View {
             AvatarView(dataURL: signal.from?.avatar, name: signal.from?.title ?? "Call",
                        size: YoohTheme.Layout.avatarS)
             VStack(alignment: .leading, spacing: 2) {
-                Text(signal.from?.title ?? "Incoming call")
+                Text(signal.from?.title ?? "Входящий звонок")
                     .font(.subheadline.bold())
-                Text(signal.mode == "video" ? "Video call…" : "Voice call…")
+                Text(signal.mode == "video" ? "Видеозвонок…" : "Голосовой звонок…")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -154,7 +154,7 @@ private struct IncomingCallBanner: View {
                     .frame(width: 40, height: 40)
                     .background(.red, in: .circle)
             }
-            .accessibilityLabel(Text("Decline call"))
+            .accessibilityLabel(Text("Отклонить звонок"))
             Button {
                 app.callsViewModel.unavailableNotice()
             } label: {
@@ -163,7 +163,7 @@ private struct IncomingCallBanner: View {
                     .frame(width: 40, height: 40)
                     .background(.green, in: .circle)
             }
-            .accessibilityLabel(Text("Accept call"))
+            .accessibilityLabel(Text("Принять звонок"))
         }
         .padding(YoohTheme.Spacing.m)
         .yoohGlass(.interactive)
@@ -203,11 +203,11 @@ private struct GlobalSearchView: View {
                 }
             }
         )
-        .navigationTitle("Search")
+        .navigationTitle("Поиск")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
+                Button("Закрыть") { dismiss() }
             }
         }
         .navigationDestination(item: $openedChat) { chat in

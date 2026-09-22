@@ -31,19 +31,37 @@ struct ChatsView: View {
                     chatList(chats)
                 }
             }
-            .navigationTitle(chats.showArchived ? "Archived" : "Chats")
+            .navigationTitle(chats.showArchived ? "Архив" : "Чаты")
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $chats.searchText, prompt: "Search chats and messages")
+            .searchable(text: $chats.searchText, prompt: "Поиск чатов и сообщений")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(isEditing ? "Done" : "Edit") {
+                    Button {
                         Haptics.selection()
                         withAnimation(.snappy) {
                             isEditing.toggle()
                             selection.removeAll()
                         }
+                    } label: {
+                        Text(isEditing ? "Готово" : "Изм.")
+                            .font(.system(size: 16, weight: .semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(YoohTheme.TG.field, in: .capsule)
                     }
-                    .accessibilityLabel(Text(isEditing ? "Done editing" : "Edit chats"))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(isEditing ? "Закончить изменение" : "Изменить чаты"))
+                }
+                ToolbarItem(placement: .principal) {
+                    if chats.isLoading {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Обновление…")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -52,6 +70,9 @@ struct ChatsView: View {
                     } label: {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "tray.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(width: 38, height: 38)
+                                .background(YoohTheme.TG.field, in: .circle)
                             if app.requestsViewModel.badgeCount > 0 {
                                 Circle()
                                     .fill(YoohTheme.TG.badge)
@@ -61,11 +82,12 @@ struct ChatsView: View {
                                             .font(.system(size: 9, weight: .bold))
                                             .foregroundStyle(.white)
                                     }
-                                    .offset(x: 6, y: -4)
+                                    .offset(x: 4, y: -2)
                             }
                         }
                     }
-                    .accessibilityLabel(Text("Message requests"))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Заявки на переписку"))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -73,8 +95,12 @@ struct ChatsView: View {
                         showComposer = true
                     } label: {
                         Image(systemName: "square.and.pencil")
+                            .font(.system(size: 16, weight: .semibold))
+                            .frame(width: 38, height: 38)
+                            .background(YoohTheme.TG.field, in: .circle)
                     }
-                    .accessibilityLabel(Text("New chat"))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Новый чат"))
                 }
             }
             .overlay(alignment: .bottom) {
@@ -107,37 +133,37 @@ struct ChatsView: View {
                     }
                 }
             }
-            .confirmationDialog("Delete this chat?", isPresented: Binding(
+            .confirmationDialog("Удалить этот чат?", isPresented: Binding(
                 get: { confirmDelete != nil },
                 set: { if !$0 { confirmDelete = nil } }
             ), titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
+                Button("Удалить", role: .destructive) {
                     if let chat = confirmDelete {
                         Task { await chats.deleteChat(chat) }
                     }
                     confirmDelete = nil
                 }
-                Button("Cancel", role: .cancel) { confirmDelete = nil }
+                Button("Отмена", role: .cancel) { confirmDelete = nil }
             }
-            .confirmationDialog("Clear message history?", isPresented: Binding(
+            .confirmationDialog("Очистить историю сообщений?", isPresented: Binding(
                 get: { confirmClear != nil },
                 set: { if !$0 { confirmClear = nil } }
             ), titleVisibility: .visible) {
-                Button("Clear", role: .destructive) {
+                Button("Очистить", role: .destructive) {
                     if let chat = confirmClear {
                         Task { await chats.clearHistory(chat) }
                     }
                     confirmClear = nil
                 }
-                Button("Cancel", role: .cancel) { confirmClear = nil }
+                Button("Отмена", role: .cancel) { confirmClear = nil }
             }
             .navigationDestination(for: String.self) { chatId in
                 if let chat = chats.chats.first(where: { $0.id == chatId }) {
                     ChatDetailView(chat: chat, app: app)
                 } else {
                     EmptyStateView(symbol: "bubble.left.and.bubble.right",
-                                   title: "Chat unavailable",
-                                   subtitle: "It may have been deleted. Pull to refresh the list.")
+                                   title: "Чат недоступен",
+                                   subtitle: "Возможно, он был удалён. Потяните список вниз, чтобы обновить.")
                 }
             }
         }
@@ -148,7 +174,7 @@ struct ChatsView: View {
     private func foldersStrip(folder: ChatsViewModel.Folder) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: YoohTheme.Spacing.s) {
-                folderChip(title: "All", active: app.chatsViewModel.customFolder == nil && folder == .all) {
+                folderChip(title: "Все", active: app.chatsViewModel.customFolder == nil && folder == .all) {
                     app.chatsViewModel.setFolder(.all)
                 }
                 ForEach(app.chatsViewModel.customFolders) { cf in
@@ -156,7 +182,7 @@ struct ChatsView: View {
                         app.chatsViewModel.setCustomFolder(cf)
                     }
                 }
-                folderChip(title: "Archived", active: app.chatsViewModel.customFolder == nil && folder == .archived) {
+                folderChip(title: "Архив", active: app.chatsViewModel.customFolder == nil && folder == .archived) {
                     app.chatsViewModel.setFolder(.archived)
                 }
                 Button {
@@ -170,7 +196,7 @@ struct ChatsView: View {
                         .background(YoohTheme.TG.field, in: .capsule)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("Manage folders"))
+                .accessibilityLabel(Text("Папки чатов"))
             }
             .padding(.horizontal, YoohTheme.Spacing.l)
             .padding(.vertical, YoohTheme.Spacing.xs)
@@ -212,13 +238,13 @@ struct ChatsView: View {
                                     .font(.system(size: 22, weight: .semibold))
                                     .foregroundStyle(ThemeStore.shared.accent)
                             }
-                            Text("Add")
+                            Text("Добавить")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                         }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Create story"))
+                    .accessibilityLabel(Text("Создать историю"))
                     ForEach(groups.indices, id: \.self) { i in
                         let g = groups[i]
                         let seen = isGroupSeen(g.stories)
@@ -265,8 +291,8 @@ struct ChatsView: View {
             if chats.chats.isEmpty, !chats.isLoading {
                 emptyState(chats)
             } else if chats.visibleChats.isEmpty, secretChats.isEmpty, savedChat == nil {
-                EmptyStateView(symbol: "magnifyingglass", title: "Nothing found",
-                               subtitle: "Try a different search or folder.")
+                EmptyStateView(symbol: "magnifyingglass", title: "Ничего не найдено",
+                               subtitle: "Попробуйте другой запрос или папку.")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
@@ -282,9 +308,9 @@ struct ChatsView: View {
                                         .foregroundStyle(ThemeStore.shared.accent)
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Saved Messages")
+                                    Text("Избранное")
                                         .font(.system(size: 17, weight: .semibold))
-                                    Text("Your personal cloud notes")
+                                    Text("Личные заметки в облаке")
                                         .font(.system(size: 15))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
@@ -316,7 +342,7 @@ struct ChatsView: View {
                                                     .font(.system(size: 12))
                                                     .foregroundStyle(.green)
                                             }
-                                            Text("Device-local secret chat")
+                                            Text("Секретный чат на устройстве")
                                                 .font(.system(size: 15))
                                                 .foregroundStyle(.secondary)
                                                 .lineLimit(1)
@@ -331,7 +357,7 @@ struct ChatsView: View {
                                 .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
                             }
                         } header: {
-                            Text("Secret chats")
+                            Text("Секретные чаты")
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -374,43 +400,43 @@ struct ChatsView: View {
                             .listRowInsets(EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12))
                             .swipeActions(edge: .leading) {
                                 Button { chats.togglePin(chat.id) } label: {
-                                    Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
+                                    Label(chats.isPinned(chat.id) ? "Открепить" : "Закреп",
                                           systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
                                 }
                                 .tint(.orange)
                                 Button { chats.toggleArchive(chat.id) } label: {
-                                    Label("Archive", systemImage: "archivebox")
+                                    Label("В архив", systemImage: "archivebox")
                                 }
                                 .tint(.gray)
                             }
                             .swipeActions(edge: .trailing) {
                                 Button { chats.toggleMute(chat.id) } label: {
-                                    Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
+                                    Label(chats.isMuted(chat.id) ? "Со звуком" : "Без звука",
                                           systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
                                 }
                                 .tint(.blue)
                                 Button(role: .destructive) { confirmDelete = chat } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label("Удалить", systemImage: "trash")
                                 }
                             }
                             .contextMenu {
                                 Button { chats.togglePin(chat.id) } label: {
-                                    Label(chats.isPinned(chat.id) ? "Unpin" : "Pin",
+                                    Label(chats.isPinned(chat.id) ? "Открепить" : "Закреп",
                                           systemImage: chats.isPinned(chat.id) ? "pin.slash" : "pin")
                                 }
                                 Button { chats.toggleMute(chat.id) } label: {
-                                    Label(chats.isMuted(chat.id) ? "Unmute" : "Mute",
+                                    Label(chats.isMuted(chat.id) ? "Со звуком" : "Без звука",
                                           systemImage: chats.isMuted(chat.id) ? "bell" : "bell.slash")
                                 }
                                 Button { chats.toggleArchive(chat.id) } label: {
-                                    Label(chats.isArchived(chat.id) ? "Unarchive" : "Archive",
+                                    Label(chats.isArchived(chat.id) ? "Из архива" : "В архив",
                                           systemImage: chats.isArchived(chat.id) ? "archivebox.fill" : "archivebox")
                                 }
                                 Button { confirmClear = chat } label: {
-                                    Label("Clear history", systemImage: "eraser")
+                                    Label("Очистить историю", systemImage: "eraser")
                                 }
                                 Button(role: .destructive) { confirmDelete = chat } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label("Удалить", systemImage: "trash")
                                 }
                             }
                         }
@@ -440,23 +466,23 @@ struct ChatsView: View {
 
     private func editBar(_ chats: ChatsViewModel) -> some View {
         VStack(spacing: 6) {
-            Text(selection.isEmpty ? "Select chats" : "\(selection.count) selected")
+            Text(selection.isEmpty ? "Выберите чаты" : "Выбрано: \(selection.count)")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
             HStack(spacing: 0) {
-                editAction(symbol: "pin.fill", title: "Pin") {
+                editAction(symbol: "pin.fill", title: "Закреп") {
                     for id in selection { chats.togglePin(id) }
                     doneEditing()
                 }
-                editAction(symbol: "bell.slash.fill", title: "Mute") {
+                editAction(symbol: "bell.slash.fill", title: "Без звука") {
                     for id in selection { chats.toggleMute(id) }
                     doneEditing()
                 }
-                editAction(symbol: "archivebox.fill", title: "Archive") {
+                editAction(symbol: "archivebox.fill", title: "В архив") {
                     for id in selection { chats.toggleArchive(id) }
                     doneEditing()
                 }
-                editAction(symbol: "trash.fill", title: "Delete", destructive: true) {
+                editAction(symbol: "trash.fill", title: "Удалить", destructive: true) {
                     Task {
                         for id in selection {
                             if let chat = chats.chats.first(where: { $0.id == id }) {
@@ -472,7 +498,7 @@ struct ChatsView: View {
             .yoohGlass(.interactive, cornerRadius: 24)
             .padding(.horizontal, YoohTheme.Spacing.l)
             .accessibilityElement(children: .contain)
-            .accessibilityLabel(Text("\(selection.count) chats selected"))
+            .accessibilityLabel(Text("Выбрано чатов: \(selection.count)"))
         }
     }
 
@@ -507,16 +533,16 @@ struct ChatsView: View {
         VStack(spacing: YoohTheme.Spacing.m) {
             if let error = chats.error {
                 ErrorBanner(message: error, onDismiss: { chats.clearError() })
-                Button("Try again") {
+                Button("Попробовать снова") {
                     Task { await chats.refresh() }
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.top, YoohTheme.Spacing.s)
             } else {
                 EmptyStateView(symbol: "bubble.left.and.bubble.right",
-                               title: "No chats yet",
-                               subtitle: "Start a conversation from Contacts or the compose button.")
-                Button("Reload") {
+                               title: "Пока нет чатов",
+                               subtitle: "Начните общение из Контактов или кнопкой нового чата.")
+                Button("Обновить") {
                     Task { await chats.refresh() }
                 }
                 .buttonStyle(.bordered)

@@ -20,14 +20,14 @@ struct LinkDeviceView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             } header: {
-                Text("Scan the QR code shown on the other device")
+                Text("Отсканируйте QR-код, показанный на другом устройстве")
             }
 
-            Section("Or enter manually") {
+            Section("Или введите вручную") {
                 TextField("https://…/?yooh_qr_login=token", text: $manualToken)
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
-                AsyncButton(title: "Link device", isBusy: isBusy) {
+                AsyncButton(title: "Привязать устройство", isBusy: isBusy) {
                     await link(raw: manualToken)
                 }
                 .disabled(manualToken.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -40,11 +40,11 @@ struct LinkDeviceView: View {
                 Text(notice).font(.footnote).foregroundStyle(.green)
             }
         }
-        .navigationTitle("Link device")
+        .navigationTitle("Привязка устройства")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
+                Button("Закрыть") { dismiss() }
             }
         }
     }
@@ -63,7 +63,7 @@ struct LinkDeviceView: View {
         defer { isBusy = false }
         do {
             try await app.authService.linkDevice(rawValue: raw)
-            notice = "Device linked. Approve the login there."
+            notice = "Устройство привязано. Подтвердите вход на нём."
             manualToken = ""
             await app.settingsViewModel.loadSessions()
         } catch {

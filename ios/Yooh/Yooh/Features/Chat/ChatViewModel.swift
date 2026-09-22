@@ -35,8 +35,8 @@ final class ChatViewModel {
     var typingText: String? {
         let peers = app.typingPeers(chatId: chatId).filter { $0.userId != myUserId }
         guard !peers.isEmpty else { return nil }
-        if peers.count == 1 { return "\(peers[0].displayName) is typing…" }
-        return "\(peers.count) people are typing…"
+        if peers.count == 1 { return "\(peers[0].displayName) печатает…" }
+        return "Печатают: \(peers.count)"
     }
 
     private var prefs: LocalPreferences? {
@@ -160,7 +160,7 @@ final class ChatViewModel {
             if messages.contains(where: { $0.id == id }) {
                 jumpTarget = id
             } else {
-                showError("Couldn't load that message.")
+                showError("Не удалось загрузить сообщение.")
             }
         }
     }
@@ -222,7 +222,7 @@ final class ChatViewModel {
                 var req = SendMessageRequest.text(clean)
                 req.scheduledAt = ISO8601DateFormatter().string(from: date)
                 _ = try await app.messageService.send(chatId: chatId, request: req, stream: stream)
-                showNotice("Message scheduled for \(YoohDates.fullDateTime(req.scheduledAt)).")
+                showNotice("Сообщение запланировано: \(YoohDates.fullDateTime(req.scheduledAt)).")
                 Haptics.send()
             } catch {
                 self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription

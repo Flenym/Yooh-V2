@@ -19,29 +19,29 @@ struct MessageRequestSheet: View {
                         AvatarView(dataURL: user.avatar, name: user.title, size: 52)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(user.title).font(.headline)
-                            Text("This user only accepts messages from contacts. Introduce yourself — they can accept or decline.")
+                            Text("Этот пользователь принимает сообщения только от контактов. Представьтесь — он сможет принять или отклонить заявку.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
                     }
                     .padding(.vertical, 4)
                 }
-                Section("Message (optional)") {
-                    TextField("Hi! I'd like to chat…", text: $text, axis: .vertical)
+                Section("Сообщение (необязательно)") {
+                    TextField("Привет! Хочу пообщаться…", text: $text, axis: .vertical)
                         .lineLimit(2...4)
                 }
                 if let error {
                     Text(error).font(.footnote).foregroundStyle(.red)
                 }
-                AsyncButton(title: "Send request", isBusy: isBusy) {
+                AsyncButton(title: "Отправить заявку", isBusy: isBusy) {
                     await send()
                 }
             }
-            .navigationTitle("Message request")
+            .navigationTitle("Заявка на переписку")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Отмена") { dismiss() }
                 }
             }
         }
@@ -79,9 +79,9 @@ struct RequestsInboxView: View {
                     ErrorBanner(message: error, onDismiss: { requests.clearError() })
                         .listRowSeparator(.hidden)
                 }
-                Section("Incoming") {
+                Section("Входящие") {
                     if requests.incoming.isEmpty {
-                        Text("No pending requests.")
+                        Text("Нет новых заявок.")
                             .foregroundStyle(.secondary)
                     }
                     ForEach(requests.incoming) { r in
@@ -90,7 +90,7 @@ struct RequestsInboxView: View {
                                 AvatarView(dataURL: r.user?.avatar, name: r.user?.title ?? "?",
                                            size: 48)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(r.user?.title ?? "User")
+                                    Text(r.user?.title ?? "Пользователь")
                                         .font(.headline)
                                     if let text = r.text, !text.isEmpty {
                                         Text(text)
@@ -106,12 +106,12 @@ struct RequestsInboxView: View {
                                 Spacer()
                             }
                             HStack {
-                                Button("Decline") {
+                                Button("Отклонить") {
                                     Task { await requests.decline(r) }
                                 }
                                 .buttonStyle(.bordered)
                                 Spacer()
-                                Button("Accept") {
+                                Button("Принять") {
                                     Task {
                                         if let chat = await requests.accept(r) {
                                             openedChat = chat
@@ -126,15 +126,15 @@ struct RequestsInboxView: View {
                     }
                 }
                 if !requests.outgoing.isEmpty {
-                    Section("Sent") {
+                    Section("Отправленные") {
                         ForEach(requests.outgoing) { r in
                             HStack(spacing: YoohTheme.Spacing.m) {
                                 AvatarView(dataURL: r.user?.avatar, name: r.user?.title ?? "?",
                                            size: 40)
                                 VStack(alignment: .leading) {
-                                    Text(r.user?.title ?? "User")
+                                    Text(r.user?.title ?? "Пользователь")
                                         .font(.subheadline)
-                                    Text("Waiting for answer")
+                                    Text("Ожидает ответа")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -146,11 +146,11 @@ struct RequestsInboxView: View {
                 }
             }
             .listStyle(.plain)
-            .navigationTitle("Requests")
+            .navigationTitle("Заявки")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
             }
             .refreshable {

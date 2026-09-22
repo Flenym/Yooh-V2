@@ -60,20 +60,13 @@ private struct RootView: View {
         ZStack {
             YoohTheme.TG.background.ignoresSafeArea()
             VStack(spacing: YoohTheme.Spacing.m) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22)
-                        .fill(ThemeStore.brandGradient)
-                        .frame(width: 84, height: 84)
-                    Image(systemName: "bubble.left.and.bubble.right.fill")
-                        .font(.system(size: 38))
-                        .foregroundStyle(.white)
-                }
+                YoohLogoMark(size: 84)
                 Text("Yooh")
                     .font(.system(size: 28, weight: .bold))
                 ProgressView()
             }
         }
-        .accessibilityLabel(Text("Loading Yooh"))
+        .accessibilityLabel(Text("Загрузка Yooh"))
     }
 }
 
@@ -87,15 +80,8 @@ private struct LockScreenView: View {
         ZStack {
             YoohTheme.TG.background.ignoresSafeArea()
             VStack(spacing: YoohTheme.Spacing.m) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22)
-                        .fill(ThemeStore.brandGradient)
-                        .frame(width: 84, height: 84)
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 34))
-                        .foregroundStyle(.white)
-                }
-                Text("Yooh is locked")
+                YoohLogoMark(size: 84)
+                Text("Yooh заблокирован")
                     .font(.title3.bold())
                 Button {
                     Task {
@@ -106,7 +92,7 @@ private struct LockScreenView: View {
                 } label: {
                     HStack {
                         if isBusy { ProgressView().tint(.white) }
-                        Text("Unlock with \(lock.biometryName)")
+                        Text("Разблокировать: \(lock.biometryName)")
                             .bold()
                             .foregroundStyle(.white)
                     }
@@ -126,6 +112,6 @@ private struct LockScreenView: View {
             _ = await lock.unlock()
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("Yooh is locked"))
+        .accessibilityLabel(Text("Yooh заблокирован"))
     }
 }

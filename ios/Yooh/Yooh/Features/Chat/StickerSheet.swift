@@ -13,11 +13,11 @@ struct StickerSheetView: View {
         NavigationStack {
             Group {
                 if app.settingsViewModel.stickerPacks.isEmpty {
-                    EmptyStateView(symbol: "face.smiling", title: "No stickers",
-                                   subtitle: "Sticker packs from Settings will appear here.")
+                    EmptyStateView(symbol: "face.smiling", title: "Нет стикеров",
+                                   subtitle: "Стикерпаки из настроек появятся здесь.")
                 } else {
                     List(app.settingsViewModel.stickerPacks, id: \.id) { pack in
-                        Section(pack.title ?? "Pack") {
+                        Section(pack.title ?? "Пак") {
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 64))], spacing: 12) {
                                 ForEach(pack.stickers ?? []) { item in
                                     Button {
@@ -34,11 +34,11 @@ struct StickerSheetView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Stickers")
+            .navigationTitle("Стикеры")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
             }
             .overlay(alignment: .top) {
@@ -59,7 +59,7 @@ struct StickerSheetView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 64, height: 64)
-                .accessibilityLabel(Text(item.label ?? item.emoji ?? "Sticker"))
+                .accessibilityLabel(Text(item.label ?? item.emoji ?? "Стикер"))
         } else {
             Text(item.emoji ?? "?")
                 .font(.system(size: 40))
@@ -74,7 +74,7 @@ struct StickerSheetView: View {
 
     private func send(_ item: StickerItem) {
         guard let data = stickerData(item) else {
-            error = "Couldn't load this sticker."
+            error = "Не удалось загрузить стикер."
             return
         }
         let mime = data.prefix(4) == Data([0x89, 0x50, 0x4E, 0x47]) ? "image/png" : "image/jpeg"

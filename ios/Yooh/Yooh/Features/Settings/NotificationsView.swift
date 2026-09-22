@@ -13,25 +13,25 @@ struct NotificationsView: View {
 
     var body: some View {
         List {
-            Section("Show notifications for") {
-                SettingToggleRow(title: "Private chats", subtitle: nil, isOn: $privateChats) {
+            Section("Показывать уведомления") {
+                SettingToggleRow(title: "Личные чаты", subtitle: nil, isOn: $privateChats) {
                     save(["privateChats": $0])
                 }
-                SettingToggleRow(title: "Groups", subtitle: nil, isOn: $groups) {
+                SettingToggleRow(title: "Группы", subtitle: nil, isOn: $groups) {
                     save(["groups": $0])
                 }
-                SettingToggleRow(title: "Channels", subtitle: nil, isOn: $channels) {
+                SettingToggleRow(title: "Каналы", subtitle: nil, isOn: $channels) {
                     save(["channels": $0])
                 }
             }
-            Section("Message content") {
-                SettingToggleRow(title: "Message preview", subtitle: "Show text in alerts", isOn: $preview) {
+            Section("Содержимое сообщений") {
+                SettingToggleRow(title: "Предпросмотр", subtitle: "Показывать текст в уведомлениях", isOn: $preview) {
                     save(["messagePreview": $0])
                 }
-                SettingToggleRow(title: "Sounds", subtitle: nil, isOn: $sounds) {
+                SettingToggleRow(title: "Звуки", subtitle: nil, isOn: $sounds) {
                     save(["sounds": $0])
                 }
-                SettingToggleRow(title: "Vibration", subtitle: nil, isOn: $vibration) {
+                SettingToggleRow(title: "Вибрация", subtitle: nil, isOn: $vibration) {
                     save(["vibration": $0])
                 }
             }
@@ -39,7 +39,7 @@ struct NotificationsView: View {
                 Text(error).font(.footnote).foregroundStyle(.red)
             }
         }
-        .navigationTitle("Notifications")
+        .navigationTitle("Уведомления")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
     }

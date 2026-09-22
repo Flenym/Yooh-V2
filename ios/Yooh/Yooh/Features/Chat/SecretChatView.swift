@@ -53,25 +53,25 @@ struct SecretChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button { showFingerprint = true } label: {
-                            Label("Fingerprint", systemImage: "key.fill")
+                            Label("Отпечаток", systemImage: "key.fill")
                         }
-                        Menu("Self-destruct timer") {
+                        Menu("Таймер самоуничтожения") {
                             ForEach([0, 10, 60, 3600, 86400], id: \.self) { s in
                                 Button(ttlName(s)) { vm.setTTL(s) }
                             }
                         }
-                        Button("Delete secret chat", role: .destructive) {
+                        Button("Удалить секретный чат", role: .destructive) {
                             confirmDeleteChat = true
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel(Text("Secret chat options"))
+                    .accessibilityLabel(Text("Настройки секретного чата"))
                 }
             }
             .sheet(isPresented: $showFingerprint) {
@@ -80,36 +80,36 @@ struct SecretChatView: View {
                         Image(systemName: "key.fill")
                             .font(.largeTitle)
                             .foregroundStyle(ThemeStore.shared.accent)
-                        Text("Pairing fingerprint")
+                        Text("Отпечаток сопряжения")
                             .font(.headline)
                         Text(vm.chat.fingerprint)
                             .font(.body.monospaced())
                             .multilineTextAlignment(.center)
                             .padding()
                             .background(YoohTheme.TG.card, in: .rect(cornerRadius: 16))
-                        Text("Compare with your peer to verify this pairing.")
+                        Text("Сверьте с собеседником, чтобы подтвердить сопряжение.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
                     .padding()
-                    .navigationTitle("Fingerprint")
+                    .navigationTitle("Отпечаток")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Button("Close") { showFingerprint = false }
+                            Button("Закрыть") { showFingerprint = false }
                         }
                     }
                 }
                 .presentationDetents([.medium])
             }
-            .confirmationDialog("Delete this secret chat and all its messages?", isPresented: $confirmDeleteChat, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
+            .confirmationDialog("Удалить секретный чат и все сообщения?", isPresented: $confirmDeleteChat, titleVisibility: .visible) {
+                Button("Удалить", role: .destructive) {
                     vm.deleteChat()
                     onDelete()
                     dismiss()
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Отмена", role: .cancel) {}
             }
             .onChange(of: photoItem) { _, item in
                 guard let item else { return }
@@ -130,7 +130,7 @@ struct SecretChatView: View {
             Image(systemName: "lock.fill")
                 .font(.caption)
                 .foregroundStyle(ThemeStore.shared.accent)
-            Text("Device-local · auto-delete \(vm.ttlLabel == "Off" ? "off" : vm.ttlLabel)")
+            Text("На устройстве · автоудаление \(vm.ttlLabel == "Выкл" ? "выкл" : vm.ttlLabel)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
@@ -141,11 +141,11 @@ struct SecretChatView: View {
 
     private func ttlName(_ s: Int) -> String {
         switch s {
-        case 0: return "Off"
-        case 1..<60: return "\(s) seconds"
-        case 60..<3600: return "\(s / 60) minute(s)"
-        case 3600..<86400: return "\(s / 3600) hour(s)"
-        default: return "\(s / 86400) day(s)"
+        case 0: return "Выкл"
+        case 1..<60: return RU.plural(s, one: "секунда", few: "секунды", many: "секунд")
+        case 60..<3600: return RU.plural(s / 60, one: "минута", few: "минуты", many: "минут")
+        case 3600..<86400: return RU.plural(s / 3600, one: "час", few: "часа", many: "часов")
+        default: return RU.plural(s / 86400, one: "день", few: "дня", many: "дней")
         }
     }
 
@@ -177,7 +177,7 @@ struct SecretChatView: View {
                 }
                 HStack(spacing: 4) {
                     if m.editedAt != nil {
-                        Text("edited").font(.caption2).foregroundStyle(.secondary)
+                        Text("изм.").font(.caption2).foregroundStyle(.secondary)
                     }
                     Text(YoohDates.bubbleTime(m.createdAt))
                         .font(.caption2)
@@ -197,16 +197,16 @@ struct SecretChatView: View {
                 Button {
                     UIPasteboard.general.string = text
                 } label: {
-                    Label("Copy", systemImage: "doc.on.doc")
+                    Label("Копировать", systemImage: "doc.on.doc")
                 }
             }
             if m.senderIsMe, m.text != nil {
                 Button { vm.beginEdit(m) } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Label("Изменить", systemImage: "pencil")
                 }
             }
             Button(role: .destructive) { vm.delete(m) } label: {
-                Label("Delete", systemImage: "trash")
+                Label("Удалить", systemImage: "trash")
             }
         }
         .accessibilityElement(children: .combine)
@@ -218,14 +218,14 @@ struct SecretChatView: View {
             if vm.editing != nil {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Edit message").font(.caption.bold()).foregroundStyle(ThemeStore.shared.accent)
+                        Text("Редактирование").font(.caption.bold()).foregroundStyle(ThemeStore.shared.accent)
                         Text(vm.editing?.text ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Spacer()
                     Button { vm.cancelEdit() } label: {
                         Image(systemName: "xmark").font(.caption).foregroundStyle(.secondary)
                     }
-                    .accessibilityLabel(Text("Cancel edit"))
+                    .accessibilityLabel(Text("Отменить изменение"))
                 }
                 .padding(.horizontal, YoohTheme.Spacing.m)
                 .padding(.vertical, 4)
@@ -238,14 +238,14 @@ struct SecretChatView: View {
                         .frame(width: 40, height: 40)
                 }
                 .yoohGlass(.interactive, cornerRadius: 20)
-                .accessibilityLabel(Text("Send photo"))
-                TextField("Secret message", text: $vm.draft, axis: .vertical)
+                .accessibilityLabel(Text("Отправить фото"))
+                TextField("Секретное сообщение", text: $vm.draft, axis: .vertical)
                     .lineLimit(1...5)
                     .padding(.horizontal, YoohTheme.Spacing.m)
                     .padding(.vertical, 10)
                     .background(YoohTheme.TG.field, in: .rect(cornerRadius: 20))
                     .onSubmit { vm.send() }
-                    .accessibilityLabel(Text("Secret message text"))
+                    .accessibilityLabel(Text("Текст секретного сообщения"))
                 Button { vm.send() } label: {
                     Image(systemName: "arrow.up")
                         .font(.system(size: 18, weight: .bold))
@@ -254,7 +254,7 @@ struct SecretChatView: View {
                         .background(ThemeStore.shared.accent, in: .circle)
                 }
                 .disabled(vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && vm.editing == nil)
-                .accessibilityLabel(Text(vm.editing == nil ? "Send" : "Save edit"))
+                .accessibilityLabel(Text(vm.editing == nil ? "Отправить" : "Сохранить"))
             }
             .padding(.horizontal, YoohTheme.Spacing.s)
             .padding(.vertical, YoohTheme.Spacing.xs)

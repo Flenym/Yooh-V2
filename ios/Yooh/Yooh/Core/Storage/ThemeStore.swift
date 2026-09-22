@@ -22,11 +22,11 @@ final class ThemeStore {
     }
 
     static let accents: [Accent] = [
-        Accent(id: "pulse", name: "Pulse", color: Color(red: 0.46, green: 0.34, blue: 1.0)),
-        Accent(id: "telegram", name: "Sky", color: Color(red: 0.20, green: 0.57, blue: 0.93)),
-        Accent(id: "emerald", name: "Emerald", color: Color(red: 0.18, green: 0.83, blue: 0.49)),
-        Accent(id: "amber", name: "Amber", color: Color(red: 1.0, green: 0.62, blue: 0.15)),
-        Accent(id: "crimson", name: "Crimson", color: Color(red: 1.0, green: 0.30, blue: 0.40)),
+        Accent(id: "pulse", name: "Пульс", color: Color(red: 0.46, green: 0.34, blue: 1.0)),
+        Accent(id: "telegram", name: "Небо", color: Color(red: 0.20, green: 0.57, blue: 0.93)),
+        Accent(id: "emerald", name: "Изумруд", color: Color(red: 0.18, green: 0.83, blue: 0.49)),
+        Accent(id: "amber", name: "Янтарь", color: Color(red: 1.0, green: 0.62, blue: 0.15)),
+        Accent(id: "crimson", name: "Малиновый", color: Color(red: 1.0, green: 0.30, blue: 0.40)),
     ]
 
     static let brandGradient = LinearGradient(
@@ -38,14 +38,14 @@ final class ThemeStore {
     )
 
     static let wallpapers: [Wallpaper] = [
-        Wallpaper(id: "system", name: "System", top: .clear, bottom: .clear),
-        Wallpaper(id: "midnight", name: "Midnight Ink",
+        Wallpaper(id: "system", name: "Системные", top: .clear, bottom: .clear),
+        Wallpaper(id: "midnight", name: "Полуночные чернила",
                   top: Color(red: 0.07, green: 0.07, blue: 0.12), bottom: Color.black),
-        Wallpaper(id: "ocean", name: "Deep Ocean",
+        Wallpaper(id: "ocean", name: "Глубокий океан",
                   top: Color(red: 0.02, green: 0.12, blue: 0.22), bottom: Color(red: 0.0, green: 0.03, blue: 0.07)),
-        Wallpaper(id: "royal", name: "Royal Night",
+        Wallpaper(id: "royal", name: "Королевская ночь",
                   top: Color(red: 0.12, green: 0.05, blue: 0.22), bottom: Color(red: 0.03, green: 0.02, blue: 0.07)),
-        Wallpaper(id: "ember", name: "Crimson Dusk",
+        Wallpaper(id: "ember", name: "Багровый закат",
                   top: Color(red: 0.22, green: 0.06, blue: 0.10), bottom: Color(red: 0.05, green: 0.02, blue: 0.03)),
     ]
 
@@ -53,6 +53,14 @@ final class ThemeStore {
         case system = "System"
         case dark = "Dark"
         case light = "Light"
+
+        var title: String {
+            switch self {
+            case .system: return "Система"
+            case .dark: return "Тёмная"
+            case .light: return "Светлая"
+            }
+        }
     }
 
     var accentID: String {

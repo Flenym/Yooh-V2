@@ -22,30 +22,30 @@ struct DeleteAccountView: View {
                         .foregroundStyle(.secondary)
                 }
                 if needsPassword {
-                    Section("Confirm with cloud password") {
-                        SecureField("Cloud password", text: $password)
+                    Section("Подтвердите облачным паролем") {
+                        SecureField("Облачный пароль", text: $password)
                     }
                 }
                 if let error {
                     Text(error).font(.footnote).foregroundStyle(.red)
                 }
-                AsyncButton(title: "Delete my account", isBusy: isBusy) {
+                AsyncButton(title: "Удалить мой аккаунт", isBusy: isBusy) {
                     confirm = true
                 }
                 .disabled(needsPassword && password.isEmpty)
             }
-            .navigationTitle("Delete account")
+            .navigationTitle("Удаление аккаунта")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Отмена") { dismiss() }
                 }
             }
-            .confirmationDialog("Delete your account forever?", isPresented: $confirm, titleVisibility: .visible) {
-                Button("Delete forever", role: .destructive) {
+            .confirmationDialog("Удалить аккаунт навсегда?", isPresented: $confirm, titleVisibility: .visible) {
+                Button("Удалить навсегда", role: .destructive) {
                     Task { await delete() }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Отмена", role: .cancel) {}
             }
         }
     }

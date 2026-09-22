@@ -24,14 +24,14 @@ struct VoicePlayerView: View {
             }
             .buttonStyle(.plain)
             .disabled(resolvedToken == nil)
-            .accessibilityLabel(Text(player.isPlaying ? "Pause voice message" : "Play voice message"))
+            .accessibilityLabel(Text(player.isPlaying ? "Пауза" : "Слушать голосовое"))
             if player.duration > 0 {
                 Text("\(Int(player.progress)) / \(Int(player.duration)) s")
                     .font(.caption)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             } else {
-                Text("Voice message")
+                Text("Голосовое сообщение")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

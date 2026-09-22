@@ -15,17 +15,17 @@ struct ContactsView: View {
                 YoohTheme.TG.background.ignoresSafeArea()
                 contactsList(contacts)
             }
-            .navigationTitle("Contacts")
+            .navigationTitle("Контакты")
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $search, prompt: "Name or @username")
+            .searchable(text: $search, prompt: "Имя или @username")
             .onChange(of: search) { _, q in contacts.search(q) }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(onlineFirst ? "Online" : "Sort") {
+                    Button(onlineFirst ? "В сети" : "Сорт") {
                         Haptics.selection()
                         onlineFirst.toggle()
                     }
-                    .accessibilityLabel(Text("Toggle sort order"))
+                    .accessibilityLabel(Text("Порядок сортировки"))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
@@ -33,7 +33,7 @@ struct ContactsView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel(Text("New chat"))
+                    .accessibilityLabel(Text("Новый чат"))
                 }
             }
             .navigationDestination(for: String.self) { chatId in
@@ -73,9 +73,9 @@ struct ContactsView: View {
                             .frame(width: 52)
                     }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Sync phone contacts")
+                        Text("Синхронизировать контакты")
                             .font(.system(size: 17))
-                        Text("Find contacts already on Yooh")
+                        Text("Найти знакомых, которые уже в Yooh")
                             .font(.system(size: 15))
                             .foregroundStyle(.secondary)
                     }
@@ -87,15 +87,15 @@ struct ContactsView: View {
             .disabled(contacts.isSyncing)
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
-            .accessibilityLabel(Text("Sync phone contacts"))
+            .accessibilityLabel(Text("Синхронизировать контакты"))
 
-            ShareLink(item: "Join me on Yooh: \(AppConfig.apiURLString)") {
+            ShareLink(item: "Присоединяйся ко мне в Yooh: \(AppConfig.apiURLString)") {
                 HStack(spacing: YoohTheme.Spacing.m) {
                     Image(systemName: "person.badge.plus")
                         .font(.system(size: 22))
                         .foregroundStyle(.secondary)
                         .frame(width: 52)
-                    Text("Invite Friends")
+                    Text("Пригласить друзей")
                         .font(.system(size: 17))
                     Spacer()
                 }
@@ -129,7 +129,7 @@ struct ContactsView: View {
                                     BotTag()
                                 }
                             }
-                            Text(app.isOnline(user.id) ? "online" : presenceFallback(user))
+                            Text(app.isOnline(user.id) ? "в сети" : presenceFallback(user))
                                 .font(.system(size: 15))
                                 .foregroundStyle(app.isOnline(user.id) ? YoohTheme.TG.presence : .secondary)
                         }
@@ -147,14 +147,14 @@ struct ContactsView: View {
                     HStack(spacing: YoohTheme.Spacing.m) {
                         AvatarView(dataURL: nil, name: dc.title ?? "?", size: 52)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(dc.title ?? "Group")
+                            Text(dc.title ?? "Группа")
                                 .font(.system(size: 17))
-                            Text(dc.handle.map { "@\($0)" } ?? "public group")
+                            Text(dc.handle.map { "@\($0)" } ?? "публичная группа")
                                 .font(.system(size: 15))
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button(dc.joined == true ? "Open" : "Join") {
+                        Button(dc.joined == true ? "Открыть" : "Вступить") {
                             Task {
                                 if let chat = await contacts.joinPublic(dc) {
                                     app.contactsPath.append(chat.id)
@@ -190,6 +190,6 @@ struct ContactsView: View {
 
     private func presenceFallback(_ user: PublicUser) -> String {
         if let u = user.username, !u.isEmpty { return "@\(u)" }
-        return "last seen recently"
+        return "был(а) недавно"
     }
 }

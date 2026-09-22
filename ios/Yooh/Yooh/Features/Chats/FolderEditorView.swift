@@ -15,7 +15,7 @@ struct FolderEditorView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Folders") {
+                Section("Папки") {
                     ForEach(app.chatsViewModel.customFolders) { f in
                         Button {
                             startEdit(f)
@@ -33,33 +33,33 @@ struct FolderEditorView: View {
                             Button(role: .destructive) {
                                 app.chatsViewModel.deleteCustomFolder(f.id)
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label("Удалить", systemImage: "trash")
                             }
                         }
                     }
                 }
-                Section(editing == nil ? "New folder" : "Edit folder") {
-                    TextField("Folder name", text: $name)
-                    Toggle("Direct chats", isOn: $includeDirect)
-                    Toggle("Groups", isOn: $includeGroups)
-                    Toggle("Channels", isOn: $includeChannels)
-                    Toggle("Unread only", isOn: $unreadOnly)
-                    Button(editing == nil ? "Create folder" : "Save") {
+                Section(editing == nil ? "Новая папка" : "Изменить папку") {
+                    TextField("Название папки", text: $name)
+                    Toggle("Личные чаты", isOn: $includeDirect)
+                    Toggle("Группы", isOn: $includeGroups)
+                    Toggle("Каналы", isOn: $includeChannels)
+                    Toggle("Только непрочитанные", isOn: $unreadOnly)
+                    Button(editing == nil ? "Создать папку" : "Сохранить") {
                         save()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                     if editing != nil {
-                        Button("Cancel", role: .cancel) {
+                        Button("Отмена", role: .cancel) {
                             reset()
                         }
                     }
                 }
             }
-            .navigationTitle("Chat folders")
+            .navigationTitle("Папки чатов")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Done") { dismiss() }
+                    Button("Готово") { dismiss() }
                 }
             }
             .task {
@@ -70,11 +70,11 @@ struct FolderEditorView: View {
 
     private func summary(_ f: LocalPreferences.FolderDef) -> String {
         var parts: [String] = []
-        if f.includeDirect { parts.append("personal") }
-        if f.includeGroups { parts.append("groups") }
-        if f.includeChannels { parts.append("channels") }
-        if f.unreadOnly { parts.append("unread") }
-        return parts.isEmpty ? "empty" : parts.joined(separator: " · ")
+        if f.includeDirect { parts.append("личные") }
+        if f.includeGroups { parts.append("группы") }
+        if f.includeChannels { parts.append("каналы") }
+        if f.unreadOnly { parts.append("непрочитанные") }
+        return parts.isEmpty ? "пусто" : parts.joined(separator: " · ")
     }
 
     private func startEdit(_ f: LocalPreferences.FolderDef) {

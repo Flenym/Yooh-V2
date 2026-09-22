@@ -21,6 +21,14 @@ enum Audience: String, CaseIterable {
     case contacts = "Contacts"
     case nobody = "Nobody"
 
+    var title: String {
+        switch self {
+        case .everyone: return "Все"
+        case .contacts: return "Контакты"
+        case .nobody: return "Никто"
+        }
+    }
+
     var wire: String { rawValue.lowercased() }
     static func from(_ wire: String) -> Audience {
         switch wire.lowercased() {
@@ -88,7 +96,7 @@ struct AudienceRow: View {
                 set: { v in selection = v; onChange(v) }
             )) {
                 ForEach(Audience.allCases, id: \.self) { a in
-                    Text(a.rawValue).tag(a)
+                    Text(a.title).tag(a)
                 }
             }
             .pickerStyle(.segmented)

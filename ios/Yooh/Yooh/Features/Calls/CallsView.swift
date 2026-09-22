@@ -12,10 +12,10 @@ struct CallsView: View {
                 YoohTheme.TG.background.ignoresSafeArea()
                 Group {
                     if calls.visible.isEmpty, !calls.isLoading {
-                        EmptyStateView(symbol: "phone", title: "No calls",
+                        EmptyStateView(symbol: "phone", title: "Нет звонков",
                                        subtitle: calls.filter == .missed
-                                           ? "No missed calls."
-                                           : "Your call history will appear here.")
+                                           ? "Пропущенных звонков нет."
+                                           : "История звонков появится здесь.")
                     } else {
                         List {
                             ForEach(calls.visible, id: \.id) { call in
@@ -24,7 +24,7 @@ struct CallsView: View {
                                         Button(role: .destructive) {
                                             Task { await calls.delete(call) }
                                         } label: {
-                                            Label("Delete", systemImage: "trash")
+                                            Label("Удалить", systemImage: "trash")
                                         }
                                     }
                             }
@@ -36,12 +36,12 @@ struct CallsView: View {
                     }
                 }
             }
-            .navigationTitle("Calls")
+            .navigationTitle("Звонки")
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Picker("Filter", selection: $calls.filter) {
-                        Text("All").tag(CallsViewModel.Filter.all)
-                        Text("Missed").tag(CallsViewModel.Filter.missed)
+                    Picker("Фильтр", selection: $calls.filter) {
+                        Text("Все").tag(CallsViewModel.Filter.all)
+                        Text("Пропущенные").tag(CallsViewModel.Filter.missed)
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 180)
@@ -90,21 +90,21 @@ private struct CallRowView: View {
                     .foregroundStyle(ThemeStore.shared.accent)
                     .frame(width: 44, height: 44)
             }
-            .accessibilityLabel(Text("Call back"))
+            .accessibilityLabel(Text("Перезвонить"))
         }
         .padding(.vertical, YoohTheme.Spacing.xs)
         .accessibilityElement(children: .combine)
     }
 
     private var title: String {
-        call.peer?.title ?? call.chat?.title ?? "Unknown"
+        call.peer?.title ?? call.chat?.title ?? "Неизвестно"
     }
 
     private var subtitle: String {
         var parts: [String] = []
         parts.append(YoohDates.fullDateTime(call.createdAt))
         if let mode = call.mode {
-            parts.append(mode == "video" ? "Video" : "Audio")
+            parts.append(mode == "video" ? "Видео" : "Аудио")
         }
         if let d = call.durationSeconds, d > 0 {
             parts.append("\(d)s")

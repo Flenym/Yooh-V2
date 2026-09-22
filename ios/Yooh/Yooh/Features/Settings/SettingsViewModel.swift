@@ -54,7 +54,7 @@ final class SettingsViewModel {
     func terminateOthers() async {
         do {
             let removed = try await app.authService.terminateOtherSessions()
-            notice = removed > 0 ? "Closed \(removed) session(s)." : "No other sessions."
+            notice = removed > 0 ? "Завершено сессий: \(removed)." : "Других сессий нет."
             await loadSessions()
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
@@ -73,7 +73,7 @@ final class SettingsViewModel {
     func setCloudPassword(_ password: String?) async -> Bool {
         do {
             _ = try await app.authService.setCloudPassword(password?.isEmpty == true ? nil : password)
-            notice = password == nil ? "Cloud password disabled." : "Cloud password enabled."
+            notice = password == nil ? "Облачный пароль отключён." : "Облачный пароль включён."
             await app.profileViewModel.reload()
             return true
         } catch {
@@ -85,7 +85,7 @@ final class SettingsViewModel {
     func sendFeedback(category: String, message: String) async -> Bool {
         do {
             try await app.settingsService.sendFeedback(category: category, message: message)
-            notice = "Thanks! Your feedback was sent."
+            notice = "Спасибо! Ваш отзыв отправлен."
             return true
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription

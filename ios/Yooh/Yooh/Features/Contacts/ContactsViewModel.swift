@@ -162,11 +162,11 @@ final class ContactsViewModel {
         do {
             let granted = try await store.requestAccess(for: .contacts)
             guard granted else {
-                error = "Contacts access is required for sync. Allow it in Settings."
+                error = "Для синхронизации нужен доступ к контактам. Разрешите его в настройках."
                 return
             }
         } catch {
-            self.error = "Contacts access is required for sync. Allow it in Settings."
+            self.error = "Для синхронизации нужен доступ к контактам. Разрешите его в настройках."
             return
         }
         isSyncing = true
@@ -182,13 +182,13 @@ final class ContactsViewModel {
             }
             phones = Array(Set(phones)).prefix(2000).map { $0 }
             guard !phones.isEmpty else {
-                notice = "No phone numbers found on this device."
+                notice = "На этом устройстве не найдено номеров."
                 return
             }
             let result = try await app.userService.syncContacts(phones: phones)
             await app.chatsViewModel.refresh()
             let n = result.matches?.count ?? 0
-            notice = n > 0 ? "Found \(n) contact\(n == 1 ? "" : "s") on Yooh." : "No mutual contacts found yet."
+                notice = n > 0 ? RU.plural(n, one: "контакт", few: "контакта", many: "контактов") + " в Yooh." : "Общих контактов пока нет."
             Haptics.send()
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription

@@ -16,8 +16,8 @@ struct MessageSearchView: View {
         NavigationStack {
             Group {
                 if results.isEmpty, !isSearching, query.trimmingCharacters(in: .whitespaces).count >= 2 {
-                    EmptyStateView(symbol: "magnifyingglass", title: "No matches",
-                                   subtitle: "Try different words.")
+                    EmptyStateView(symbol: "magnifyingglass", title: "Нет совпадений",
+                                   subtitle: "Попробуйте другие слова.")
                 } else {
                     List(results) { m in
                         Button {
@@ -42,13 +42,13 @@ struct MessageSearchView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Search in chat")
+            .navigationTitle("Поиск по чату")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, prompt: "Words in messages")
+            .searchable(text: $query, prompt: "Слова в сообщениях")
             .onChange(of: query) { _, q in run(q) }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
             }
             .overlay {

@@ -41,42 +41,42 @@ struct MessageBubbleView: View {
         }
         .contextMenu {
             Button { vm.replyTo = message } label: {
-                Label("Reply", systemImage: "arrowshape.turn.up.left")
+                Label("Ответить", systemImage: "arrowshape.turn.up.left")
             }
             if message.type == .text, !((message.text ?? "").isEmpty) {
                 Button {
                     UIPasteboard.general.string = message.text
                 } label: {
-                    Label("Copy", systemImage: "doc.on.doc")
+                    Label("Копировать", systemImage: "doc.on.doc")
                 }
                 if #available(iOS 18, *) {
                     Button {
                         showTranslation = true
                     } label: {
-                        Label("Translate", systemImage: "character.book.closed")
+                        Label("Перевести", systemImage: "character.book.closed")
                     }
                 }
             }
             if message.isOutgoing, message.type == .text {
                 Button { vm.beginEdit(message) } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Label("Изменить", systemImage: "pencil")
                 }
             }
             Button {
                 vm.forwardTarget = message
             } label: {
-                Label("Forward", systemImage: "arrowshape.turn.up.right")
+                Label("Переслать", systemImage: "arrowshape.turn.up.right")
             }
             Button {
                 vm.togglePin(message)
             } label: {
-                Label(vm.isPinned(message) ? "Unpin" : "Pin", systemImage: "pin")
+                Label(vm.isPinned(message) ? "Открепить" : "Закрепить", systemImage: "pin")
             }
             Button(role: .destructive) { vm.delete(message) } label: {
-                Label(vm.chat.type == .direct ? "Delete for everyone" : "Delete", systemImage: "trash")
+                Label(vm.chat.type == .direct ? "Удалить у всех" : "Удалить", systemImage: "trash")
             }
             Button { vm.report(message) } label: {
-                Label("Report", systemImage: "flag")
+                Label("Пожаловаться", systemImage: "flag")
             }
         }
         .accessibilityElement(children: .combine)
@@ -87,7 +87,7 @@ struct MessageBubbleView: View {
     @ViewBuilder
     private var content: some View {
         if let fwd = message.forwardedFrom, fwd.chatId != nil || fwd.messageId != nil {
-            Text("Forwarded")
+            Text("Переслано")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -95,7 +95,7 @@ struct MessageBubbleView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(reply.sender?.displayName ?? reply.sender?.title ?? "")
                     .font(.caption.bold())
-                Text(reply.text ?? (reply.file?.originalName ?? "Attachment"))
+                Text(reply.text ?? (reply.file?.originalName ?? "Вложение"))
                     .font(.caption)
                     .lineLimit(2)
             }
@@ -153,17 +153,17 @@ struct MessageBubbleView: View {
     private var callText: String {
         let status = message.call?.status ?? ""
         switch status {
-        case "completed": return "Call ended"
-        case "canceled": return "Call canceled"
-        case "busy": return "Busy"
-        default: return "Missed call"
+        case "completed": return "Звонок завершён"
+        case "canceled": return "Звонок отменён"
+        case "busy": return "Занято"
+        default: return "Пропущенный звонок"
         }
     }
 
     private var metaRow: some View {
         HStack(spacing: 4) {
             if message.isEdited {
-                Text("edited")
+                Text("изм.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -174,7 +174,7 @@ struct MessageBubbleView: View {
                 Image(systemName: isRead ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.caption2)
                     .foregroundStyle(isRead ? YoohTheme.TG.checksRead : YoohTheme.TG.checksSent)
-                    .accessibilityLabel(Text(isRead ? "Read" : "Sent"))
+                    .accessibilityLabel(Text(isRead ? "Прочитано" : "Отправлено"))
             }
         }
     }
@@ -216,15 +216,15 @@ struct MessageBubbleView: View {
                     .background(Color(.tertiarySystemFill), in: .capsule)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("Add reaction"))
+            .accessibilityLabel(Text("Добавить реакцию"))
         }
     }
 
     private var accessibilityText: String {
         var parts: [String] = []
-        if message.isOutgoing { parts.append("You") }
+        if message.isOutgoing { parts.append("Вы") }
         else if let s = message.sender?.title { parts.append(s) }
-        parts.append(message.text ?? message.file?.originalName ?? message.poll?.question ?? "Message")
+        parts.append(message.text ?? message.file?.originalName ?? message.poll?.question ?? "Сообщение")
         parts.append(YoohDates.bubbleTime(message.createdAt))
         return parts.joined(separator: ". ")
     }
@@ -252,7 +252,7 @@ private struct FileContentView: View {
                     Image(systemName: icon)
                         .font(.title3)
                     VStack(alignment: .leading) {
-                        Text(message.file?.originalName ?? "File")
+                        Text(message.file?.originalName ?? "Файл")
                             .font(.subheadline)
                             .lineLimit(2)
                         if let size = message.file?.size {
@@ -315,7 +315,7 @@ private struct LocationContentView: View {
                 Image(systemName: "mappin.circle.fill")
                     .font(.title2)
                 VStack(alignment: .leading) {
-                    Text(message.location?.title ?? "Location")
+                    Text(message.location?.title ?? "Геопозиция")
                         .font(.subheadline.bold())
                     if let addr = message.location?.address, !addr.isEmpty {
                         Text(addr).font(.caption).lineLimit(2)
@@ -345,16 +345,16 @@ private struct PollContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: YoohTheme.Spacing.s) {
             HStack(spacing: 6) {
-                Text(message.poll?.question ?? "Poll")
+                Text(message.poll?.question ?? "Опрос")
                     .font(.subheadline.bold())
                 if message.poll?.quiz == true {
-                    Text("Quiz")
+                    Text("Викторина")
                         .font(.caption2.bold())
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(ThemeStore.shared.accent, in: .capsule)
-                        .accessibilityLabel(Text("Quiz poll"))
+                        .accessibilityLabel(Text("Опрос-викторина"))
                 }
             }
             if let poll = message.poll {
@@ -374,7 +374,7 @@ private struct PollContentView: View {
                             if poll.correctOptionId == opt.id {
                                 Image(systemName: "checkmark.seal.fill")
                                     .foregroundStyle(.green)
-                                    .accessibilityLabel(Text("Correct answer"))
+                                    .accessibilityLabel(Text("Правильный ответ"))
                             } else if opt.mine {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(ThemeStore.shared.accent)
@@ -383,7 +383,7 @@ private struct PollContentView: View {
                         .padding(.vertical, 4)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Vote for \(opt.text ?? "option")"))
+                    .accessibilityLabel(Text("Голосовать: \(opt.text ?? "вариант")"))
                 }
                 Text("\(poll.totalVotes) votes")
                     .font(.caption)
@@ -411,14 +411,14 @@ private struct TranscribeButton: View {
                         if isWorking {
                             ProgressView().controlSize(.small)
                         }
-                        Text("Transcribe")
+                        Text("Распознать")
                             .font(.caption)
                             .foregroundStyle(ThemeStore.shared.accent)
                     }
                 }
                 .buttonStyle(.plain)
                 .disabled(isWorking)
-                .accessibilityLabel(Text("Transcribe voice message"))
+                .accessibilityLabel(Text("Распознать голосовое сообщение"))
             }
             if let transcript {
                 Text(transcript)
@@ -444,7 +444,7 @@ private struct TranscribeButton: View {
             transcript = text.isEmpty ? "(no speech detected)" : text
             Haptics.selection()
         } catch {
-            self.error = "Couldn't transcribe this message."
+            self.error = "Не удалось распознать сообщение."
         }
     }
 }

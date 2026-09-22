@@ -13,32 +13,32 @@ struct StorageView: View {
 
     var body: some View {
         List {
-            Section("On this device") {
-                LabeledContent("Image cache", value: ByteCountFormatter.string(fromByteCount: imageCacheBytes, countStyle: .file))
-                LabeledContent("Temporary files", value: ByteCountFormatter.string(fromByteCount: tmpBytes, countStyle: .file))
-                Button("Clear image cache", role: .destructive) {
+            Section("На этом устройстве") {
+                LabeledContent("Кэш изображений", value: ByteCountFormatter.string(fromByteCount: imageCacheBytes, countStyle: .file))
+                LabeledContent("Временные файлы", value: ByteCountFormatter.string(fromByteCount: tmpBytes, countStyle: .file))
+                Button("Очистить кэш изображений", role: .destructive) {
                     Task {
                         await ImageCache.shared.clear()
                         Haptics.send()
                         await measure()
-                        notice = "Image cache cleared."
+                        notice = "Кэш изображений очищен."
                     }
                 }
-                Button("Clear temporary files", role: .destructive) {
+                Button("Очистить временные файлы", role: .destructive) {
                     clearTmp()
                     Haptics.send()
                     Task { await measure() }
-                    notice = "Temporary files cleared."
+                    notice = "Временные файлы очищены."
                 }
             }
-            Section("Auto-download photos") {
-                SettingToggleRow(title: "On Wi-Fi", subtitle: nil, isOn: $wifi) {
+            Section("Автозагрузка фото") {
+                SettingToggleRow(title: "По Wi-Fi", subtitle: nil, isOn: $wifi) {
                     save(["autoDownloadWifi": $0])
                 }
-                SettingToggleRow(title: "On mobile data", subtitle: nil, isOn: $mobile) {
+                SettingToggleRow(title: "По мобильной сети", subtitle: nil, isOn: $mobile) {
                     save(["autoDownloadMobile": $0])
                 }
-                SettingToggleRow(title: "On roaming", subtitle: nil, isOn: $roaming) {
+                SettingToggleRow(title: "В роуминге", subtitle: nil, isOn: $roaming) {
                     save(["autoDownloadRoaming": $0])
                 }
             }
@@ -49,7 +49,7 @@ struct StorageView: View {
                 Text(notice).font(.footnote).foregroundStyle(.green)
             }
         }
-        .navigationTitle("Data & Storage")
+        .navigationTitle("Данные и память")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await measure()

@@ -41,11 +41,11 @@ struct NewChatView: View {
                     }
                 }
             )
-            .navigationTitle("New chat")
+            .navigationTitle("Новый чат")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -56,21 +56,21 @@ struct NewChatView: View {
                                 }
                             }
                         } label: {
-                            Label("Saved Messages", systemImage: "bookmark.fill")
+                            Label("Избранное", systemImage: "bookmark.fill")
                         }
                         Button { showSecretPicker = true } label: {
-                            Label("New secret chat", systemImage: "lock.fill")
+                            Label("Новый секретный чат", systemImage: "lock.fill")
                         }
                         Button { showGroupForm = true } label: {
-                            Label("New group", systemImage: "person.3")
+                            Label("Новая группа", systemImage: "person.3")
                         }
                         Button { showChannelForm = true } label: {
-                            Label("New channel", systemImage: "megaphone")
+                            Label("Новый канал", systemImage: "megaphone")
                         }
                     } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel(Text("Create options"))
+                    .accessibilityLabel(Text("Варианты создания"))
                 }
             }
             .sheet(isPresented: $showSecretPicker) {
@@ -90,11 +90,11 @@ struct NewChatView: View {
                         },
                         onJoinPublic: { _ in }
                     )
-                    .navigationTitle("New secret chat")
+                    .navigationTitle("Новый секретный чат")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Button("Close") { showSecretPicker = false }
+                            Button("Закрыть") { showSecretPicker = false }
                         }
                     }
                 }
@@ -123,13 +123,13 @@ struct NewChatView: View {
     private var groupForm: some View {
         NavigationStack {
             Form {
-                TextField("Group name", text: $groupTitle)
+                TextField("Название группы", text: $groupTitle)
                 Section("Members (optional — add more later)") {
                     Text("Pick people from search results after creating, or invite them from group info.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                AsyncButton(title: "Create group", isBusy: false) {
+                AsyncButton(title: "Создать группу", isBusy: false) {
                     guard !groupTitle.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                     if await app.contactsViewModel.createGroup(
                         title: groupTitle.trimmingCharacters(in: .whitespaces),
@@ -139,7 +139,7 @@ struct NewChatView: View {
                     }
                 }
             }
-            .navigationTitle("New group")
+            .navigationTitle("Новая группа")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -147,8 +147,8 @@ struct NewChatView: View {
     private var channelForm: some View {
         NavigationStack {
             Form {
-                TextField("Channel name", text: $channelTitle)
-                AsyncButton(title: "Create channel", isBusy: false) {
+                TextField("Название канала", text: $channelTitle)
+                AsyncButton(title: "Создать канал", isBusy: false) {
                     guard !channelTitle.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                     if await app.contactsViewModel.createChannel(
                         title: channelTitle.trimmingCharacters(in: .whitespaces)) != nil
@@ -157,7 +157,7 @@ struct NewChatView: View {
                     }
                 }
             }
-            .navigationTitle("New channel")
+            .navigationTitle("Новый канал")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -173,9 +173,9 @@ struct ContactsSearchBody: View {
     var botsOnly: Bool = false
 
     enum Scope: String, CaseIterable {
-        case all = "All"
-        case people = "People"
-        case groups = "Groups"
+        case all = "Все"
+        case people = "Люди"
+        case groups = "Группы"
     }
 
     @State private var scope: Scope = .all
@@ -193,7 +193,7 @@ struct ContactsSearchBody: View {
                     .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
             }
             Section {
-                Text("Tip: start with @ % & $ * to scope the search (people, channels, groups, servers, bots).")
+                Text("Подсказка: начните с @ % & $ *, чтобы искать среди людей, каналов, групп, серверов и ботов.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .listRowBackground(Color.clear)
@@ -222,7 +222,7 @@ struct ContactsSearchBody: View {
                                     if let u = user.username {
                                         Text("@\(u)").font(.system(size: 15)).foregroundStyle(.secondary)
                                     } else {
-                                        Text(app.isOnline(user.id) ? "online" : "last seen recently")
+                                        Text(app.isOnline(user.id) ? "в сети" : "был(а) недавно")
                                             .font(.system(size: 15))
                                             .foregroundStyle(app.isOnline(user.id) ? YoohTheme.TG.presence : .secondary)
                                     }
@@ -236,7 +236,7 @@ struct ContactsSearchBody: View {
                         .listRowSeparator(.hidden)
                     }
                 } header: {
-                    Text("People").foregroundStyle(.secondary)
+                    Text("Люди").foregroundStyle(.secondary)
                 }
             }
             if showGroups, !contacts.publicChats.isEmpty {
@@ -245,7 +245,7 @@ struct ContactsSearchBody: View {
                         HStack(spacing: YoohTheme.Spacing.m) {
                             AvatarView(dataURL: nil, name: dc.title ?? "?", size: 52)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(dc.title ?? "Group")
+                                Text(dc.title ?? "Группа")
                                     .font(.system(size: 17))
                                 if let h = dc.handle {
                                     Text("@\(h)").font(.system(size: 15)).foregroundStyle(.secondary)
@@ -253,9 +253,9 @@ struct ContactsSearchBody: View {
                             }
                             Spacer()
                             if dc.joined == true {
-                                Text("Joined").font(.caption).foregroundStyle(.secondary)
+                                Text("Вы участник").font(.caption).foregroundStyle(.secondary)
                             } else {
-                                Button("Join") { onJoinPublic(dc) }
+                                Button("Вступить") { onJoinPublic(dc) }
                                     .buttonStyle(.bordered)
                                     .controlSize(.small)
                             }
@@ -265,20 +265,20 @@ struct ContactsSearchBody: View {
                         .listRowSeparator(.hidden)
                     }
                 } header: {
-                    Text("Public groups").foregroundStyle(.secondary)
+                    Text("Публичные группы").foregroundStyle(.secondary)
                 }
             }
             if search.trimmingCharacters(in: .whitespaces).count >= 2,
                contacts.users.isEmpty, contacts.publicChats.isEmpty, !contacts.isSearching
             {
-                EmptyStateView(symbol: "magnifyingglass", title: "Nothing found",
-                               subtitle: "Try a different name or @username.")
+                    EmptyStateView(symbol: "magnifyingglass", title: "Ничего не найдено",
+                               subtitle: "Попробуйте другое имя или @username.")
             }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(YoohTheme.TG.background)
-        .searchable(text: $search, prompt: "Name or @username")
+        .searchable(text: $search, prompt: "Имя или @username")
         .onChange(of: search) { _, q in contacts.search(q, botsOnly: botsOnly) }
         .onChange(of: botsOnly) { contacts.search(search, botsOnly: botsOnly) }
         .overlay {

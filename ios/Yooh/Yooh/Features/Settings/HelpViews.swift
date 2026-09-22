@@ -12,30 +12,30 @@ struct SupportView: View {
 
     var body: some View {
         List {
-            Section("Your request") {
+            Section("Ваше обращение") {
                 if let ticket {
-                    LabeledContent("Ticket", value: "#\(ticket.number ?? 0)")
+                    LabeledContent("Тикет", value: "#\(ticket.number ?? 0)")
                     if let created = ticket.createdAt {
-                        LabeledContent("Opened", value: YoohDates.fullDateTime(created))
+                        LabeledContent("Открыт", value: YoohDates.fullDateTime(created))
                     }
                 } else {
-                    Text("No active ticket.")
+                    Text("Нет активного тикета.")
                         .foregroundStyle(.secondary)
                 }
-                Picker("Category", selection: $category) {
-                    Text("Bug").tag("bug")
-                    Text("Idea").tag("idea")
-                    Text("Account").tag("account")
-                    Text("Other").tag("other")
+                Picker("Категория", selection: $category) {
+                    Text("Ошибка").tag("bug")
+                    Text("Идея").tag("idea")
+                    Text("Аккаунт").tag("account")
+                    Text("Другое").tag("other")
                 }
                 .pickerStyle(.segmented)
-                AsyncButton(title: ticket == nil ? "Open ticket" : "New ticket", isBusy: isBusy) {
+                AsyncButton(title: ticket == nil ? "Создать тикет" : "Новый тикет", isBusy: isBusy) {
                     await create()
                 }
             }
             if supportChatId != nil {
                 Section {
-                    Button("Open support chat") {
+                    Button("Открыть чат поддержки") {
                         Task { await openSupportChat() }
                     }
                 }
@@ -47,7 +47,7 @@ struct SupportView: View {
                 Text(notice).font(.footnote).foregroundStyle(.green)
             }
         }
-        .navigationTitle("Support")
+        .navigationTitle("Поддержка")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .sheet(item: $openChat) { chat in
@@ -74,7 +74,7 @@ struct SupportView: View {
         defer { isBusy = false }
         do {
             try await app.settingsService.createSupportTicket(category: category)
-            notice = "Ticket opened. Support will reply in the support chat."
+            notice = "Тикет создан. Поддержка ответит в чате поддержки."
             Haptics.send()
             await load()
         } catch {
@@ -90,23 +90,23 @@ struct SupportView: View {
             openChat = chat
             app.socket.joinChat(id)
         } else {
-            error = "Support chat isn't available yet."
+            error = "Чат поддержки пока недоступен."
         }
     }
 }
 
 struct FAQView: View {
     private let items: [(q: String, a: String)] = [
-        ("How do I log in?", "Use your phone number or email. Enter the 6-digit code (in dev builds the code is also visible in the admin panel). If cloud password is on, enter it on the second step."),
-        ("How do I create a group or channel?", "Tap the compose button in Chats, then the + menu: New group or New channel. Public groups can have an @handle others can join by."),
-        ("How do reactions work?", "Long-press a message and pick an emoji, or tap an existing reaction to toggle yours."),
-        ("How do polls work?", "Attach → Poll. Single, multiple-choice and quiz modes are supported; tap an option to vote."),
-        ("How do I forward a message?", "Long-press → Forward, then pick the target chat."),
-        ("Can I edit or delete messages?", "Your own messages: yes. In direct chats either side can delete. Deleted messages leave no trace."),
-        ("What are stories?", "Short photo posts visible for 24 hours. React, view who watched, publish your own from Chats (+) or the Stories screen."),
-        ("Why can't I call?", "Voice/video media needs a WebRTC engine (next release). Call history and incoming-call alerts already work."),
-        ("How do I change the theme?", "Settings → Appearance: interface mode, accent color, chat wallpaper and message text size."),
-        ("Is my data safe?", "The token lives in Keychain. Enable cloud password (2FA) and App Lock for extra protection. Never share OTP codes."),
+        ("Как войти в аккаунт?", "Используйте номер телефона или email. Введите 6-значный код. Если включён облачный пароль, введите его на втором шаге."),
+        ("Как создать группу или канал?", "Нажмите кнопку нового чата в «Чатах», затем меню +: «Новая группа» или «Новый канал». У публичных групп может быть @ссылка для вступления."),
+        ("Как работают реакции?", "Зажмите сообщение и выберите эмодзи или нажмите на существующую реакцию, чтобы убрать свою."),
+        ("Как работают опросы?", "Вложения → Опрос. Есть одиночный выбор, множественный и викторина; нажмите на вариант, чтобы проголосовать."),
+        ("Как переслать сообщение?", "Зажмите сообщение → «Переслать», затем выберите чат."),
+        ("Можно ли редактировать или удалять сообщения?", "Свои — да. В личных чатах удалять может любая сторона. Удалённые сообщения не оставляют следов."),
+        ("Что такое истории?", "Короткие фотопубликации на 24 часа. Ставьте реакции, смотрите просмотры, публикуйте свои из «Чатов» (+) или экрана «Истории»."),
+        ("Почему нельзя позвонить?", "Для голосовой и видеосвязи нужен WebRTC-движок (следующий релиз). История звонков и входящие уже работают."),
+        ("Как сменить тему?", "Настройки → Оформление: режим интерфейса, цвет акцента, обои чата и размер текста."),
+        ("Мои данные в безопасности?", "Токен хранится в Keychain. Включите облачный пароль (2FA) и блокировку приложения для защиты. Никому не сообщайте коды."),
     ]
 
     var body: some View {
@@ -121,7 +121,7 @@ struct FAQView: View {
             .padding(.vertical, 6)
             .accessibilityElement(children: .combine)
         }
-        .navigationTitle("FAQ")
+        .navigationTitle("Вопросы и ответы")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -13,17 +13,17 @@ struct AdminView: View {
 
     var body: some View {
         List {
-            Section("Access") {
+            Section("Доступ") {
                 if service.token == nil {
-                    SecureField("Admin token", text: $tokenInput)
-                    Button("Save token") {
+                    SecureField("Админ-токен", text: $tokenInput)
+                    Button("Сохранить токен") {
                         service.token = tokenInput.trimmingCharacters(in: .whitespaces)
                         tokenInput = ""
                         Task { await reload() }
                     }
                     .disabled(tokenInput.trimmingCharacters(in: .whitespaces).isEmpty)
                 } else {
-                    Button("Forget token", role: .destructive) {
+                    Button("Забыть токен", role: .destructive) {
                         service.token = nil
                         stats = [:]
                         codes = []
@@ -31,18 +31,18 @@ struct AdminView: View {
                 }
             }
             if service.token != nil {
-                Section("Server stats") {
+                Section("Статистика сервера") {
                     if stats.isEmpty {
-                        Text("No data — pull to refresh.")
+                        Text("Нет данных — потяните, чтобы обновить.")
                             .foregroundStyle(.secondary)
                     }
                     ForEach(statRows, id: \.0) { key, value in
                         LabeledContent(key, value: value)
                     }
                 }
-                Section("Live OTP codes") {
+                Section("Активные OTP-коды") {
                     if codes.isEmpty {
-                        Text("No active codes.")
+                        Text("Нет активных кодов.")
                             .foregroundStyle(.secondary)
                     }
                     ForEach(codes) { c in
@@ -55,9 +55,9 @@ struct AdminView: View {
                         .accessibilityElement(children: .combine)
                     }
                 }
-                Section("Broadcast") {
-                    TextField("Message to all users…", text: $broadcastText, axis: .vertical)
-                    AsyncButton(title: "Send broadcast", isBusy: isBusy) {
+                Section("Рассылка") {
+                    TextField("Сообщение всем пользователям…", text: $broadcastText, axis: .vertical)
+                    AsyncButton(title: "Отправить рассылку", isBusy: isBusy) {
                         await broadcast()
                     }
                     .disabled(broadcastText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -70,7 +70,7 @@ struct AdminView: View {
                 Text(notice).font(.footnote).foregroundStyle(.green)
             }
         }
-        .navigationTitle("Admin")
+        .navigationTitle("Админ-панель")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await reload() }
         .task { await reload() }
@@ -110,7 +110,7 @@ struct AdminView: View {
         do {
             try await service.broadcast(broadcastText.trimmingCharacters(in: .whitespacesAndNewlines))
             broadcastText = ""
-            notice = "Broadcast sent."
+            notice = "Рассылка отправлена."
             Haptics.send()
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription

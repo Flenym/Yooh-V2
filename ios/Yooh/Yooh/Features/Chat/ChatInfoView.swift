@@ -40,7 +40,7 @@ struct ChatInfoView: View {
                             groupSection(chat)
                         }
                         if let link = publicLink(chat) {
-                            Section("Invite link") {
+                            Section("Ссылка-приглашение") {
                                 ShareLink(item: link) {
                                     Label(link.absoluteString, systemImage: "link")
                                         .lineLimit(1)
@@ -60,11 +60,11 @@ struct ChatInfoView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Info")
+        .navigationTitle("Информация")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { dismiss() }
+                Button("Готово") { dismiss() }
             }
         }
         .onAppear {
@@ -80,10 +80,10 @@ struct ChatInfoView: View {
             }
         }
         .sheet(item: $sendStarsTo) { member in
-            SendStarsView(userId: member.userId, name: member.displayName ?? "User")
+                SendStarsView(userId: member.userId, name: member.displayName ?? "Пользователь")
         }
-        .confirmationDialog("Delete this chat?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
+        .confirmationDialog("Удалить этот чат?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Удалить", role: .destructive) {
                 Task {
                     if let chat {
                         await app.chatsViewModel.deleteChat(chat)
@@ -91,7 +91,7 @@ struct ChatInfoView: View {
                     dismiss()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Отмена", role: .cancel) {}
         }
     }
 
@@ -126,10 +126,10 @@ struct ChatInfoView: View {
 
     private func typeLabel(_ chat: YoohChat) -> String {
         switch chat.type {
-        case .direct: return "direct chat"
+        case .direct: return "личный чат"
         case .group: return "\(chat.membersCount) members"
-        case .channel: return "channel"
-        case .server: return "server"
+        case .channel: return "канал"
+        case .server: return "сервис"
         case .unknown: return ""
         }
     }
@@ -140,21 +140,21 @@ struct ChatInfoView: View {
         Section {
             HStack(spacing: YoohTheme.Spacing.s) {
                 if chat.type == .direct {
-                    quickCell(symbol: "phone.fill", title: "Call") {
+                    quickCell(symbol: "phone.fill", title: "Позвонить") {
                         app.callsViewModel.unavailableNotice()
                     }
-                    quickCell(symbol: "video.fill", title: "Video") {
+                    quickCell(symbol: "video.fill", title: "Видео") {
                         app.callsViewModel.unavailableNotice()
                     }
                 }
                 quickCell(symbol: app.chatsViewModel.isMuted(chat.id) ? "bell.slash.fill" : "bell.fill",
-                          title: "Mute")
+                          title: "Без звука")
                 {
                     app.chatsViewModel.toggleMute(chat.id)
                 }
                 Menu {
                     Button { Task { await app.chatsViewModel.clearHistory(chat) } } label: {
-                        Label("Clear history", systemImage: "eraser")
+                        Label("Очистить историю", systemImage: "eraser")
                     }
                     Button(role: .destructive) {
                         Task {
@@ -162,12 +162,12 @@ struct ChatInfoView: View {
                             dismiss()
                         }
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label("Удалить", systemImage: "trash")
                     }
                 } label: {
-                    quickCellLabel(symbol: "ellipsis", title: "More")
+                    quickCellLabel(symbol: "ellipsis", title: "Ещё")
                 }
-                .accessibilityLabel(Text("More actions"))
+                .accessibilityLabel(Text("Другие действия"))
             }
             .buttonStyle(.plain)
             .listRowBackground(Color.clear)
@@ -201,20 +201,20 @@ struct ChatInfoView: View {
     @ViewBuilder
     private func detailsSection(_ chat: YoohChat) -> some View {
         if canEdit(chat) {
-            Section("Details") {
-                TextField("Title", text: $title)
-                TextField("Description", text: $description, axis: .vertical)
+            Section("Данные") {
+                TextField("Название", text: $title)
+                TextField("Описание", text: $description, axis: .vertical)
                 if chat.type == .group {
-                    TextField("Public handle (optional)", text: $handle)
+                    TextField("Публичная ссылка (необязательно)", text: $handle)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                 }
-                AsyncButton(title: "Save changes", isBusy: isSaving) {
+                AsyncButton(title: "Сохранить изменения", isBusy: isSaving) {
                     await saveDetails(chat)
                 }
             }
         } else if !chat.description.isEmpty {
-            Section("About") {
+            Section("О чате") {
                 Text(chat.description)
             }
         }
@@ -232,13 +232,13 @@ struct ChatInfoView: View {
         let h = handle.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "@"))
         if h != (chat.handle ?? "") { fields["handle"] = h }
         guard !fields.isEmpty else {
-            notice = "Nothing to save."
+            notice = "Нечего сохранять."
             return
         }
         do {
             _ = try await app.chatsService.update(chatId: chat.id, fields: fields)
             await app.chatsViewModel.refresh()
-            notice = "Saved."
+            notice = "Сохранено."
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }
@@ -247,23 +247,23 @@ struct ChatInfoView: View {
     // MARK: - Channel / group settings
 
     private func channelSection(_ chat: YoohChat) -> some View {
-        Section("Channel") {
-            Toggle("Comments", isOn: Binding(
+            Section("Канал") {
+            Toggle("Комментарии", isOn: Binding(
                 get: { chat.settings?.commentsEnabled ?? true },
                 set: { v in Task { await saveChatSettings(chat, ["commentsEnabled": v]) } }
             ))
-            Toggle("Reactions", isOn: Binding(
+            Toggle("Реакции", isOn: Binding(
                 get: { chat.settings?.reactionsEnabled ?? true },
                 set: { v in Task { await saveChatSettings(chat, ["reactionsEnabled": v]) } }
             ))
-            Toggle("Sign messages", isOn: Binding(
+            Toggle("Подписывать сообщения", isOn: Binding(
                 get: { chat.settings?.signMessages ?? false },
                 set: { v in Task { await saveChatSettings(chat, ["signMessages": v]) } }
             ))
             wallpaperPicker(chat)
             if canEdit(chat) {
                 PhotosPicker(selection: $avatarItem, matching: .images) {
-                    Label("Change channel photo", systemImage: "photo")
+                    Label("Сменить фото канала", systemImage: "photo")
                 }
             }
             statusLines
@@ -279,16 +279,16 @@ struct ChatInfoView: View {
     }
 
     private func groupSection(_ chat: YoohChat) -> some View {
-        Section("Group") {
+            Section("Группа") {
             if canEdit(chat) {
                 PhotosPicker(selection: $avatarItem, matching: .images) {
-                    Label("Change group photo", systemImage: "photo")
+                    Label("Сменить фото группы", systemImage: "photo")
                 }
-                Picker("Slow mode", selection: Binding(
+                Picker("Медленный режим", selection: Binding(
                     get: { chat.settings?.slowModeSeconds ?? 0 },
                     set: { v in Task { await saveChatSettings(chat, [:], permissions: ["slowModeSeconds": v]) } }
                 )) {
-                    Text("Off").tag(0)
+                    Text("Выкл").tag(0)
                     Text("10 sec").tag(10)
                     Text("30 sec").tag(30)
                     Text("1 min").tag(60)
@@ -296,21 +296,21 @@ struct ChatInfoView: View {
                     Text("15 min").tag(900)
                     Text("1 hour").tag(3600)
                 }
-                Picker("Auto-delete", selection: Binding(
+                Picker("Автоудаление", selection: Binding(
                     get: { chat.settings?.autoDeleteDays ?? 0 },
                     set: { v in Task { await saveChatSettings(chat, ["autoDeleteDays": v]) } }
                 )) {
-                    Text("Off").tag(0)
+                    Text("Выкл").tag(0)
                     Text("1 day").tag(1)
                     Text("7 days").tag(7)
                     Text("30 days").tag(30)
                     Text("1 year").tag(365)
                 }
-                Toggle("Members can post", isOn: Binding(
+                Toggle("Участники могут писать", isOn: Binding(
                     get: { chat.settings?.membersCanPost ?? true },
                     set: { v in Task { await saveChatSettings(chat, [:], permissions: ["sendMessages": v]) } }
                 ))
-                Toggle("Members can invite", isOn: Binding(
+                Toggle("Участники могут приглашать", isOn: Binding(
                     get: { chat.settings?.allowMemberInvites ?? true },
                     set: { v in Task { await saveChatSettings(chat, ["allowMemberInvites": v]) } }
                 ))
@@ -329,15 +329,15 @@ struct ChatInfoView: View {
     }
 
     private func wallpaperPicker(_ chat: YoohChat) -> some View {
-        Picker("Chat wallpaper", selection: Binding(
+        Picker("Обои чата", selection: Binding(
             get: { chat.settings?.wallpaperPreset ?? "" },
             set: { v in Task { await saveChatSettings(chat, ["wallpaperPreset": v]) } }
         )) {
-            Text("Default").tag("")
-            Text("Midnight").tag("midnight")
-            Text("Ocean").tag("ocean")
-            Text("Royal").tag("royal")
-            Text("Ember").tag("ember")
+            Text("По умолчанию").tag("")
+            Text("Полночь").tag("midnight")
+            Text("Океан").tag("ocean")
+            Text("Королевская ночь").tag("royal")
+            Text("Закат").tag("ember")
         }
     }
 
@@ -364,7 +364,7 @@ struct ChatInfoView: View {
         do {
             _ = try await app.chatsService.update(chatId: chat.id, fields: fields)
             await app.chatsViewModel.refresh()
-            notice = "Saved."
+            notice = "Сохранено."
             Haptics.send()
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
@@ -376,7 +376,7 @@ struct ChatInfoView: View {
               let img = UIImage(data: data),
               let url = ProfileViewModel.avatarDataURL(img) else
         {
-            error = "Couldn't process the image."
+            error = "Не удалось обработать изображение."
             return
         }
         await saveChatSettings(chat, [:], avatar: url)
@@ -396,16 +396,16 @@ struct ChatInfoView: View {
     // MARK: - Members + moderation
 
     private func membersSection(_ chat: YoohChat) -> some View {
-        Section("Members (\(chat.membersCount))") {
+            Section(RU.plural(chat.membersCount, one: "участник", few: "участника", many: "участников").capitalized) {
             if canInvite(chat) {
                 Button {
                     showAddMember = true
                 } label: {
-                    Label("Add member", systemImage: "person.badge.plus")
+                    Label("Добавить участника", systemImage: "person.badge.plus")
                 }
             }
             if chat.members.isEmpty {
-                Text("Member list is hidden by chat settings.")
+                Text("Список участников скрыт настройками чата.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -428,21 +428,21 @@ struct ChatInfoView: View {
                     Spacer()
                     if canManageRoles(chat), m.userId != app.session.currentUser?.id {
                         Menu {
-                            Button("Make admin") { setRole(chat, member: m, role: "admin") }
-                            Button("Make member") { setRole(chat, member: m, role: "member") }
+                            Button("Сделать админом") { setRole(chat, member: m, role: "admin") }
+                            Button("Сделать участником") { setRole(chat, member: m, role: "member") }
                             Divider()
-                            Button("Mute") { moderate(chat, member: m, kind: .mute) }
-                            Button("Unmute") { moderate(chat, member: m, kind: .unmute) }
-                            Button("Ban", role: .destructive) { moderate(chat, member: m, kind: .ban) }
-                            Button("Unban") { moderate(chat, member: m, kind: .unban) }
+                            Button("Заглушить") { moderate(chat, member: m, kind: .mute) }
+                            Button("Включить звук") { moderate(chat, member: m, kind: .unmute) }
+                            Button("Заблокировать", role: .destructive) { moderate(chat, member: m, kind: .ban) }
+                            Button("Разблокировать") { moderate(chat, member: m, kind: .unban) }
                             Divider()
-                            Button("Remove", role: .destructive) { removeMember(chat, member: m) }
+                            Button("Удалить", role: .destructive) { removeMember(chat, member: m) }
                         } label: {
                             Image(systemName: "ellipsis")
                                 .foregroundStyle(.secondary)
                                 .frame(width: 44, height: 44)
                         }
-                        .accessibilityLabel(Text("Manage member"))
+                        .accessibilityLabel(Text("Управление участником"))
                     }
                 }
             }
@@ -518,7 +518,7 @@ struct ChatInfoView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 4) {
-                                Text(peer.displayName ?? "User")
+                                Text(peer.displayName ?? "Пользователь")
                                     .font(.title3.bold())
                                 if peer.isPremium {
                                     Image(systemName: "star.fill")
@@ -538,7 +538,7 @@ struct ChatInfoView: View {
                             Button {
                                 sendStarsTo = peer
                             } label: {
-                                Label("Send Stars", systemImage: "star.fill")
+                                Label("Отправить звёзды", systemImage: "star.fill")
                                     .font(.subheadline)
                                     .foregroundStyle(ThemeStore.shared.accent)
                             }
@@ -558,9 +558,9 @@ struct ChatInfoView: View {
     // MARK: - Shared media
 
     private func sharedMedia(_ chat: YoohChat) -> some View {
-        Section("Shared media") {
+            Section("Общие медиа") {
             if sharedImages.isEmpty {
-                Text("No photos yet.")
+                Text("Пока нет фото.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
@@ -593,9 +593,9 @@ struct ChatInfoView: View {
     // MARK: - Scheduled
 
     private func scheduledSection(_ chat: YoohChat) -> some View {
-        Section("Scheduled") {
+            Section("Отложенные") {
             if scheduled.isEmpty {
-                Text("Nothing scheduled.")
+                    Text("Ничего не запланировано.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -612,7 +612,7 @@ struct ChatInfoView: View {
                         }
                     }
                     Spacer()
-                    Button("Cancel") {
+                    Button("Отмена") {
                         Task {
                             do {
                                 try await app.messageService.delete(chatId: chat.id, messageId: m.id)
@@ -624,7 +624,7 @@ struct ChatInfoView: View {
                     }
                     .font(.footnote)
                     .foregroundStyle(.red)
-                    .accessibilityLabel(Text("Cancel scheduled message"))
+                    .accessibilityLabel(Text("Отменить отложенное сообщение"))
                 }
             }
         }
@@ -640,17 +640,17 @@ struct ChatInfoView: View {
     // MARK: - Options + danger
 
     private func optionsSection(_ chat: YoohChat) -> some View {
-        Section("Options") {
-            Toggle("Pin chat", isOn: Binding(
+            Section("Настройки") {
+            Toggle("Закрепить чат", isOn: Binding(
                 get: { app.chatsViewModel.isPinned(chat.id) },
                 set: { _ in app.chatsViewModel.togglePin(chat.id) }))
-            Toggle("Mute notifications", isOn: Binding(
+            Toggle("Без звука", isOn: Binding(
                 get: { app.chatsViewModel.isMuted(chat.id) },
                 set: { _ in app.chatsViewModel.toggleMute(chat.id) }))
             Button {
                 Task { await app.chatsViewModel.clearHistory(chat) }
             } label: {
-                Label("Clear history", systemImage: "eraser")
+                Label("Очистить историю", systemImage: "eraser")
             }
             if let error {
                 Text(error).font(.footnote).foregroundStyle(.red)
@@ -673,7 +673,7 @@ struct ChatInfoView: View {
                     confirmDelete = true
                 }
             } label: {
-                Label(chat.type == .direct ? "Delete conversation" : "Delete and leave",
+                Label(chat.type == .direct ? "Удалить переписку" : "Удалить и выйти",
                       systemImage: "trash")
             }
         }
@@ -725,14 +725,14 @@ private struct AddMemberView: View {
             onJoinPublic: { _ in },
             botsOnly: botsOnly
         )
-        .navigationTitle(botsOnly ? "Add bot" : "Add member")
+        .navigationTitle(botsOnly ? "Добавить бота" : "Добавить участника")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
+                Button("Закрыть") { dismiss() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button(botsOnly ? "People" : "Bots") {
+                Button(botsOnly ? "Люди" : "Боты") {
                     Haptics.selection()
                     botsOnly.toggle()
                 }

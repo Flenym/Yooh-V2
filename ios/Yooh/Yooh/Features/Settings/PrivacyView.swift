@@ -21,9 +21,9 @@ struct PrivacyView: View {
             voiceSection
             messagesSection
             invitesSection
-            Section("Messages") {
-                SettingToggleRow(title: "Read receipts",
-                                 subtitle: "If off, you won't see theirs either",
+            Section("Сообщения") {
+                SettingToggleRow(title: "Отчёты о прочтении",
+                                 subtitle: "Если выкл, вы тоже не увидите чужие",
                                  isOn: receiptBinding)
                 {
                     model.readReceipts = $0
@@ -31,9 +31,9 @@ struct PrivacyView: View {
                     save()
                 }
             }
-            Section("App lock") {
-                SettingToggleRow(title: "Lock with \(AppLockStore.shared.biometryName)",
-                                 subtitle: "Require authentication on launch and return",
+            Section("Блокировка") {
+                SettingToggleRow(title: "Блокировка: \(AppLockStore.shared.biometryName)",
+                                 subtitle: "Требовать аутентификацию при запуске",
                                  isOn: Binding(
                                      get: { AppLockStore.shared.isEnabled },
                                      set: { v in
@@ -47,7 +47,7 @@ struct PrivacyView: View {
                 Text(error).font(.footnote).foregroundStyle(.red)
             }
         }
-        .navigationTitle("Privacy")
+        .navigationTitle("Конфиденциальность")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .sheet(item: $pickerTarget) { target in
@@ -61,20 +61,20 @@ struct PrivacyView: View {
     // MARK: - Sections
 
     private var phoneSection: some View {
-        Section("Phone number") {
-            AudienceRow(title: "Who can see my number",
+        Section("Номер телефона") {
+            AudienceRow(title: "Кто видит мой номер",
                         selection: audienceBinding(get: { model.phoneSee },
                                                    set: { model.phoneSee = $0 }))
             { _ in
                 save()
             }
-            AudienceRow(title: "Who can find me by number",
+            AudienceRow(title: "Кто может найти меня по номеру",
                         selection: audienceBinding(get: { model.phoneFind },
                                                    set: { model.phoneFind = $0 }))
             { _ in
                 save()
             }
-            ExceptionEditor(title: "Always show my number to",
+            ExceptionEditor(title: "Всегда показывать номер",
                             ids: model.phoneShow, store: exceptionStore,
                             onAdd: { pickerTarget = .phoneShow },
                             onRemove: { remove($0, from: .phoneShow) })
@@ -82,15 +82,15 @@ struct PrivacyView: View {
     }
 
     private var lastSeenSection: some View {
-        Section("Last seen & online") {
-            AudienceRow(title: "Who can see my last seen",
-                        subtitle: "Approximate values are shown instead of exact time",
+        Section("Время визита") {
+            AudienceRow(title: "Кто видит мой визит",
+                        subtitle: "Вместо точного времени показываются приблизительные значения",
                         selection: audienceBinding(get: { model.lastSeenSee },
                                                    set: { model.lastSeenSee = $0 }))
             { _ in
                 save()
             }
-            ExceptionEditor(title: "Always show to",
+            ExceptionEditor(title: "Всегда показывать",
                             ids: model.lastSeenShow, store: exceptionStore,
                             onAdd: { pickerTarget = .lastSeenShow },
                             onRemove: { remove($0, from: .lastSeenShow) })
@@ -98,18 +98,18 @@ struct PrivacyView: View {
     }
 
     private var photosSection: some View {
-        Section("Profile photo") {
-            AudienceRow(title: "Who can see my photo",
+        Section("Фото профиля") {
+            AudienceRow(title: "Кто видит моё фото",
                         selection: audienceBinding(get: { model.photosSee },
                                                    set: { model.photosSee = $0 }))
             { _ in
                 save()
             }
-            ExceptionEditor(title: "Always show to",
+            ExceptionEditor(title: "Всегда показывать",
                             ids: model.photosShow, store: exceptionStore,
                             onAdd: { pickerTarget = .photosShow },
                             onRemove: { remove($0, from: .photosShow) })
-            ExceptionEditor(title: "Never show to",
+            ExceptionEditor(title: "Никогда не показывать",
                             ids: model.photosHide, store: exceptionStore,
                             onAdd: { pickerTarget = .photosHide },
                             onRemove: { remove($0, from: .photosHide) })
@@ -117,18 +117,18 @@ struct PrivacyView: View {
     }
 
     private var forwardsSection: some View {
-        Section("Forwarded messages") {
-            AudienceRow(title: "Who can link back to my account",
+        Section("Пересланные сообщения") {
+            AudienceRow(title: "Кто может ссылаться на мой аккаунт",
                         selection: audienceBinding(get: { model.forwardsLink },
                                                    set: { model.forwardsLink = $0 }))
             { _ in
                 save()
             }
-            ExceptionEditor(title: "Always allow",
+            ExceptionEditor(title: "Всегда разрешать",
                             ids: model.forwardsAllow, store: exceptionStore,
                             onAdd: { pickerTarget = .forwardsAllow },
                             onRemove: { remove($0, from: .forwardsAllow) })
-            ExceptionEditor(title: "Never allow",
+            ExceptionEditor(title: "Никогда не разрешать",
                             ids: model.forwardsDeny, store: exceptionStore,
                             onAdd: { pickerTarget = .forwardsDeny },
                             onRemove: { remove($0, from: .forwardsDeny) })
@@ -136,18 +136,18 @@ struct PrivacyView: View {
     }
 
     private var callsSection: some View {
-        Section("Calls") {
-            AudienceRow(title: "Who can call me",
+        Section("Звонки") {
+            AudienceRow(title: "Кто может мне звонить",
                         selection: audienceBinding(get: { model.callsCall },
                                                    set: { model.callsCall = $0 }))
             { _ in
                 save()
             }
-            ExceptionEditor(title: "Always allow",
+            ExceptionEditor(title: "Всегда разрешать",
                             ids: model.callsAllow, store: exceptionStore,
                             onAdd: { pickerTarget = .callsAllow },
                             onRemove: { remove($0, from: .callsAllow) })
-            ExceptionEditor(title: "Never allow",
+            ExceptionEditor(title: "Никогда не разрешать",
                             ids: model.callsDeny, store: exceptionStore,
                             onAdd: { pickerTarget = .callsDeny },
                             onRemove: { remove($0, from: .callsDeny) })
@@ -155,8 +155,8 @@ struct PrivacyView: View {
     }
 
     private var voiceSection: some View {
-        Section("Voice messages") {
-            ExceptionEditor(title: "Never accept voice from",
+        Section("Голосовые сообщения") {
+            ExceptionEditor(title: "Не принимать голосовые от",
                             ids: model.voiceDeny, store: exceptionStore,
                             onAdd: { pickerTarget = .voiceDeny },
                             onRemove: { remove($0, from: .voiceDeny) })
@@ -164,19 +164,19 @@ struct PrivacyView: View {
     }
 
     private var messagesSection: some View {
-        Section("Direct messages") {
-            AudienceRow(title: "Who can message me",
-                        subtitle: "Strangers send requests instead",
+        Section("Личные сообщения") {
+            AudienceRow(title: "Кто может мне писать",
+                        subtitle: "Незнакомцы отправляют заявки",
                         selection: audienceBinding(get: { model.messagesSend },
                                                    set: { model.messagesSend = $0 }))
             { _ in
                 save()
             }
-            ExceptionEditor(title: "Always allow",
+            ExceptionEditor(title: "Всегда разрешать",
                             ids: model.messagesAllow, store: exceptionStore,
                             onAdd: { pickerTarget = .messagesAllow },
                             onRemove: { remove($0, from: .messagesAllow) })
-            ExceptionEditor(title: "Never allow",
+            ExceptionEditor(title: "Никогда не разрешать",
                             ids: model.messagesDeny, store: exceptionStore,
                             onAdd: { pickerTarget = .messagesDeny },
                             onRemove: { remove($0, from: .messagesDeny) })
@@ -184,8 +184,8 @@ struct PrivacyView: View {
     }
 
     private var invitesSection: some View {
-        Section("Groups") {
-            AudienceRow(title: "Who can invite me to groups",
+        Section("Группы") {
+            AudienceRow(title: "Кто может приглашать меня в группы",
                         selection: audienceBinding(get: { model.invites },
                                                    set: { model.invites = $0 }))
             { _ in
@@ -301,10 +301,10 @@ private enum ExceptionTarget: String, Identifiable {
 
     var addTitle: String {
         switch self {
-        case .phoneShow, .lastSeenShow, .photosShow: return "Always show to"
-        case .photosHide: return "Never show to"
-        case .forwardsAllow, .callsAllow, .messagesAllow: return "Always allow"
-        case .forwardsDeny, .callsDeny, .messagesDeny, .voiceDeny: return "Never allow"
+    case .phoneShow, .lastSeenShow, .photosShow: return "Всегда показывать"
+    case .photosHide: return "Никогда не показывать"
+    case .forwardsAllow, .callsAllow, .messagesAllow: return "Всегда разрешать"
+    case .forwardsDeny, .callsDeny, .messagesDeny, .voiceDeny: return "Никогда не разрешать"
         }
     }
 }
@@ -330,16 +330,16 @@ private struct ExceptionEditor: View {
                     Image(systemName: "plus.circle")
                         .foregroundStyle(ThemeStore.shared.accent)
                 }
-                .accessibilityLabel(Text("Add user to \(title)"))
+                .accessibilityLabel(Text("Добавить в «\(title)»"))
             }
             .padding(.vertical, 6)
             ForEach(ids, id: \.self) { id in
                 HStack(spacing: 10) {
                     let contact = store.contact(for: id)
                     AvatarView(dataURL: contact?.avatar,
-                               name: contact?.title ?? "User \(id.prefix(4))",
+                               name: contact?.title ?? "Пользователь \(id.prefix(4))",
                                size: 32)
-                    Text(contact?.title ?? "User \(id.prefix(8))")
+                    Text(contact?.title ?? "Пользователь \(id.prefix(8))")
                         .font(.subheadline)
                         .lineLimit(1)
                     Spacer()
@@ -349,7 +349,7 @@ private struct ExceptionEditor: View {
                         Image(systemName: "minus.circle")
                             .foregroundStyle(.red)
                     }
-                    .accessibilityLabel(Text("Remove user"))
+                    .accessibilityLabel(Text("Убрать пользователя"))
                 }
                 .padding(.vertical, 4)
             }
@@ -374,7 +374,7 @@ private struct ExceptionUserPicker: View {
         NavigationStack {
             List {
                 if !query.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Section("Search") {
+                    Section("Поиск") {
                         if isSearching {
                             ProgressView()
                         }
@@ -383,7 +383,7 @@ private struct ExceptionUserPicker: View {
                         }
                     }
                 }
-                Section("Your contacts") {
+                Section("Ваши контакты") {
                     ForEach(knownPeers, id: \.id) { user in
                         pickRow(user)
                     }
@@ -391,11 +391,11 @@ private struct ExceptionUserPicker: View {
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, prompt: "Name or @username")
+            .searchable(text: $query, prompt: "Имя или @username")
             .onChange(of: query) { _, q in search(q) }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Отмена") { dismiss() }
                 }
             }
         }

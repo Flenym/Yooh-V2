@@ -15,8 +15,8 @@ struct StoriesView: View {
                 YoohTheme.TG.background.ignoresSafeArea()
                 Group {
                     if stories.stories.isEmpty, !stories.isLoading {
-                        EmptyStateView(symbol: "circle.dashed", title: "No stories",
-                                       subtitle: "Stories from your contacts will appear here.")
+                        EmptyStateView(symbol: "circle.dashed", title: "Нет историй",
+                                       subtitle: "Истории ваших контактов появятся здесь.")
                     } else {
                         List {
                             Section {
@@ -31,7 +31,7 @@ struct StoriesView: View {
                     }
                 }
             }
-            .navigationTitle("Stories")
+            .navigationTitle("Истории")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -39,7 +39,7 @@ struct StoriesView: View {
                     } label: {
                         Image(systemName: "plus.circle")
                     }
-                    .accessibilityLabel(Text("Create story"))
+                    .accessibilityLabel(Text("Создать историю"))
                 }
             }
             .overlay(alignment: .top) {
@@ -75,7 +75,7 @@ struct StoriesView: View {
                     } label: {
                         VStack(spacing: 4) {
                             StoryRingAvatar(group: g, size: 64)
-                            Text(g.author?.title ?? "Story")
+                            Text(g.author?.title ?? "История")
                                 .font(.caption2)
                                 .lineLimit(1)
                                 .frame(width: 64)
@@ -166,7 +166,7 @@ private struct StoryViewerView: View {
                             Image(systemName: "trash")
                                 .foregroundStyle(.white)
                         }
-                        .accessibilityLabel(Text("Delete story"))
+                        .accessibilityLabel(Text("Удалить историю"))
                     }
                     Button {
                         dismiss()
@@ -175,7 +175,7 @@ private struct StoryViewerView: View {
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                     }
-                    .accessibilityLabel(Text("Close viewer"))
+                    .accessibilityLabel(Text("Закрыть просмотр"))
                 }
                 .padding(.horizontal)
                 Spacer()
@@ -189,19 +189,19 @@ private struct StoryViewerView: View {
         .sheet(isPresented: $showCaptionEditor) {
             NavigationStack {
                 Form {
-                    Section("Caption") {
-                        TextField("Say something…", text: $editCaption, axis: .vertical)
+                    Section("Подпись") {
+                        TextField("Расскажите что-нибудь…", text: $editCaption, axis: .vertical)
                     }
-                    AsyncButton(title: "Save", isBusy: false) {
+                    AsyncButton(title: "Сохранить", isBusy: false) {
                         await saveCaption()
                     }
                     .disabled(editCaption.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .navigationTitle("Edit caption")
+                .navigationTitle("Изменить подпись")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") { showCaptionEditor = false }
+                        Button("Отмена") { showCaptionEditor = false }
                     }
                 }
             }
@@ -266,7 +266,7 @@ private struct StoryViewerView: View {
                 } label: {
                     Text(emoji).font(.title)
                 }
-                .accessibilityLabel(Text("React \(emoji)"))
+                .accessibilityLabel(Text("Реакция \(emoji)"))
             }
         }
         .padding()
@@ -299,7 +299,7 @@ private struct StoryViewerView: View {
                 Button {
                     Task { await app.storiesViewModel.toggleSaveToProfile(story) }
                 } label: {
-                    Label((story.saveToProfile ?? false) ? "Saved to profile" : "Save to profile",
+                    Label((story.saveToProfile ?? false) ? "Сохранено в профиле" : "Сохранить в профиле",
                           systemImage: (story.saveToProfile ?? false) ? "bookmark.fill" : "bookmark")
                         .font(.subheadline)
                         .foregroundStyle(.white)
@@ -309,17 +309,17 @@ private struct StoryViewerView: View {
                     editCaption = story.caption ?? ""
                     showCaptionEditor = true
                 } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Label("Изменить", systemImage: "pencil")
                         .font(.subheadline)
                         .foregroundStyle(.white)
                 }
-                .accessibilityLabel(Text("Edit story caption"))
+                .accessibilityLabel(Text("Изменить подпись истории"))
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
         } else {
             HStack(spacing: 8) {
-                TextField("Reply…", text: $replyText, axis: .vertical)
+                TextField("Ответить…", text: $replyText, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(1...3)
                 Button {
@@ -333,7 +333,7 @@ private struct StoryViewerView: View {
                     }
                 }
                 .disabled(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSendingReply)
-                .accessibilityLabel(Text("Send reply"))
+                .accessibilityLabel(Text("Отправить ответ"))
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
@@ -411,7 +411,7 @@ private struct StoryPageView: View {
                 RoundedRectangle(cornerRadius: YoohTheme.Radius.l)
                     .fill(Color(.darkGray))
                     .overlay {
-                        Text(story.title ?? "Yooh")
+                        Text(story.title ?? "История")
                             .font(.largeTitle.bold())
                             .foregroundStyle(.white)
                     }
@@ -473,26 +473,26 @@ struct StoryCreatorView: View {
                     }
                     PhotosPicker(selection: $item,
                                  matching: .any(of: [.images, .videos])) {
-                        Label(hasMedia ? "Change photo or video" : "Choose photo or video",
+                        Label(hasMedia ? "Сменить фото или видео" : "Выбрать фото или видео",
                               systemImage: "photo")
                     }
                 }
-                Section("Caption") {
-                    TextField("Say something…", text: $caption, axis: .vertical)
+                Section("Подпись") {
+                    TextField("Расскажите что-нибудь…", text: $caption, axis: .vertical)
                 }
                 if let error {
                     Text(error).font(.footnote).foregroundStyle(.red)
                 }
-                AsyncButton(title: "Publish", isBusy: isPublishing) {
+                AsyncButton(title: "Опубликовать", isBusy: isPublishing) {
                     await publish()
                 }
                 .disabled(!hasMedia)
             }
-            .navigationTitle("New story")
+            .navigationTitle("Новая история")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Отмена") { dismiss() }
                 }
             }
             .onChange(of: item) { _, new in

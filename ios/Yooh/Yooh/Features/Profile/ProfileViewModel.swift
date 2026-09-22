@@ -40,9 +40,9 @@ final class ProfileViewModel {
     func save() async -> Bool {
         error = nil
         notice = nil
-        guard Validation.validateDisplayName(displayName) else { error = "Enter your name."; return false }
+        guard Validation.validateDisplayName(displayName) else { error = "Введите ваше имя."; return false }
         guard Validation.validateUsername(username) else { error = "Username: 5–32 letters, digits or _."; return false }
-        guard about.count <= 280 else { error = "About is too long (max 280)."; return false }
+        guard about.count <= 280 else { error = "«О себе» слишком длинное (макс. 280)."; return false }
         return await saveFields([
             "displayName": displayName.trimmingCharacters(in: .whitespaces),
             "username": username.trimmingCharacters(in: .whitespaces).lowercased(),
@@ -53,7 +53,7 @@ final class ProfileViewModel {
     func saveAvatar(_ image: UIImage) async -> Bool {
         error = nil
         guard let dataURL = Self.avatarDataURL(image) else {
-            error = "Couldn't process the image."
+            error = "Не удалось обработать изображение."
             return false
         }
         return await saveFields(["avatar": dataURL], notice: "Photo updated.")
@@ -62,7 +62,7 @@ final class ProfileViewModel {
     func saveBanner(_ image: UIImage) async -> Bool {
         error = nil
         guard let dataURL = Self.bannerDataURL(image) else {
-            error = "Couldn't process the image."
+            error = "Не удалось обработать изображение."
             return false
         }
         return await saveFields(["banner": dataURL], notice: "Banner updated.")

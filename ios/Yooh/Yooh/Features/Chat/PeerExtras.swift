@@ -20,13 +20,13 @@ struct SendStarsView: View {
                         AvatarView(dataURL: nil, name: name, size: 52)
                         VStack(alignment: .leading) {
                             Text(name).font(.headline)
-                            Text("Balance: \(app.session.currentUser?.starsBalance ?? 0) ⭐")
+                            Text("Баланс: \(app.session.currentUser?.starsBalance ?? 0) ⭐")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
                 }
-                Section("Amount") {
+                Section("Сумма") {
                     Stepper("\(amount) ⭐", value: $amount, in: 1...10000)
                 }
                 if let error {
@@ -35,22 +35,22 @@ struct SendStarsView: View {
                 if let notice {
                     Text(notice).font(.footnote).foregroundStyle(.green)
                 }
-                AsyncButton(title: "Send \(amount) ⭐", isBusy: isBusy) {
+                AsyncButton(title: "Отправить \(amount) ⭐", isBusy: isBusy) {
                     confirm = true
                 }
             }
-            .navigationTitle("Send Stars")
+            .navigationTitle("Отправка звёзд")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button("Закрыть") { dismiss() }
                 }
             }
-            .confirmationDialog("Send \(amount) ⭐ to \(name)?", isPresented: $confirm, titleVisibility: .visible) {
-                Button("Send") {
+            .confirmationDialog("Отправить \(amount) ⭐ пользователю \(name)?", isPresented: $confirm, titleVisibility: .visible) {
+                Button("Отправить") {
                     Task { await send() }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Отмена", role: .cancel) {}
             }
         }
     }
@@ -63,7 +63,7 @@ struct SendStarsView: View {
         do {
             let res = try await app.authService.transferStars(target: userId, amount: amount)
             await app.profileViewModel.reload()
-            notice = "Sent \(res.sent ?? amount) ⭐. New balance: \(res.balance ?? 0)."
+            notice = "Отправлено \(res.sent ?? amount) ⭐. Новый баланс: \(res.balance ?? 0)."
             Haptics.send()
         } catch {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
@@ -79,10 +79,10 @@ struct ContactNoteField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Private note (only you see it)")
+            Text("Личная заметка (видите только вы)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            TextField("How you met, birthday, anything…", text: $note, axis: .vertical)
+            TextField("Как познакомились, день рождения, что угодно…", text: $note, axis: .vertical)
                 .font(.subheadline)
                 .onChange(of: note) { _, v in
                     app.contactNotes.setNote(v, userId: userId)
@@ -92,6 +92,6 @@ struct ContactNoteField: View {
         .onAppear {
             note = app.contactNotes.note(userId: userId)
         }
-        .accessibilityLabel(Text("Private contact note"))
+        .accessibilityLabel(Text("Личная заметка о контакте"))
     }
 }

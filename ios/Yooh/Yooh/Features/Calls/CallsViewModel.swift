@@ -41,7 +41,7 @@ final class CallsViewModel {
     }
 
     func unavailableNotice() {
-        notice = "Voice and video calls arrive in the next release — history and incoming alerts already work."
+        notice = "Голосовые и видеозвонки появятся в следующем релизе — история и входящие уже работают."
         Haptics.error()
     }
 

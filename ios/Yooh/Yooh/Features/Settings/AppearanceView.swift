@@ -6,16 +6,16 @@ struct AppearanceView: View {
     var body: some View {
         @Bindable var theme = theme
         List {
-            Section("Interface") {
-                Picker("Appearance", selection: $theme.mode) {
+            Section("Интерфейс") {
+                Picker("Оформление", selection: $theme.mode) {
                     ForEach(ThemeStore.Mode.allCases, id: \.self) { m in
-                        Text(m.rawValue).tag(m)
+                        Text(m.title).tag(m)
                     }
                 }
                 .pickerStyle(.segmented)
                 .padding(.vertical, 4)
             }
-            Section("Accent color") {
+            Section("Цвет акцента") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 52))], spacing: 12) {
                     ForEach(ThemeStore.accents) { a in
                         Button {
@@ -40,12 +40,12 @@ struct AppearanceView: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(Text("\(a.name) accent"))
+                        .accessibilityLabel(Text("Акцент \(a.name)"))
                     }
                 }
                 .padding(.vertical, 4)
             }
-            Section("Chat wallpaper") {
+            Section("Обои чата") {
                 ForEach(ThemeStore.wallpapers) { w in
                     Button {
                         Haptics.selection()
@@ -78,26 +78,26 @@ struct AppearanceView: View {
                         .padding(.vertical, 4)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(Text("\(w.name) wallpaper"))
+                    .accessibilityLabel(Text("Обои \(w.name)"))
                 }
             }
-            Section("Message text size") {
+            Section("Размер текста") {
                 HStack {
                     Text("A").font(.system(size: 14))
                     Slider(value: $theme.fontScale, in: 0.85...1.3, step: 0.05)
                     Text("A").font(.system(size: 22, weight: .bold))
                 }
-                Text("The quick brown fox jumps over the lazy dog")
+                Text("Съешь же ещё этих мягких французских булок")
                     .font(.system(size: 17 * theme.fontScale))
                     .padding(.vertical, 4)
             }
             Section {
-                Text("Accent recolors badges, send buttons, links and highlights. Wallpaper applies to all conversations.")
+                Text("Акцент перекрашивает бейджи, кнопки отправки, ссылки и подсветку. Обои применяются ко всем чатам.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("Appearance")
+        .navigationTitle("Оформление")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

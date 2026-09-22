@@ -17,10 +17,10 @@ struct PollComposerView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Question") {
-                    TextField("Ask something…", text: $question, axis: .vertical)
+                Section("Вопрос") {
+                    TextField("Спросите что-нибудь…", text: $question, axis: .vertical)
                 }
-                Section("Options") {
+                Section("Варианты") {
                     ForEach(options.indices, id: \.self) { i in
                         HStack {
                             if isQuiz {
@@ -30,9 +30,9 @@ struct PollComposerView: View {
                                     Image(systemName: correctIndex == i ? "checkmark.circle.fill" : "circle")
                                         .foregroundStyle(ThemeStore.shared.accent)
                                 }
-                                .accessibilityLabel(Text("Mark option \(i + 1) as correct"))
+                                .accessibilityLabel(Text("Отметить вариант \(i + 1) как правильный"))
                             }
-                            TextField("Option \(i + 1)", text: $options[i])
+                            TextField("Вариант \(i + 1)", text: $options[i])
                         }
                     }
                     .onDelete { options.remove(atOffsets: $0) }
@@ -40,27 +40,27 @@ struct PollComposerView: View {
                         Button {
                             options.append("")
                         } label: {
-                            Label("Add option", systemImage: "plus")
+                            Label("Добавить вариант", systemImage: "plus")
                         }
                     }
                 }
-                Section("Settings") {
-                    Toggle("Multiple answers", isOn: $multiple)
-                    Toggle("Anonymous voting", isOn: $anonymous)
-                    Toggle("Quiz mode", isOn: $isQuiz)
+                Section("Настройки") {
+                    Toggle("Несколько ответов", isOn: $multiple)
+                    Toggle("Анонимное голосование", isOn: $anonymous)
+                    Toggle("Режим викторины", isOn: $isQuiz)
                 }
                 if let error {
                     Text(error).font(.footnote).foregroundStyle(.red)
                 }
             }
-            .navigationTitle("New poll")
+            .navigationTitle("Новый опрос")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Отмена") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Send") { send() }
+                    Button("Отправить") { send() }
                         .bold()
                         .disabled(isSending)
                 }
@@ -72,17 +72,17 @@ struct PollComposerView: View {
         error = nil
         let q = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty, q.count <= 300 else {
-            error = "Enter a question (max 300 characters)."
+            error = "Введите вопрос (макс. 300 символов)."
             return
         }
         let clean = options.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         guard clean.count >= 2 else {
-            error = "Add at least 2 options."
+            error = "Добавьте минимум 2 варианта."
             return
         }
         guard clean.allSatisfy({ $0.count <= 120 }) else {
-            error = "Each option must be ≤ 120 characters."
+            error = "Каждый вариант — не длиннее 120 символов."
             return
         }
         isSending = true
@@ -122,11 +122,11 @@ struct ForwardSheetView: View {
                 }
             }
             .listStyle(.plain)
-            .navigationTitle("Forward to…")
+            .navigationTitle("Переслать…")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Отмена") { dismiss() }
                 }
             }
         }

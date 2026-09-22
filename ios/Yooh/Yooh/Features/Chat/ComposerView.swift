@@ -21,12 +21,12 @@ struct ComposerView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let reply = vm.replyTo {
-                previewBar(title: "Reply", text: reply.text ?? reply.file?.originalName ?? "Message") {
+                previewBar(title: "Ответ", text: reply.text ?? reply.file?.originalName ?? "Сообщение") {
                     vm.replyTo = nil
                 }
             }
             if let edit = vm.editing {
-                previewBar(title: "Edit", text: edit.text ?? "") {
+                previewBar(title: "Редактирование", text: edit.text ?? "") {
                     vm.cancelEdit()
                 }
             }
@@ -35,7 +35,7 @@ struct ComposerView: View {
             } else if let upload = vm.uploadState {
                 HStack {
                     ProgressView()
-                    Text("Uploading \(upload)…").font(.caption).foregroundStyle(.secondary)
+                    Text("Загрузка \(upload)…").font(.caption).foregroundStyle(.secondary)
                     Spacer()
                 }
                 .padding(.horizontal, YoohTheme.Spacing.l)
@@ -45,25 +45,25 @@ struct ComposerView: View {
             HStack(alignment: .bottom, spacing: YoohTheme.Spacing.s) {
                 Menu {
                     PhotosPicker(selection: $photoItem, matching: .any(of: [.images, .videos])) {
-                        Label("Photo or video", systemImage: "photo")
+                        Label("Фото или видео", systemImage: "photo")
                     }
                     Button { showCamera = true } label: {
-                        Label("Camera", systemImage: "camera")
+                        Label("Камера", systemImage: "camera")
                     }
                     Button { showFiles = true } label: {
-                        Label("File", systemImage: "doc")
+                        Label("Файл", systemImage: "doc")
                     }
                     Button { sendCurrentLocation() } label: {
-                        Label("Location", systemImage: "location")
+                        Label("Геопозиция", systemImage: "location")
                     }
                     Button { onPoll() } label: {
-                        Label("Poll", systemImage: "chart.bar")
+                        Label("Опрос", systemImage: "chart.bar")
                     }
                     Button {
                         scheduleDate = Date().addingTimeInterval(3600)
                         showSchedule = true
                     } label: {
-                        Label("Schedule message", systemImage: "clock")
+                        Label("Отложенное сообщение", systemImage: "clock")
                     }
                     .disabled(vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 } label: {
@@ -73,10 +73,10 @@ struct ComposerView: View {
                         .frame(width: 40, height: 40)
                 }
                 .yoohGlass(.interactive, cornerRadius: 20)
-                .accessibilityLabel(Text("Attach"))
+                .accessibilityLabel(Text("Прикрепить"))
                 .disabled(isLocating)
 
-                TextField("Message", text: $vm.draft, axis: .vertical)
+                TextField("Сообщение", text: $vm.draft, axis: .vertical)
                     .lineLimit(1...5)
                     .padding(.horizontal, YoohTheme.Spacing.m)
                     .padding(.vertical, 10)
@@ -85,7 +85,7 @@ struct ComposerView: View {
                         app.sendTyping(chatId: vm.chatId, active: true)
                     }
                     .onSubmit { vm.send() }
-                    .accessibilityLabel(Text("Message text"))
+                    .accessibilityLabel(Text("Текст сообщения"))
 
                 Button {
                     Haptics.selection()
@@ -96,7 +96,7 @@ struct ComposerView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 40, height: 40)
                 }
-                .accessibilityLabel(Text("Stickers"))
+                .accessibilityLabel(Text("Стикеры"))
 
                 if vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, vm.editing == nil {
                     Button {
@@ -116,7 +116,7 @@ struct ComposerView: View {
                             .frame(width: 40, height: 40)
                     }
                     .yoohGlass(.interactive, cornerRadius: 20)
-                    .accessibilityLabel(Text(recorder.isRecording ? "Send voice message" : "Record voice message"))
+                    .accessibilityLabel(Text(recorder.isRecording ? "Отправить голосовое" : "Записать голосовое"))
                 } else {
                     Button { vm.send() } label: {
                         Image(systemName: "arrow.up")
@@ -125,7 +125,7 @@ struct ComposerView: View {
                             .frame(width: 40, height: 40)
                             .background(ThemeStore.shared.accent, in: .circle)
                     }
-                    .accessibilityLabel(Text(vm.editing == nil ? "Send" : "Save edit"))
+                    .accessibilityLabel(Text(vm.editing == nil ? "Отправить" : "Сохранить"))
                 }
             }
             .padding(.horizontal, YoohTheme.Spacing.s)
@@ -151,26 +151,26 @@ struct ComposerView: View {
         .sheet(isPresented: $showSchedule) {
             NavigationStack {
                 Form {
-                    Section("Message") {
-                        Text(vm.draft.isEmpty ? "(empty)" : vm.draft)
+                    Section("Сообщение") {
+                        Text(vm.draft.isEmpty ? "(пусто)" : vm.draft)
                             .foregroundStyle(vm.draft.isEmpty ? .secondary : .primary)
                     }
-                    Section("Send at") {
-                        DatePicker("Date & time", selection: $scheduleDate,
+                    Section("Отправить в") {
+                        DatePicker("Дата и время", selection: $scheduleDate,
                                    in: Date().addingTimeInterval(60)...Date().addingTimeInterval(365 * 24 * 3600),
                                    displayedComponents: [.date, .hourAndMinute])
                     }
-                    Button("Schedule send") {
+                    Button("Запланировать") {
                         showSchedule = false
                         vm.sendScheduled(text: vm.draft, at: scheduleDate)
                     }
                     .disabled(vm.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .navigationTitle("Schedule message")
+                .navigationTitle("Отложенное сообщение")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") { showSchedule = false }
+                        Button("Отмена") { showSchedule = false }
                     }
                 }
             }
@@ -226,7 +226,7 @@ struct ComposerView: View {
                 let loc = try await provider.currentLocation()
                 vm.sendLocation(lat: loc.coordinate.latitude, lng: loc.coordinate.longitude, title: nil)
             } catch {
-                vm.showError("Couldn't get your location. Check permission in Settings.")
+                vm.showError("Не удалось получить геопозицию. Проверьте разрешение в настройках.")
             }
         }
     }
@@ -241,7 +241,7 @@ struct ComposerView: View {
             Button(action: onCancel) {
                 Image(systemName: "xmark").font(.caption).foregroundStyle(.secondary)
             }
-            .accessibilityLabel(Text("Cancel \(title.lowercased())"))
+            .accessibilityLabel(Text("Отменить"))
         }
         .padding(.horizontal, YoohTheme.Spacing.l)
         .padding(.vertical, 4)
@@ -250,14 +250,14 @@ struct ComposerView: View {
     private var recordingBar: some View {
         HStack {
             Circle().fill(.red).frame(width: 8, height: 8)
-            Text("Recording \(Int(recorder.elapsed))s — tap mic to send, ✕ to discard")
+            Text("Запись \(Int(recorder.elapsed)) с — нажмите на микрофон, чтобы отправить, ✕ — отменить")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
             Button { _ = recorder.stop(discard: true) } label: {
                 Image(systemName: "xmark").foregroundStyle(.secondary)
             }
-            .accessibilityLabel(Text("Discard recording"))
+            .accessibilityLabel(Text("Отменить запись"))
         }
         .padding(.horizontal, YoohTheme.Spacing.l)
         .padding(.vertical, 4)

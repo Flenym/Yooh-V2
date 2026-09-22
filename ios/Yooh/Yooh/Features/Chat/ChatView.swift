@@ -23,12 +23,12 @@ struct ChatDetailView: View {
             wallpaper
             VStack(spacing: 0) {
                 if vm.chat.isChannel {
-                    Picker("Stream", selection: Binding(
+                    Picker("Лента", selection: Binding(
                         get: { vm.stream },
                         set: { vm.setStream($0) }
                     )) {
-                        Text("Posts").tag(MessageStream.main)
-                        Text("Comments").tag(MessageStream.comment)
+                        Text("Публикации").tag(MessageStream.main)
+                        Text("Комментарии").tag(MessageStream.comment)
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal, YoohTheme.Spacing.l)
@@ -81,7 +81,7 @@ struct ChatDetailView: View {
                                 .padding(.trailing, YoohTheme.Spacing.m)
                                 .padding(.bottom, YoohTheme.Spacing.m)
                                 .transition(.scale.combined(with: .opacity))
-                                .accessibilityLabel(Text("Scroll to latest messages"))
+                                .accessibilityLabel(Text("К последним сообщениям"))
                             }
                         }
                     }
@@ -141,12 +141,18 @@ struct ChatDetailView: View {
                                    size: 30, isOnline: headerOnline)
                         VStack(alignment: .leading, spacing: 0) {
                             Text(chatTitle).font(.headline).lineLimit(1)
-                            Text(chatSubtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            Text(chatSubtitle)
+                                .font(.caption)
+                                .foregroundStyle(chatSubtitleColor)
+                                .lineLimit(1)
                         }
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(YoohTheme.TG.field, in: .capsule)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("Chat info for \(chatTitle)"))
+                .accessibilityLabel(Text("Информация о чате «\(chatTitle)»"))
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
@@ -154,19 +160,19 @@ struct ChatDetailView: View {
                 } label: {
                     Image(systemName: "magnifyingglass")
                 }
-                .accessibilityLabel(Text("Search in chat"))
+                .accessibilityLabel(Text("Поиск по чату"))
                 Button {
                     app.callsViewModel.unavailableNotice()
                 } label: {
                     Image(systemName: "phone.fill")
                 }
-                .accessibilityLabel(Text("Voice call"))
+                .accessibilityLabel(Text("Голосовой звонок"))
                 Button {
                     app.callsViewModel.unavailableNotice()
                 } label: {
                     Image(systemName: "video.fill")
                 }
-                .accessibilityLabel(Text("Video call"))
+                .accessibilityLabel(Text("Видеозвонок"))
             }
         }
         .sheet(isPresented: $showInfo) {
@@ -235,10 +241,10 @@ struct ChatDetailView: View {
                             .fill(ThemeStore.shared.accent)
                             .frame(width: 2)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Pinned message")
+                            Text("Закреплённое сообщение")
                                 .font(.caption.bold())
                                 .foregroundStyle(ThemeStore.shared.accent)
-                            Text(pinned.text ?? pinned.file?.originalName ?? "Message")
+                            Text(pinned.text ?? pinned.file?.originalName ?? "Сообщение")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
@@ -248,7 +254,7 @@ struct ChatDetailView: View {
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("Go to pinned message"))
+                .accessibilityLabel(Text("Перейти к закреплённому сообщению"))
                 Button {
                     vm.togglePin(pinned)
                 } label: {
@@ -257,7 +263,7 @@ struct ChatDetailView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 28, height: 28)
                 }
-                .accessibilityLabel(Text("Unpin message"))
+                .accessibilityLabel(Text("Открепить сообщение"))
             }
             .padding(.horizontal, YoohTheme.Spacing.m)
             .padding(.vertical, YoohTheme.Spacing.s)
@@ -301,8 +307,8 @@ struct ChatDetailView: View {
     private func dayTitle(_ iso: String?) -> String {
         guard let date = YoohDates.parse(iso) else { return "" }
         let cal = Calendar.current
-        if cal.isDateInToday(date) { return "Today" }
-        if cal.isDateInYesterday(date) { return "Yesterday" }
+        if cal.isDateInToday(date) { return "Сегодня" }
+        if cal.isDateInYesterday(date) { return "Вчера" }
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .none
@@ -342,17 +348,27 @@ struct ChatDetailView: View {
             if let me = app.session.currentUser?.id,
                let peer = vm.chat.peer(myUserId: me), app.isOnline(peer.userId)
             {
-                return "online"
+                return "в сети"
             }
-            return "last seen recently"
+            return "был(а) недавно"
         case .group:
-            return "\(vm.chat.membersCount) members"
+            return RU.plural(vm.chat.membersCount, one: "участник", few: "участника", many: "участников")
         case .channel:
-            return "channel"
+            return "канал"
         case .server:
-            return "server"
+            return "сервис"
         case .unknown:
             return ""
         }
+    }
+
+    private var chatSubtitleColor: Color {
+        if vm.chat.type == .direct,
+           let me = app.session.currentUser?.id,
+           let peer = vm.chat.peer(myUserId: me), app.isOnline(peer.userId)
+        {
+            return YoohTheme.TG.presence
+        }
+        return .secondary
     }
 }

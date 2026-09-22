@@ -25,7 +25,7 @@ struct ChatRowView: View {
                             Image(systemName: "bell.slash.fill")
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
-                                .accessibilityLabel(Text("Muted"))
+                                .accessibilityLabel(Text("Без звука"))
                         }
                         Spacer()
                         Text(YoohDates.listTimestamp(chat.lastMessage?.createdAt ?? chat.updatedAt))
@@ -66,7 +66,7 @@ struct ChatRowView: View {
                                 .foregroundStyle(.white)
                         }
                     }
-                    .accessibilityLabel(Text("Unread messages"))
+                    .accessibilityLabel(Text("Непрочитанные сообщения"))
             } else if let m = chat.lastMessage, m.senderId == myUserId {
                 Image(systemName: m.readByUserIds.contains(where: { $0 != myUserId }) ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.system(size: 15))
@@ -105,7 +105,7 @@ struct ChatRowView: View {
         }
         if let t = m.text, !t.isEmpty {
             if m.senderId == myUserId {
-                return Text("You: ") + Text(t)
+                        return Text("Вы: ") + Text(t)
             }
             if chat.type != .direct,
                let name = m.sender?.displayName ?? m.sender?.username, !name.isEmpty
@@ -122,7 +122,7 @@ struct ChatRowView: View {
         if let t = m.text, !t.isEmpty {
             var prefix = ""
             if m.senderId == myUserId {
-                prefix = "You: "
+                        prefix = "Вы: "
             } else if chat.type != .direct,
                       let name = m.sender?.displayName ?? m.sender?.username, !name.isEmpty
             {
@@ -131,10 +131,10 @@ struct ChatRowView: View {
             return prefix + t
         }
         switch m.type {
-        case .file: return "File: \(m.file?.originalName ?? "attachment")"
-        case .location: return "Location"
-        case .poll: return "Poll: \(m.poll?.question ?? "")"
-        case .call: return "Call"
+        case .file: return "Файл: \(m.file?.originalName ?? "вложение")"
+        case .location: return "Геопозиция"
+        case .poll: return "Опрос: \(m.poll?.question ?? "")"
+        case .call: return "Звонок"
         case .unknown: return ""
         case .text: return ""
         }

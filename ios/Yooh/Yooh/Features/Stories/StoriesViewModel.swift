@@ -105,7 +105,7 @@ final class StoriesViewModel {
 
     func publishPhoto(_ image: UIImage, caption: String?) async -> Bool {
         guard let dataURL = ProfileViewModel.storyImageDataURL(image) else {
-            error = "Couldn't process the image."
+            error = "Не удалось обработать изображение."
             return false
         }
         do {
@@ -123,7 +123,7 @@ final class StoriesViewModel {
 
     func publishVideo(_ data: Data, caption: String?) async -> Bool {
         guard data.count <= 25 * 1024 * 1024 else {
-            error = "Video is too large (25 MB max)."
+            error = "Видео слишком большое (макс. 25 МБ)."
             return false
         }
         let dataURL = "data:video/mp4;base64,\(data.base64EncodedString())"
