@@ -30,7 +30,13 @@ struct GlassIconButton: View {
 struct EmptyStateView: View {
     let symbol: String
     let title: String
-    let subtitle: String? = nil
+    let subtitle: String?
+
+    init(symbol: String, title: String, subtitle: String? = nil) {
+        self.symbol = symbol
+        self.title = title
+        self.subtitle = subtitle
+    }
 
     var body: some View {
         VStack(spacing: YoohTheme.Spacing.m) {

@@ -64,13 +64,13 @@ struct PrivacyView: View {
         Section("Phone number") {
             AudienceRow(title: "Who can see my number",
                         selection: audienceBinding(get: { model.phoneSee },
-                                                   set: { model.phoneSee = $0.wire }))
+                                                   set: { model.phoneSee = $0 }))
             {
                 save()
             }
             AudienceRow(title: "Who can find me by number",
                         selection: audienceBinding(get: { model.phoneFind },
-                                                   set: { model.phoneFind = $0.wire }))
+                                                   set: { model.phoneFind = $0 }))
             {
                 save()
             }
@@ -86,7 +86,7 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can see my last seen",
                         subtitle: "Approximate values are shown instead of exact time",
                         selection: audienceBinding(get: { model.lastSeenSee },
-                                                   set: { model.lastSeenSee = $0.wire }))
+                                                   set: { model.lastSeenSee = $0 }))
             {
                 save()
             }
@@ -101,7 +101,7 @@ struct PrivacyView: View {
         Section("Profile photo") {
             AudienceRow(title: "Who can see my photo",
                         selection: audienceBinding(get: { model.photosSee },
-                                                   set: { model.photosSee = $0.wire }))
+                                                   set: { model.photosSee = $0 }))
             {
                 save()
             }
@@ -120,7 +120,7 @@ struct PrivacyView: View {
         Section("Forwarded messages") {
             AudienceRow(title: "Who can link back to my account",
                         selection: audienceBinding(get: { model.forwardsLink },
-                                                   set: { model.forwardsLink = $0.wire }))
+                                                   set: { model.forwardsLink = $0 }))
             {
                 save()
             }
@@ -139,7 +139,7 @@ struct PrivacyView: View {
         Section("Calls") {
             AudienceRow(title: "Who can call me",
                         selection: audienceBinding(get: { model.callsCall },
-                                                   set: { model.callsCall = $0.wire }))
+                                                   set: { model.callsCall = $0 }))
             {
                 save()
             }
@@ -168,7 +168,7 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can message me",
                         subtitle: "Strangers send requests instead",
                         selection: audienceBinding(get: { model.messagesSend },
-                                                   set: { model.messagesSend = $0.wire }))
+                                                   set: { model.messagesSend = $0 }))
             {
                 save()
             }
@@ -187,7 +187,7 @@ struct PrivacyView: View {
         Section("Groups") {
             AudienceRow(title: "Who can invite me to groups",
                         selection: audienceBinding(get: { model.invites },
-                                                   set: { model.invites = $0.wire }))
+                                                   set: { model.invites = $0 }))
             {
                 save()
             }

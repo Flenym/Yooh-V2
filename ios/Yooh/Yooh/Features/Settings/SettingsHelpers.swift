@@ -33,9 +33,17 @@ enum Audience: String, CaseIterable {
 
 struct SettingToggleRow: View {
     let title: String
-    let subtitle: String? = nil
+    let subtitle: String?
     @Binding var isOn: Bool
     var onChange: (Bool) -> Void
+
+    init(title: String, subtitle: String? = nil, isOn: Binding<Bool>,
+         onChange: @escaping (Bool) -> Void) {
+        self.title = title
+        self.subtitle = subtitle
+        self._isOn = isOn
+        self.onChange = onChange
+    }
 
     var body: some View {
         Toggle(isOn: Binding(
@@ -55,9 +63,17 @@ struct SettingToggleRow: View {
 
 struct AudienceRow: View {
     let title: String
-    let subtitle: String? = nil
+    let subtitle: String?
     @Binding var selection: Audience
     var onChange: (Audience) -> Void
+
+    init(title: String, subtitle: String? = nil, selection: Binding<Audience>,
+         onChange: @escaping (Audience) -> Void) {
+        self.title = title
+        self.subtitle = subtitle
+        self._selection = selection
+        self.onChange = onChange
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
