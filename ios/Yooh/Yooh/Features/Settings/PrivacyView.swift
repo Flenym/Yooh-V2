@@ -65,13 +65,13 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can see my number",
                         selection: audienceBinding(get: { model.phoneSee },
                                                    set: { model.phoneSee = $0 }))
-            {
+            { _ in
                 save()
             }
             AudienceRow(title: "Who can find me by number",
                         selection: audienceBinding(get: { model.phoneFind },
                                                    set: { model.phoneFind = $0 }))
-            {
+            { _ in
                 save()
             }
             ExceptionEditor(title: "Always show my number to",
@@ -87,7 +87,7 @@ struct PrivacyView: View {
                         subtitle: "Approximate values are shown instead of exact time",
                         selection: audienceBinding(get: { model.lastSeenSee },
                                                    set: { model.lastSeenSee = $0 }))
-            {
+            { _ in
                 save()
             }
             ExceptionEditor(title: "Always show to",
@@ -102,7 +102,7 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can see my photo",
                         selection: audienceBinding(get: { model.photosSee },
                                                    set: { model.photosSee = $0 }))
-            {
+            { _ in
                 save()
             }
             ExceptionEditor(title: "Always show to",
@@ -121,7 +121,7 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can link back to my account",
                         selection: audienceBinding(get: { model.forwardsLink },
                                                    set: { model.forwardsLink = $0 }))
-            {
+            { _ in
                 save()
             }
             ExceptionEditor(title: "Always allow",
@@ -140,7 +140,7 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can call me",
                         selection: audienceBinding(get: { model.callsCall },
                                                    set: { model.callsCall = $0 }))
-            {
+            { _ in
                 save()
             }
             ExceptionEditor(title: "Always allow",
@@ -169,7 +169,7 @@ struct PrivacyView: View {
                         subtitle: "Strangers send requests instead",
                         selection: audienceBinding(get: { model.messagesSend },
                                                    set: { model.messagesSend = $0 }))
-            {
+            { _ in
                 save()
             }
             ExceptionEditor(title: "Always allow",
@@ -188,7 +188,7 @@ struct PrivacyView: View {
             AudienceRow(title: "Who can invite me to groups",
                         selection: audienceBinding(get: { model.invites },
                                                    set: { model.invites = $0 }))
-            {
+            { _ in
                 save()
             }
         }
