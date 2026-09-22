@@ -17,7 +17,7 @@ struct AuthStartView: View {
                 .font(.system(size: 17))
                 .foregroundStyle(AuthUI.hint)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 18)
             Text("Beta · Предварительная версия")
                 .font(.system(size: 14, weight: .medium))
