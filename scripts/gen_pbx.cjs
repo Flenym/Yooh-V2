@@ -179,9 +179,9 @@ const TEST_COMMON = {
 };
 cfg('proj:Debug', { ALWAYS_SEARCH_USER_PATHS: 'NO', MARKETING_VERSION: '1.0' });
 cfg('proj:Release', { ALWAYS_SEARCH_USER_PATHS: 'NO', MARKETING_VERSION: '1.0' });
-cfg('app:Debug', APP_COMMON);
+cfg('app:Debug', { ...APP_COMMON, SWIFT_ACTIVE_COMPILATION_CONDITIONS: 'DEBUG' });
 cfg('app:Release', APP_COMMON);
-cfg('tests:Debug', TEST_COMMON);
+cfg('tests:Debug', { ...TEST_COMMON, SWIFT_ACTIVE_COMPILATION_CONDITIONS: 'DEBUG' });
 cfg('tests:Release', TEST_COMMON);
 
 const PROJ_CFG_LIST = uid('cfglist:proj');

@@ -155,6 +155,9 @@ def cfg(name, settings):
     A("\n".join(lines))
 
 
+APP_DEBUG_EXTRA = {
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS": "DEBUG",
+}
 APP_COMMON = {
     "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
@@ -191,9 +194,9 @@ TEST_COMMON = {
 
 cfg("proj:Debug", {"ALWAYS_SEARCH_USER_PATHS": "NO", "MARKETING_VERSION": "1.0"})
 cfg("proj:Release", {"ALWAYS_SEARCH_USER_PATHS": "NO", "MARKETING_VERSION": "1.0"})
-cfg("app:Debug", APP_COMMON)
+cfg("app:Debug", {**APP_COMMON, **APP_DEBUG_EXTRA})
 cfg("app:Release", APP_COMMON)
-cfg("tests:Debug", TEST_COMMON)
+cfg("tests:Debug", {**TEST_COMMON, **APP_DEBUG_EXTRA})
 cfg("tests:Release", TEST_COMMON)
 
 PROJ_CFG_LIST = uid("cfglist:proj")
