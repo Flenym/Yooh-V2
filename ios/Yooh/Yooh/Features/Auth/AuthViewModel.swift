@@ -260,7 +260,8 @@ final class AuthViewModel {
     private func armCodeStep(_ res: OTPRequestResponse) {
         code = ""
         step = .code
-        startResendTimer(seconds: res.expiresInSeconds ?? 60)
+        // Server TTL is 5 min; allow resend after 60 s (re-issues the code).
+        startResendTimer(seconds: min(res.expiresInSeconds ?? 60, 60))
     }
 
     private func startResendTimer(seconds: Int) {

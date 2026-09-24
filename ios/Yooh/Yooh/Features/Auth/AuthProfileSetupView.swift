@@ -54,9 +54,10 @@ struct AuthProfileSetupView: View {
 
             Text("Минимум 5 символов: латинские буквы, цифры и подчёркивание.")
                 .font(.system(size: 14))
-                .foregroundStyle(AuthUI.faint)
+                .foregroundStyle(AuthUI.hint)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
                 .padding(.top, 16)
 
             if let error = vm.error {
