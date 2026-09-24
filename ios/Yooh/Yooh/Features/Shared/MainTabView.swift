@@ -10,8 +10,17 @@ struct MainTabView: View {
         case contacts, calls, chats, settings
     }
 
-    @State private var tab: Tab = .chats
+    @State private var tab: Tab = MainTabView.initialTab
     @State private var showSearch = false
+
+    private static var initialTab: Tab {
+        switch UITestPreview.initialTabID {
+        case "contacts": return .contacts
+        case "calls": return .calls
+        case "settings": return .settings
+        default: return .chats
+        }
+    }
     @Namespace private var tabGlow
 
     var body: some View {
@@ -52,6 +61,7 @@ struct MainTabView: View {
             }
         }
         .task {
+            guard !UITestPreview.isActive else { return }
             await app.chatsViewModel.refresh()
             await app.storiesViewModel.refresh()
             await app.requestsViewModel.refresh()

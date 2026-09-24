@@ -25,6 +25,7 @@ final class StoriesViewModel {
 
     func refresh() async {
         guard app.session.isAuthenticated else { return }
+        guard !UITestPreview.isActive else { return }
         isLoading = true
         defer { isLoading = false }
         do {
@@ -145,4 +146,13 @@ final class StoriesViewModel {
             stories[idx] = story
         }
     }
+
+#if DEBUG
+    /// Visual-QA seeding (simulator screenshots, no backend).
+    func seedPreviewStories(_ items: [YoohStory]) {
+        stories = items
+        isLoading = false
+        error = nil
+    }
+#endif
 }

@@ -20,6 +20,7 @@ final class CallsViewModel {
 
     func refresh() async {
         guard app.session.isAuthenticated else { return }
+        guard !UITestPreview.isActive else { return }
         isLoading = true
         defer { isLoading = false }
         do {
@@ -47,4 +48,13 @@ final class CallsViewModel {
 
     func clearError() { error = nil }
     func clearNotice() { notice = nil }
+
+#if DEBUG
+    /// Visual-QA seeding (simulator screenshots, no backend).
+    func seedPreviewCalls(_ items: [CallLog]) {
+        calls = items
+        isLoading = false
+        error = nil
+    }
+#endif
 }

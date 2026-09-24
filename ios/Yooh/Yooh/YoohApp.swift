@@ -46,6 +46,10 @@ private struct RootView: View {
         }
         .animation(.snappy, value: app.session.isAuthenticated)
         .task {
+            if UITestPreview.isActive {
+                UITestPreview.configure(app: app)
+                return
+            }
             if !app.didBoot {
                 app.didBoot = true
                 await app.session.bootstrap()

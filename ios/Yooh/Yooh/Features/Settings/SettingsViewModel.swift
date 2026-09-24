@@ -21,6 +21,7 @@ final class SettingsViewModel {
     func clearNotice() { notice = nil }
 
     func load() async {
+        guard !UITestPreview.isActive else { return }
         isLoading = true
         defer { isLoading = false }
         do {
@@ -42,6 +43,7 @@ final class SettingsViewModel {
     }
 
     func loadSessions() async {
+        guard !UITestPreview.isActive else { return }
         do {
             let (current, others) = try await app.authService.sessions()
             currentSession = current
@@ -94,6 +96,7 @@ final class SettingsViewModel {
     }
 
     func loadStickerPacks() async {
+        guard !UITestPreview.isActive else { return }
         do {
             stickerPacks = try await app.settingsService.stickerPacks()
         } catch {

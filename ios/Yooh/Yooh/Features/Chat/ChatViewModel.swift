@@ -105,6 +105,16 @@ final class ChatViewModel {
     }
 
     func loadInitial() {
+#if DEBUG
+        if UITestPreview.isActive {
+            if messages.isEmpty, let seed = UITestPreview.chatMessages {
+                messages = seed
+            }
+            hasMore = false
+            isLoading = false
+            return
+        }
+#endif
         loadTask?.cancel()
         loadTask = Task {
             isLoading = true

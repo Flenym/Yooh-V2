@@ -42,6 +42,15 @@ final class SessionStore {
         self.currentUser = user
     }
 
+#if DEBUG
+    /// Visual-QA seeding: in-memory session, Keychain untouched.
+    func seedPreviewSession(user: YoohUser, token: String) {
+        self.token = token
+        self.currentUser = user
+        isRestoring = false
+    }
+#endif
+
     func updateUser(_ user: YoohUser) {
         currentUser = user
     }

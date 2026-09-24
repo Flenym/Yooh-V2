@@ -83,6 +83,11 @@ jobs:
           shot auth-code.png UITEST_CODE
           shot auth-profile.png UITEST_PROFILE
           shot auth-cloud.png UITEST_CLOUD
+          shot app-chats.png UITEST_CHATS
+          shot app-chat.png UITEST_CHAT
+          shot app-contacts.png UITEST_CONTACTS
+          shot app-calls.png UITEST_CALLS
+          shot app-settings.png UITEST_SETTINGS
           ls -la build/shots
 
       - name: Upload screenshots

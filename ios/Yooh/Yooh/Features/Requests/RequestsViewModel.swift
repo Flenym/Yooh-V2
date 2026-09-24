@@ -15,6 +15,7 @@ final class RequestsViewModel {
 
     func refresh() async {
         guard app.session.isAuthenticated else { return }
+        guard !UITestPreview.isActive else { return }
         isLoading = true
         defer { isLoading = false }
         do {

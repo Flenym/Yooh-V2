@@ -133,6 +133,7 @@ final class ChatsViewModel {
 
     func refresh() async {
         guard app.session.isAuthenticated else { return }
+        guard !UITestPreview.isActive else { return }
         reloadFolders()
         isLoading = true
         error = nil
@@ -187,4 +188,13 @@ final class ChatsViewModel {
             self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }
     }
+
+#if DEBUG
+    /// Visual-QA seeding (simulator screenshots, no backend).
+    func seedPreviewChats(_ items: [YoohChat]) {
+        chats = items
+        isLoading = false
+        error = nil
+    }
+#endif
 }
