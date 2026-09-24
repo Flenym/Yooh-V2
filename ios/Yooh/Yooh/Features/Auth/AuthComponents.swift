@@ -149,6 +149,7 @@ struct AuthHeader: View {
                 .font(.system(size: 16))
                 .foregroundStyle(AuthUI.hint)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
