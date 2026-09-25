@@ -25,17 +25,19 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Yooh uses the camera to capture photos for messages and stories, and to scan QR login codes.</string>
+	<string>Yooh использует камеру для фото в сообщения и истории, а также для сканирования QR-кодов входа.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Yooh uses your contacts only to find which of them are already on Yooh when you tap Sync.</string>
+	<string>Yooh использует контакты только чтобы найти ваших знакомых в Yooh при нажатии «Синхронизировать».</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Yooh uses Face ID to lock the app when App Lock is enabled.</string>
+	<string>Yooh использует Face ID для блокировки приложения, если включена блокировка.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Yooh uses your location only when you choose to share it in a chat.</string>
+	<string>Yooh использует геопозицию только когда вы сами отправляете её в чат.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Yooh uses the microphone to record voice messages.</string>
+	<string>Yooh использует микрофон для записи голосовых сообщений.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Yooh сохраняет истории и медиа в фото по вашему запросу.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Yooh transcribes voice messages on your request.</string>
+	<string>Yooh распознаёт голосовые сообщения только по вашему запросу.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

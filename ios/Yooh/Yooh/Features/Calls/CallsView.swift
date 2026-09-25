@@ -44,7 +44,7 @@ struct CallsView: View {
                         Text("Пропущенные").tag(CallsViewModel.Filter.missed)
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 180)
+                    .frame(width: 230)
                 }
             }
             .overlay(alignment: .top) {
@@ -107,9 +107,9 @@ private struct CallRowView: View {
             parts.append(mode == "video" ? "Видео" : "Аудио")
         }
         if let d = call.durationSeconds, d > 0 {
-            parts.append("\(d)s")
-        } else {
-            parts.append(call.status ?? "")
+            parts.append(RU.callDuration(d))
+        } else if call.isMissed {
+            parts.append("Пропущенный")
         }
         return parts.joined(separator: " · ")
     }

@@ -108,7 +108,11 @@ final class ChatViewModel {
 #if DEBUG
         if UITestPreview.isActive {
             if messages.isEmpty, let seed = UITestPreview.chatMessages {
-                messages = seed
+                messages = seed.map { m in
+                    var c = m
+                    c.isOutgoing = (m.senderId == myUserId)
+                    return c
+                }
             }
             hasMore = false
             isLoading = false

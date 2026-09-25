@@ -240,9 +240,9 @@ struct ChatDetailView: View {
                     }
                 } label: {
                     HStack(spacing: YoohTheme.Spacing.s) {
-                        Capsule()
+                        RoundedRectangle(cornerRadius: 1.5)
                             .fill(ThemeStore.shared.accent)
-                            .frame(width: 2)
+                            .frame(width: 3, height: 38)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Закреплённое сообщение")
                                 .font(.caption.bold())
@@ -270,6 +270,7 @@ struct ChatDetailView: View {
             }
             .padding(.horizontal, YoohTheme.Spacing.m)
             .padding(.vertical, YoohTheme.Spacing.s)
+            .fixedSize(horizontal: false, vertical: true)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
             .padding(.horizontal, YoohTheme.Spacing.m)
             .padding(.vertical, 4)

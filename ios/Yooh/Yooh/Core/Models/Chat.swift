@@ -116,7 +116,7 @@ extension YoohChat {
     var displayTitle: String {
         if let t = title, !t.isEmpty { return t }
         if let h = handle, !h.isEmpty { return "@\(h)" }
-        return "Chat"
+        return "Чат"
     }
 
     var isChannel: Bool { type == .channel || type == .server }

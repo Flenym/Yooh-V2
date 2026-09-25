@@ -17,6 +17,17 @@ enum RU {
         return "\(n) \(form)"
     }
 
+    /// Call duration as m:ss ("4:05", "1:02:30" for long calls).
+    static func callDuration(_ seconds: Int) -> String {
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
+        }
+        return String(format: "%d:%02d", m, s)
+    }
+
     /// Short relative time for list rows: "только что", "5 мин", "вчера".
     static func relativeListDate(_ iso: String?) -> String {
         guard let date = YoohDates.parse(iso) else { return "" }

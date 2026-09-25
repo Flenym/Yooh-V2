@@ -169,6 +169,16 @@ private struct StoryViewerView: View {
                         .accessibilityLabel(Text("Удалить историю"))
                     }
                     Button {
+                        if let story = current {
+                            Task { await saveToPhotos(story) }
+                        }
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel(Text("Сохранить в фото"))
+                    Button {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
@@ -185,6 +195,19 @@ private struct StoryViewerView: View {
                 reactionBar
                 bottomBar
             }
+            .overlay(alignment: .top) {
+                if let notice = saveNotice {
+                    Text(notice)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.6), in: .capsule)
+                        .padding(.top, 54)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.snappy, value: saveNotice)
         }
         .sheet(isPresented: $showCaptionEditor) {
             NavigationStack {
@@ -337,6 +360,38 @@ private struct StoryViewerView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
+        }
+    }
+
+    @State private var saveNotice: String?
+
+    private func saveToPhotos(_ story: YoohStory) async {
+        if story.mediaType == "video",
+           let raw = story.video ?? story.image,
+           let url = StoryVideoCache.url(storyId: story.id, dataURL: raw)
+        {
+            UISaveVideoAtPathToSavedPhotosAlbum(url.path, nil, nil, nil)
+            Haptics.send()
+            flashSaveNotice("Видео сохранено в фото.")
+            return
+        }
+        guard let raw = story.image ?? story.avatar,
+              let data = MediaService.data(fromDataURL: raw),
+              let img = UIImage(data: data)
+        else {
+            flashSaveNotice("Нечего сохранять.")
+            return
+        }
+        UIImageWriteToSavedPhotosAlbum(img, nil, nil, nil)
+        Haptics.send()
+        flashSaveNotice("Фото сохранено в фото.")
+    }
+
+    private func flashSaveNotice(_ text: String) {
+        saveNotice = text
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            saveNotice = nil
         }
     }
 

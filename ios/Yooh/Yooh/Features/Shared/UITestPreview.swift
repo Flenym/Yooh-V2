@@ -137,9 +137,7 @@ enum UITestPreview {
           "membersCount":2,"updatedAt":"\(iso(hoursAgo: 76))",
           "lastMessage":{"id":"uitest-lm4","senderId":"uitest-me","type":"text",
             "text":"Хорошо, спасибо","createdAt":"\(iso(hoursAgo: 76))",
-            "readByUserIds":["uitest-mama"]}},
-         {"id":"uitest-c0","type":"direct","description":"","members":[],
-          "membersCount":1,"updatedAt":"\(iso(hoursAgo: 100))"}]
+            "readByUserIds":["uitest-mama"]}}]
         """
     }
 
