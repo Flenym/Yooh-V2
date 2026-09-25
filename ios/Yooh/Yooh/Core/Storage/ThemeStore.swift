@@ -96,6 +96,17 @@ final class ThemeStore {
         Self.wallpapers.first(where: { $0.id == wallpaperID }) ?? Self.wallpapers[0]
     }
 
+    /// Per-chat override saved by ChatInfoView ("wallpaperPreset").
+    /// Empty/missing preset falls back to the global wallpaper.
+    static func wallpaper(forPreset preset: String?) -> Wallpaper {
+        if let p = preset, !p.isEmpty,
+           let w = wallpapers.first(where: { $0.id == p })
+        {
+            return w
+        }
+        return ThemeStore.shared.wallpaper
+    }
+
     var colorScheme: ColorScheme? {
         switch mode {
         case .system: return nil

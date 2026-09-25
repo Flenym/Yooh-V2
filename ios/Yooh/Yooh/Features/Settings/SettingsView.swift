@@ -420,6 +420,13 @@ private struct StickerPacksView: View {
                     Text(pack.title ?? "Пак").font(.headline)
                     Spacer()
                     Text("\(pack.stickers?.count ?? 0)").font(.caption).foregroundStyle(.secondary)
+                    Button(pack.installed ?? true ? "Убрать" : "Взять") {
+                        Task { await settings.toggleStickerPack(pack) }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(pack.installed ?? true ? .secondary : ThemeStore.shared.accent)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text((pack.installed ?? true ? "Убрать пак " : "Взять пак ") + (pack.title ?? "")))
                 }
                 if let desc = pack.description, !desc.isEmpty {
                     Text(desc).font(.caption).foregroundStyle(.secondary)

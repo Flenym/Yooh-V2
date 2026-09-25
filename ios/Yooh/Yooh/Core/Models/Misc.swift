@@ -174,6 +174,7 @@ struct StickerPack: Decodable, Identifiable {
     let description: String?
     let coverEmoji: String?
     let stickers: [StickerItem]?
+    let installed: Bool?
 }
 
 struct StickerPacksResponse: Decodable {

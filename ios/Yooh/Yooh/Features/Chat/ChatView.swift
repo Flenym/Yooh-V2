@@ -209,8 +209,11 @@ struct ChatDetailView: View {
     }
 
     private var wallpaper: some View {
-        ZStack {
-            LinearGradient(colors: [YoohTheme.TG.wallpaperTop, YoohTheme.TG.wallpaperBottom],
+        let preset = ThemeStore.wallpaper(forPreset: vm.chat.settings?.wallpaperPreset)
+        let top: Color = preset.id == "system" ? YoohTheme.TG.wallpaperTop : preset.top
+        let bottom: Color = preset.id == "system" ? YoohTheme.TG.wallpaperBottom : preset.bottom
+        return ZStack {
+            LinearGradient(colors: [top, bottom],
                            startPoint: .top, endPoint: .bottom)
             Circle()
                 .fill(ThemeStore.shared.accent.opacity(0.10))

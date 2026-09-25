@@ -18,6 +18,7 @@ enum UITestPreview {
         return "chats"
     }
 
+    @MainActor
     static var chatMessages: [YoohMessage]? {
 #if DEBUG
         guard isActive else { return nil }
@@ -27,6 +28,7 @@ enum UITestPreview {
 #endif
     }
 
+    @MainActor
     static func configure(app: AppState) {
 #if DEBUG
         guard isActive else { return }
@@ -44,6 +46,7 @@ enum UITestPreview {
     // MARK: - Seeding (DEBUG only)
 
 #if DEBUG
+    @MainActor
     private static func seedSession(app: AppState) {
         let user: YoohUser = decode(YoohUser.self, """
         {"id":"uitest-me","chatId":"uitest-c0","phone":"+79001234567",
@@ -54,6 +57,7 @@ enum UITestPreview {
         app.session.seedPreviewSession(user: user, token: "uitest-token")
     }
 
+    @MainActor
     private static func seedChats(app: AppState) {
         let chats: [YoohChat] = decode([YoohChat].self, chatsFixture())
         app.chatsViewModel.seedPreviewChats(chats)
@@ -63,6 +67,7 @@ enum UITestPreview {
         prefs.setPinned(messageId: "uitest-m1", chatId: "uitest-c1")
     }
 
+    @MainActor
     private static func seedContacts(app: AppState) {
         app.contactsViewModel.seedPreviewUsers([
             PublicUser(id: "uitest-ignat", username: "ignat", displayName: "Игнат 🐵"),
@@ -72,6 +77,7 @@ enum UITestPreview {
         ])
     }
 
+    @MainActor
     private static func seedCalls(app: AppState) {
         let calls: [CallLog] = decode([CallLog].self, """
         [{"id":"uitest-call1","status":"no_answer","mode":"audio","direction":"incoming",
@@ -87,6 +93,7 @@ enum UITestPreview {
         app.callsViewModel.seedPreviewCalls(calls)
     }
 
+    @MainActor
     private static func seedStories(app: AppState) {
         let stories: [YoohStory] = decode([YoohStory].self, """
         [{"id":"uitest-s1","authorId":"uitest-ignat","createdAt":"\(iso(hoursAgo: 1))",

@@ -8,6 +8,7 @@ struct MessageBubbleView: View {
     let vm: ChatViewModel
 
     @State private var showTranslation = false
+    @State private var showInfo = false
 
     var body: some View {
         HStack {
@@ -78,10 +79,16 @@ struct MessageBubbleView: View {
             Button { vm.report(message) } label: {
                 Label("Пожаловаться", systemImage: "flag")
             }
+            Button { showInfo = true } label: {
+                Label("Данные", systemImage: "info.circle")
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(accessibilityText))
         .translateSheet(isPresented: $showTranslation, text: message.text ?? "")
+        .sheet(isPresented: $showInfo) {
+            MessageInfoSheet(message: message)
+        }
     }
 
     @ViewBuilder
@@ -441,7 +448,7 @@ private struct TranscribeButton: View {
         do {
             let url = try await AudioFileCache.shared.localURL(fileId: fileId, token: token)
             let text = try await SpeechTranscriber.transcribe(url: url)
-            transcript = text.isEmpty ? "(no speech detected)" : text
+            transcript = text.isEmpty ? "(речь не распознана)" : text
             Haptics.selection()
         } catch {
             self.error = "Не удалось распознать сообщение."
@@ -455,4 +462,56 @@ private struct ShareSheet: UIViewControllerRepresentable {
         UIActivityViewController(activityItems: [url], applicationActivities: nil)
     }
     func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+}
+
+/// Message details: sender, timestamps, read state, reactions.
+private struct MessageInfoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let message: YoohMessage
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    LabeledContent("Отправитель", value: senderName)
+                    LabeledContent("Отправлено", value: YoohDates.fullDateTime(message.createdAt))
+                    if message.isEdited {
+                        LabeledContent("Изменено", value: YoohDates.fullDateTime(message.editedAt))
+                    }
+                }
+                Section("Доставка") {
+                    LabeledContent("Статус", value: statusText)
+                    LabeledContent("Прочитали", value: "\(message.readByUserIds.count)")
+                    if !message.reactions.isEmpty {
+                        LabeledContent("Реакции", value: message.reactions.map { "\($0.emoji)×\($0.count)" }.joined(separator: " "))
+                    }
+                }
+                Section("ID") {
+                    Text(String(message.id.prefix(13)) + "…")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+            }
+            .navigationTitle("Данные сообщения")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Закрыть") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private var senderName: String {
+        if message.isOutgoing { return "Вы" }
+        return message.sender?.displayName ?? message.sender?.title ?? "Собеседник"
+    }
+
+    private var statusText: String {
+        guard message.isOutgoing else { return "Входящее" }
+        let others = message.readByUserIds.filter { $0 != message.senderId }
+        return others.isEmpty ? "Доставлено" : "Прочитано"
+    }
 }

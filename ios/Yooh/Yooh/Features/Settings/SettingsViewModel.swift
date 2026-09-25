@@ -104,6 +104,16 @@ final class SettingsViewModel {
         }
     }
 
+    func toggleStickerPack(_ pack: StickerPack) async {
+        let target = !(pack.installed ?? true)
+        do {
+            _ = try await app.settingsService.setStickerPackInstalled(packId: pack.id, installed: target)
+            await loadStickerPacks()
+        } catch {
+            self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
     func applyServerURL() {
         let clean = serverURL.trimmingCharacters(in: .whitespaces)
         UserDefaults.standard.set(clean.isEmpty ? nil : clean, forKey: AppConfig.Keys.serverURLOverride)

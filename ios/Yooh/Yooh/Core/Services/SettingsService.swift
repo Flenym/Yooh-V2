@@ -37,4 +37,11 @@ final class SettingsService {
         let res: StickerPacksResponse = try await api.send(.stickerPacks)
         return res.packs ?? []
     }
+
+    @discardableResult
+    func setStickerPackInstalled(packId: String, installed: Bool) async throws -> Bool {
+        struct Res: Decodable { let installed: Bool? }
+        let res: Res = try await api.send(.setStickerPackInstalled(packId: packId, installed: installed))
+        return res.installed ?? installed
+    }
 }

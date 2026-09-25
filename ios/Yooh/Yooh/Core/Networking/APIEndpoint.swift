@@ -449,6 +449,11 @@ struct APIEndpoint {
 
     static var stickerPacks: APIEndpoint { APIEndpoint(path: "/api/stickers/packs") }
 
+    static func setStickerPackInstalled(packId: String, installed: Bool) -> APIEndpoint {
+        APIEndpoint(method: installed ? .post : .delete,
+                    path: "/api/stickers/packs/\(packId)/install")
+    }
+
     // MARK: - Feedback / support
 
     static func sendFeedback(category: String, message: String) -> APIEndpoint {
