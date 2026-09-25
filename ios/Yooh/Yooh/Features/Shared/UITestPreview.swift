@@ -10,6 +10,11 @@ enum UITestPreview {
         CommandLine.arguments.contains(where: { $0.hasPrefix("UITEST_") })
     }
 
+    /// Forces dark appearance for night-theme screenshots.
+    static var forceDark: Bool {
+        CommandLine.arguments.contains("UITEST_DARK")
+    }
+
     static var initialTabID: String {
         let args = CommandLine.arguments
         if args.contains("UITEST_CONTACTS") { return "contacts" }

@@ -13,7 +13,7 @@ struct YoohApp: App {
             RootView()
                 .environment(app)
                 .environment(theme)
-                .preferredColorScheme(theme.colorScheme)
+                .preferredColorScheme(UITestPreview.forceDark ? .dark : theme.colorScheme)
                 .overlay {
                     if appLock.isLocked, app.session.isAuthenticated {
                         LockScreenView()
