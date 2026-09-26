@@ -1,13 +1,11 @@
 import SwiftUI
 
 /// Chat list: official nav bar (Edit / compose), native search, folder
-/// chips, stories strip, dense dialog rows, bulk edit mode, saved row
+/// chips, dense dialog rows, bulk edit mode, saved row
 /// and the device-local secret section.
 struct ChatsView: View {
     @Environment(AppState.self) private var app
     @State private var showComposer = false
-    @State private var showStories = false
-    @State private var showStoryCreator = false
     @State private var showFolders = false
     @State private var confirmDelete: YoohChat?
     @State private var confirmClear: YoohChat?
@@ -27,7 +25,6 @@ struct ChatsView: View {
                     .ignoresSafeArea()
                 VStack(spacing: 0) {
                     foldersStrip(folder: chats.folder)
-                    storiesStrip
                     chatList(chats)
                 }
             }
@@ -113,12 +110,6 @@ struct ChatsView: View {
             .animation(.snappy, value: isEditing)
             .sheet(isPresented: $showComposer) {
                 NewChatView()
-            }
-            .sheet(isPresented: $showStories) {
-                NavigationStack { StoriesView() }
-            }
-            .sheet(isPresented: $showStoryCreator) {
-                StoryCreatorView()
             }
             .sheet(isPresented: $showFolders) {
                 FolderEditorView()
@@ -215,73 +206,6 @@ struct ChatsView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("\(title) chats"))
-    }
-
-    // MARK: - Stories strip
-
-    @ViewBuilder
-    private var storiesStrip: some View {
-        let groups = app.storiesViewModel.groups
-        if !groups.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: YoohTheme.Spacing.m) {
-                    Button {
-                        Haptics.selection()
-                        showStoryCreator = true
-                    } label: {
-                        VStack(spacing: 4) {
-                            ZStack {
-                                Circle()
-                                    .fill(YoohTheme.TG.field)
-                                    .frame(width: 56, height: 56)
-                                Image(systemName: "plus")
-                                    .font(.system(size: 22, weight: .semibold))
-                                    .foregroundStyle(ThemeStore.shared.accent)
-                            }
-                            Text("Добавить")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Создать историю"))
-                    ForEach(groups.indices, id: \.self) { i in
-                        let g = groups[i]
-                        let seen = isGroupSeen(g.stories)
-                        Button {
-                            Haptics.selection()
-                            showStories = true
-                        } label: {
-                            VStack(spacing: 4) {
-                                AvatarView(dataURL: g.author?.avatar ?? g.stories.first?.image,
-                                           name: g.author?.title ?? "?",
-                                           size: 56)
-                                .overlay {
-                                    Circle()
-                                        .stroke(seen ? Color(.systemGray3) : ThemeStore.shared.accent, lineWidth: 2)
-                                        .frame(width: 62, height: 62)
-                                }
-                                Text(g.author?.title ?? "")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                                    .frame(width: 62)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, YoohTheme.Spacing.l)
-                .padding(.vertical, YoohTheme.Spacing.xs)
-            }
-        }
-    }
-
-    private func isGroupSeen(_ stories: [YoohStory]) -> Bool {
-        guard let me = app.session.currentUser?.id, !stories.isEmpty else { return true }
-        return stories.allSatisfy { s in
-            (s.viewers ?? []).contains(where: { $0.userId == me })
-        }
     }
 
     // MARK: - List

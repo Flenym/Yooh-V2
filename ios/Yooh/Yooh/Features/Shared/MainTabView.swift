@@ -63,7 +63,6 @@ struct MainTabView: View {
         .task {
             guard !UITestPreview.isActive else { return }
             await app.chatsViewModel.refresh()
-            await app.storiesViewModel.refresh()
             await app.requestsViewModel.refresh()
         }
     }

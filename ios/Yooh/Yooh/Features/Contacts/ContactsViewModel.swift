@@ -19,6 +19,14 @@ final class ContactsViewModel {
     func clearError() { error = nil }
     func clearNotice() { notice = nil }
 
+#if DEBUG
+    /// Visual-QA seeding (simulator screenshots, no backend).
+    func seedPreviewUsers(_ items: [PublicUser]) {
+        users = items
+        error = nil
+    }
+#endif
+
     private enum Scope {
         case all, people, channels, groups, servers
     }

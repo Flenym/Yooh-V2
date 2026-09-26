@@ -131,6 +131,15 @@ final class ChatsViewModel {
     func showError(_ message: String) { error = message }
     func clearError() { error = nil }
 
+#if DEBUG
+    /// Visual-QA seeding (simulator screenshots, no backend).
+    func seedPreviewChats(_ items: [YoohChat]) {
+        chats = items
+        isLoading = false
+        error = nil
+    }
+#endif
+
     func refresh() async {
         guard app.session.isAuthenticated else { return }
         guard !UITestPreview.isActive else { return }

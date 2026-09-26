@@ -41,7 +41,6 @@ enum UITestPreview {
         seedChats(app: app)
         seedContacts(app: app)
         seedCalls(app: app)
-        seedStories(app: app)
         if CommandLine.arguments.contains("UITEST_CHAT") {
             app.chatsPath.append("uitest-c1")
         }
@@ -96,19 +95,6 @@ enum UITestPreview {
           "peer":{"id":"uitest-anna","username":"anna","displayName":"Анна"}}]
         """)
         app.callsViewModel.seedPreviewCalls(calls)
-    }
-
-    @MainActor
-    private static func seedStories(app: AppState) {
-        let stories: [YoohStory] = decode([YoohStory].self, """
-        [{"id":"uitest-s1","authorId":"uitest-ignat","createdAt":"\(iso(hoursAgo: 1))",
-          "caption":"Выходные удались",
-          "author":{"id":"uitest-ignat","username":"ignat","displayName":"Игнат 🐵"}},
-         {"id":"uitest-s2","authorId":"uitest-mama","createdAt":"\(iso(hoursAgo: 3))",
-          "caption":"Пирог готов!",
-          "author":{"id":"uitest-mama","username":"mama","displayName":"Мама"}}]
-        """)
-        app.storiesViewModel.seedPreviewStories(stories)
     }
 
     // MARK: - Fixtures
