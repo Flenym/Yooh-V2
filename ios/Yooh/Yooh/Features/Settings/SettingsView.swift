@@ -3,12 +3,13 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppState.self) private var app
     @State private var showLogoutConfirm = false
-    @State private var showLinkDevice = false
+    @State private var showAddAccountConfirm = false
     @State private var showQR = false
     @State private var showDeleteAccount = false
     @State private var cloudPassword = ""
     @State private var feedbackCategory = "improvement"
     @State private var feedbackText = ""
+    @State private var openSavedChat: YoohChat?
 
     var body: some View {
         @Bindable var settings = app.settingsViewModel
@@ -18,20 +19,17 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(spacing: YoohTheme.Spacing.m) {
                         hero
+                        quickActionsCard
+                        accountCard
                         profileCard
-                        generalCard(settings)
-                        appearanceCard
-                        notificationsCard
-                        privacyCard
-                        storageCard
-                        sessionsCard(settings)
-                        securityCard(settings)
-                        stickersCard
-                        feedbackCard(settings)
+                        libraryCard(settings)
+                        prefsCard
+                        starsCard
                         helpCard
+                        feedbackCard(settings)
+                        securityCard(settings)
                         adminCard
                         serverCard(url: $settings.serverURL, onApply: { settings.applyServerURL() })
-                        aboutCard
                         logoutCard
                     }
                     .padding(.horizontal, YoohTheme.Spacing.l)
@@ -43,7 +41,6 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.large)
             .task {
                 await settings.load()
-                await settings.loadSessions()
             }
             .overlay(alignment: .top) {
                 VStack(spacing: YoohTheme.Spacing.s) {
@@ -59,10 +56,10 @@ struct SettingsView: View {
                 Button("Выйти", role: .destructive) { settings.logout() }
                 Button("Отмена", role: .cancel) {}
             }
-            .sheet(isPresented: $showLinkDevice) {
-                NavigationStack {
-                    LinkDeviceView()
-                }
+            .confirmationDialog("Добавить аккаунт? Текущая сессия завершится, и откроется вход.",
+                                isPresented: $showAddAccountConfirm, titleVisibility: .visible) {
+                Button("Продолжить", role: .destructive) { settings.logout() }
+                Button("Отмена", role: .cancel) {}
             }
             .sheet(isPresented: $showQR) {
                 ShowQRView()
@@ -70,29 +67,147 @@ struct SettingsView: View {
             .sheet(isPresented: $showDeleteAccount) {
                 DeleteAccountView()
             }
+            .navigationDestination(item: $openSavedChat) { chat in
+                ChatDetailView(chat: chat, app: app)
+            }
         }
     }
 
+    /// Telegram-style profile hero: banner backdrop, avatar, name,
+    /// phone · username, QR shortcut and Edit.
     private var hero: some View {
-        VStack(spacing: YoohTheme.Spacing.s) {
-            if let user = app.session.currentUser {
-                AvatarView(dataURL: user.avatar, name: user.displayName, size: 110)
-                HStack(spacing: 4) {
-                    Text(user.displayName)
-                        .font(.system(size: 26, weight: .bold))
-                    if user.isPremium {
-                        Image(systemName: "star.fill")
-                            .font(.caption)
-                            .foregroundStyle(.yellow)
+        ZStack(alignment: .top) {
+            heroBackdrop
+            VStack(spacing: 0) {
+                HStack {
+                    Button { showQR = true } label: {
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 46, height: 46)
+                            .background(Color.black.opacity(0.35), in: .circle)
                     }
+                    .accessibilityLabel(Text("QR-код"))
+                    Spacer()
+                    NavigationLink {
+                        ProfileView()
+                    } label: {
+                        Text("Изм.")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 10)
+                            .background(Color.black.opacity(0.35), in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Изменить профиль"))
                 }
-                Text("\(user.phone) · @\(user.username)")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
+                .padding(.horizontal, YoohTheme.Spacing.l)
+                .padding(.top, YoohTheme.Spacing.s)
+                if let user = app.session.currentUser {
+                    AvatarView(dataURL: user.avatar, name: user.displayName, size: 110)
+                        .padding(.top, 54)
+                    HStack(spacing: 4) {
+                        Text(user.displayName)
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundStyle(.white)
+                        if user.isPremium {
+                            Image(systemName: "star.fill")
+                                .font(.caption)
+                                .foregroundStyle(.yellow)
+                        }
+                        if !user.emojiStatus.isEmpty {
+                            Text(user.emojiStatus)
+                                .font(.title3)
+                        }
+                    }
+                    .padding(.top, 8)
+                    Text("\(user.phone) · @\(user.username)")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.bottom, 20)
+                }
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, YoohTheme.Spacing.l)
+        .clipShape(.rect(cornerRadius: 24))
+    }
+
+    private var heroBackdrop: some View {
+        ZStack {
+            if let banner = app.session.currentUser?.banner, !banner.isEmpty,
+               let data = MediaService.data(fromDataURL: banner),
+               let img = UIImage(data: data)
+            {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                LinearGradient(
+                    colors: [ThemeStore.shared.accent, ThemeStore.shared.accent.opacity(0.55)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 250, maxHeight: 250)
+        .clipped()
+        .overlay {
+            LinearGradient(colors: [.clear, Color.black.opacity(0.25)],
+                           startPoint: .top, endPoint: .bottom)
+        }
+    }
+
+    private var quickActionsCard: some View {
+        card {
+            NavigationLink {
+                ProfileView()
+            } label: {
+                plainRow(symbol: "face.smiling", title: "Сменить эмодзи-статус")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                ProfileView()
+            } label: {
+                plainRow(symbol: "camera.fill", title: "Сменить фото профиля")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var accountCard: some View {
+        card {
+            if let user = app.session.currentUser {
+                HStack(spacing: YoohTheme.Spacing.m) {
+                    AvatarView(dataURL: user.avatar, name: user.displayName, size: 44)
+                    Text(user.displayName)
+                        .font(.system(size: 17))
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(ThemeStore.shared.accent)
+                }
+                .padding(.vertical, 8)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(Text("Текущий аккаунт"))
+                Divider().opacity(0.4)
+            }
+            Button {
+                showAddAccountConfirm = true
+            } label: {
+                HStack(spacing: YoohTheme.Spacing.m) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44)
+                    Text("Добавить аккаунт")
+                        .font(.system(size: 17))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Добавить аккаунт"))
+        }
     }
 
     private var profileCard: some View {
@@ -103,6 +218,130 @@ struct SettingsView: View {
                 settingRow(tile: "person.crop.circle.fill", color: .red, title: "Мой профиль")
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    private var libraryCard: some View {
+        card {
+            Button { openSaved() } label: {
+                settingRow(tile: "bookmark.fill", color: .blue, title: "Избранное")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            Button {
+                NotificationCenter.default.post(
+                    name: MainTabView.switchTabNotification,
+                    object: nil, userInfo: ["tab": "calls"])
+            } label: {
+                settingRow(tile: "phone.fill", color: .green, title: "Недавние звонки")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                DevicesView()
+            } label: {
+                let n = app.settingsViewModel.sessions.count
+                settingRow(tile: "laptopcomputer", color: .orange,
+                           title: "Устройства", value: n > 0 ? "\(n)" : nil)
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                FolderEditorView()
+            } label: {
+                settingRow(tile: "folder.fill", color: .teal, title: "Папки чатов")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var prefsCard: some View {
+        card {
+            NavigationLink {
+                NotificationsView()
+            } label: {
+                settingRow(tile: "bell.badge.fill", color: .red, title: "Уведомления и звуки")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                PrivacyView()
+            } label: {
+                settingRow(tile: "lock.shield.fill", color: .gray, title: "Конфиденциальность")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                StorageView()
+            } label: {
+                settingRow(tile: "internaldrive.fill", color: .green, title: "Данные и память")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                AppearanceView()
+            } label: {
+                settingRow(tile: "paintpalette.fill", color: .purple, title: "Оформление")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                LanguageView()
+            } label: {
+                settingRow(tile: "globe", color: .blue, title: "Язык",
+                           value: app.settingsViewModel.language == "ru" ? "Русский" : "English")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var starsCard: some View {
+        card {
+            NavigationLink {
+                StarsView()
+            } label: {
+                settingRow(tile: "star.fill", color: .yellow,
+                           title: "Мои звёзды",
+                           value: "\(app.session.currentUser?.starsBalance ?? 0) ⭐")
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.4)
+            NavigationLink {
+                StickerPacksView()
+            } label: {
+                settingRow(tile: "face.smiling.fill", color: .orange, title: "Стикеры")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func plainRow(symbol: String, title: String) -> some View {
+        HStack(spacing: YoohTheme.Spacing.m) {
+            Image(systemName: symbol)
+                .font(.system(size: 17))
+                .foregroundStyle(.secondary)
+                .frame(width: 28)
+            Text(title)
+                .font(.system(size: 17))
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(.tertiaryLabel))
+        }
+        .padding(.vertical, 10)
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(title))
+    }
+
+    private func openSaved() {
+        guard let me = app.session.currentUser?.id else { return }
+        if let chat = app.chatsViewModel.chats.first(where: {
+            $0.type == .direct && $0.peer(myUserId: me) == nil
+        }) {
+            openSavedChat = chat
+        } else {
+            app.chatsViewModel.showError("Откройте Избранное во вкладке Чаты.")
         }
     }
 
@@ -139,130 +378,6 @@ struct SettingsView: View {
         .accessibilityLabel(Text(title))
     }
 
-    private func generalCard(_ settings: SettingsViewModel) -> some View {
-        card {
-            HStack(spacing: YoohTheme.Spacing.m) {
-                Image(systemName: "globe")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 30, height: 30)
-                    .background(Color.blue, in: .rect(cornerRadius: 7))
-                Text("Язык")
-                    .font(.system(size: 17))
-                Spacer()
-                Picker("Язык", selection: Binding(
-                    get: { settings.language },
-                    set: { code in Task { await settings.setLanguage(code) } }
-                )) {
-                    Text("Английский").tag("en")
-                    Text("Русский").tag("ru")
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 120)
-            }
-            .padding(.vertical, 8)
-        }
-    }
-
-    private var appearanceCard: some View {
-        card {
-            NavigationLink {
-                AppearanceView()
-            } label: {
-                settingRow(tile: "paintpalette.fill", color: .purple, title: "Оформление")
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var notificationsCard: some View {
-        card {
-            NavigationLink {
-                NotificationsView()
-            } label: {
-                settingRow(tile: "bell.badge.fill", color: .red, title: "Уведомления и звуки")
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var privacyCard: some View {
-        card {
-            NavigationLink {
-                PrivacyView()
-            } label: {
-                settingRow(tile: "lock.shield.fill", color: .gray, title: "Конфиденциальность")
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var storageCard: some View {
-        card {
-            NavigationLink {
-                StorageView()
-            } label: {
-                settingRow(tile: "internaldrive.fill", color: .green, title: "Данные и память")
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func sessionsCard(_ settings: SettingsViewModel) -> some View {
-        card {
-            ForEach(settings.sessions, id: \.id) { s in
-                HStack {
-                    Image(systemName: icon(for: s.platform))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28)
-                    VStack(alignment: .leading) {
-                        Text(s.name ?? s.client ?? "Сессия").font(.subheadline)
-                        Text(YoohDates.relative(s.lastSeenAt)).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if s.isCurrent == true {
-                        Text("Это устройство").font(.caption).foregroundStyle(ThemeStore.shared.accent)
-                    } else {
-                        Button {
-                            Task { await settings.deleteSession(s.id) }
-                        } label: {
-                            Image(systemName: "xmark").font(.caption).foregroundStyle(.secondary)
-                        }
-                        .accessibilityLabel(Text("Завершить сессию"))
-                    }
-                }
-                .padding(.vertical, 6)
-                Divider().background(Color(.separator).opacity(0.4))
-            }
-            Button("Завершить другие сессии") {
-                Task { await settings.terminateOthers() }
-            }
-            .font(.system(size: 17))
-            .foregroundStyle(ThemeStore.shared.accent)
-            .padding(.vertical, 8)
-            Button("Привязать устройство") {
-                showLinkDevice = true
-            }
-            .font(.system(size: 17))
-            .foregroundStyle(ThemeStore.shared.accent)
-            .padding(.vertical, 4)
-            Button("Показать код для нового устройства") {
-                showQR = true
-            }
-            .font(.system(size: 17))
-            .foregroundStyle(ThemeStore.shared.accent)
-            .padding(.vertical, 4)
-        }
-    }
-
-    private func icon(for platform: String?) -> String {
-        switch platform {
-        case "iphone": return "iphone"
-        case "android": return "smartphone"
-        default: return "desktopcomputer"
-        }
-    }
-
     private func securityCard(_ settings: SettingsViewModel) -> some View {
         card {
             if app.session.currentUser?.cloudPasswordEnabled == true {
@@ -287,17 +402,6 @@ struct SettingsView: View {
                 .foregroundStyle(ThemeStore.shared.accent)
                 .padding(.bottom, 4)
             }
-        }
-    }
-
-    private var stickersCard: some View {
-        card {
-            NavigationLink {
-                StickerPacksView()
-            } label: {
-                settingRow(tile: "face.smiling.fill", color: .orange, title: "Стикеры")
-            }
-            .buttonStyle(.plain)
         }
     }
 
@@ -337,6 +441,12 @@ struct SettingsView: View {
                 settingRow(tile: "book.fill", color: .teal, title: "Вопросы и ответы")
             }
             .buttonStyle(.plain)
+            NavigationLink {
+                AboutView()
+            } label: {
+                settingRow(tile: "info.circle.fill", color: .gray, title: "О приложении")
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -366,16 +476,6 @@ struct SettingsView: View {
                 .font(.system(size: 17))
                 .foregroundStyle(ThemeStore.shared.accent)
                 .padding(.bottom, 4)
-        }
-    }
-
-    private var aboutCard: some View {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        return card {
-            LabeledContent("Yooh for iOS", value: version)
-                .padding(.vertical, 4)
-            LabeledContent("Сервер", value: "Yooh server API + Socket.IO")
-                .padding(.vertical, 4)
         }
     }
 

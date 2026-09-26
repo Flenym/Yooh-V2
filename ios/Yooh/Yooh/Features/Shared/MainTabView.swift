@@ -13,6 +13,9 @@ struct MainTabView: View {
     @State private var tab: Tab = MainTabView.initialTab
     @State private var showSearch = false
 
+    /// Cross-screen tab requests (e.g. Settings → Recent Calls).
+    static let switchTabNotification = Notification.Name("YoohSwitchTab")
+
     private static var initialTab: Tab {
         switch UITestPreview.initialTabID {
         case "contacts": return .contacts
@@ -64,6 +67,12 @@ struct MainTabView: View {
             guard !UITestPreview.isActive else { return }
             await app.chatsViewModel.refresh()
             await app.requestsViewModel.refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Self.switchTabNotification)) { note in
+            if let raw = note.userInfo?["tab"] as? String, let next = Tab(rawValue: raw) {
+                Haptics.selection()
+                withAnimation(.snappy) { tab = next }
+            }
         }
     }
 
