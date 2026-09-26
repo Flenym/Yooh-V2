@@ -203,11 +203,4 @@ final class ContactsViewModel {
         }
     }
 
-#if DEBUG
-    /// Visual-QA seeding (simulator screenshots, no backend).
-    func seedPreviewUsers(_ items: [PublicUser]) {
-        users = items
-        error = nil
-    }
-#endif
 }

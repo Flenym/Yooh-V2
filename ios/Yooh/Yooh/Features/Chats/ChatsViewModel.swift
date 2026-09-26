@@ -208,12 +208,4 @@ final class ChatsViewModel {
         }
     }
 
-#if DEBUG
-    /// Visual-QA seeding (simulator screenshots, no backend).
-    func seedPreviewChats(_ items: [YoohChat]) {
-        chats = items
-        isLoading = false
-        error = nil
-    }
-#endif
 }

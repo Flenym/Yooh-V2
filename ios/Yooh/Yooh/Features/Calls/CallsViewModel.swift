@@ -57,13 +57,4 @@ final class CallsViewModel {
         error = nil
     }
 #endif
-
-#if DEBUG
-    /// Visual-QA seeding (simulator screenshots, no backend).
-    func seedPreviewCalls(_ items: [CallLog]) {
-        calls = items
-        isLoading = false
-        error = nil
-    }
-#endif
 }

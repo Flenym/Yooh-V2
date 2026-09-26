@@ -22,7 +22,7 @@ struct SettingsView: View {
                         quickActionsCard
                         accountCard
                         profileCard
-                        libraryCard(settings)
+                        libraryCard
                         prefsCard
                         starsCard
                         helpCard
