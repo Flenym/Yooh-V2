@@ -347,6 +347,9 @@ struct ChatDetailView: View {
     }
 
     private var chatSubtitle: String {
+        if !ConnectionMonitor.shared.isAvailable {
+            return "Нет соединения"
+        }
         switch vm.chat.type {
         case .direct:
             if let me = app.session.currentUser?.id,

@@ -37,6 +37,7 @@ final class AppState {
 
     private(set) var onlineUsers: Set<String> = []
     private(set) var typingByChat: [String: [TypingPeer]] = [:]
+    var socketState: YoohSocket.ConnectionState = .disconnected
     private(set) var incomingCall: CallSignal?
 
     var messageHandler: ((YoohSocketEvent) -> Void)?
@@ -73,6 +74,9 @@ final class AppState {
         callsViewModel = CallsViewModel()
         requestsViewModel = RequestsViewModel()
         socket.delegate = self
+        socket.onStateChange = { [weak self] state in
+            Task { @MainActor in self?.socketState = state }
+        }
         chatsViewModel.app = self
         contactsViewModel.app = self
         profileViewModel.app = self

@@ -143,15 +143,25 @@ final class ChatsViewModel {
     func refresh() async {
         guard app.session.isAuthenticated else { return }
         guard !UITestPreview.isActive else { return }
+        let uid = myUserId ?? ""
+        // Instant open: show device cache first, sync in background.
+        if chats.isEmpty, let cached = ChatCache.loadChats(userId: uid), !cached.isEmpty {
+            chats = cached
+        }
         reloadFolders()
         isLoading = true
-        error = nil
+        if chats.isEmpty { error = nil }
         defer { isLoading = false }
         do {
             chats = try await app.chatsService.list()
+            error = nil
+            ChatCache.saveChats(chats, userId: uid)
         } catch {
             if !((error as? APIError)?.isAuthExpired ?? false) {
-                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                // Offline with cache: status pill covers it, no banner spam.
+                if chats.isEmpty {
+                    self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                }
             }
         }
     }

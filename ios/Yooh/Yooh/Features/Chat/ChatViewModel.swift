@@ -120,19 +120,28 @@ final class ChatViewModel {
         }
 #endif
         loadTask?.cancel()
+        // Instant open: device cache first, then network sync.
+        if messages.isEmpty,
+           let cached = ChatCache.loadMessages(chatId: chatId, userId: myUserId), !cached.isEmpty
+        {
+            messages = stamp(cached)
+        }
         loadTask = Task {
             isLoading = true
-            error = nil
+            if messages.isEmpty { error = nil }
             defer { isLoading = false }
             do {
                 let list = try await app.messageService.history(chatId: chatId, stream: stream)
                 guard !Task.isCancelled else { return }
                 messages = stamp(list)
                 hasMore = list.count >= AppConfig.messagePageSize
+                ChatCache.saveMessages(messages, chatId: chatId, userId: myUserId)
                 sendReadForLatest()
             } catch {
                 guard !Task.isCancelled else { return }
-                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                if messages.isEmpty {
+                    self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                }
             }
         }
     }
@@ -446,6 +455,7 @@ final class ChatViewModel {
         var c = m
         c.isOutgoing = (m.senderId == myUserId)
         messages.append(c)
+        ChatCache.saveMessages(messages, chatId: chatId, userId: myUserId)
     }
 
     private func replaceOptimistic(clientId: String?, with saved: YoohMessage) {

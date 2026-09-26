@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - SafeUser (toSafeUser in authService.js)
 
-struct YoohUser: Decodable {
+struct YoohUser: Codable {
     let id: String
     let chatId: String
     let phone: String
@@ -75,7 +75,7 @@ struct PremiumBadge: Codable {
 
 // MARK: - Public user (senders, members, search)
 
-struct PublicUser: Decodable, Identifiable, Hashable {
+struct PublicUser: Codable, Identifiable, Hashable {
     let id: String
     let chatId: String?
     let username: String?
@@ -150,7 +150,7 @@ struct PublicUser: Decodable, Identifiable, Hashable {
 
 // MARK: - Chat member (public user + role + bot flags + badge)
 
-struct ChatMember: Decodable, Identifiable {
+struct ChatMember: Codable, Identifiable {
     var id: String { userId }
     let userId: String
     let chatId: String?

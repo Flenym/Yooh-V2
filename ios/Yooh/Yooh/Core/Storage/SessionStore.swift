@@ -56,9 +56,11 @@ final class SessionStore {
     }
 
     func logout() {
+        let uid = currentUser?.id ?? ""
         KeychainStore.delete(for: .authToken)
         token = nil
         currentUser = nil
+        if !uid.isEmpty { ChatCache.clear(userId: uid) }
         Task { await ImageCache.shared.clear() }
     }
 

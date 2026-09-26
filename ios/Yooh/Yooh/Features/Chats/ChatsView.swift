@@ -50,15 +50,7 @@ struct ChatsView: View {
                     .accessibilityLabel(Text(isEditing ? "Закончить изменение" : "Изменить чаты"))
                 }
                 ToolbarItem(placement: .principal) {
-                    if chats.isLoading {
-                        HStack(spacing: 6) {
-                            ProgressView()
-                                .controlSize(.small)
-                            Text("Обновление…")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    connectionPill(chats: chats)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -158,6 +150,35 @@ struct ChatsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Connection status (Telegram-style, replaces the title)
+
+    @ViewBuilder
+    private func connectionPill(chats: ChatsViewModel) -> some View {
+        if !ConnectionMonitor.shared.isAvailable {
+            statusPill(text: "Нет соединения", spinning: false)
+        } else if app.socketState != .connected {
+            statusPill(text: "Подключение…", spinning: true)
+        } else if chats.isLoading {
+            statusPill(text: "Обновление…", spinning: true)
+        }
+    }
+
+    private func statusPill(text: String, spinning: Bool) -> some View {
+        HStack(spacing: 6) {
+            if spinning {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "wifi.slash")
+                    .font(.system(size: 13, weight: .semibold))
+            }
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityLabel(Text(text))
     }
 
     // MARK: - Folders

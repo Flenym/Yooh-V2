@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Message (hydrateMessage in chatService.js)
 
-enum MessageType: String, Decodable {
+enum MessageType: String, Codable {
     case text, file, location, poll, call
     case unknown
 
@@ -12,7 +12,7 @@ enum MessageType: String, Decodable {
     }
 }
 
-struct ReactionCount: Decodable, Hashable {
+struct ReactionCount: Codable, Hashable {
     let emoji: String
     let count: Int
     let mine: Bool
@@ -27,7 +27,7 @@ struct ReactionCount: Decodable, Hashable {
     }
 }
 
-struct Attachment: Decodable, Hashable {
+struct Attachment: Codable, Hashable {
     let id: String
     let originalName: String?
     let size: Int?
@@ -35,7 +35,7 @@ struct Attachment: Decodable, Hashable {
     let expiresAt: String?
 }
 
-struct MessageLocation: Decodable, Hashable {
+struct MessageLocation: Codable, Hashable {
     let lat: Double
     let lng: Double
     let title: String?
@@ -43,14 +43,14 @@ struct MessageLocation: Decodable, Hashable {
     let mapUrl: String?
 }
 
-struct PollOption: Decodable, Hashable {
+struct PollOption: Codable, Hashable {
     let id: String
     let text: String?
     let count: Int
     let mine: Bool
 }
 
-struct Poll: Decodable {
+struct Poll: Codable {
     let question: String?
     let anonymous: Bool?
     let multiple: Bool?
@@ -60,7 +60,7 @@ struct Poll: Decodable {
     let totalVotes: Int
 }
 
-struct CallInfo: Decodable {
+struct CallInfo: Codable {
     let callerId: String?
     let calleeId: String?
     let mode: String?
@@ -68,13 +68,13 @@ struct CallInfo: Decodable {
     let durationSeconds: Int?
 }
 
-struct ForwardRef: Decodable {
+struct ForwardRef: Codable {
     let chatId: String?
     let messageId: String?
     let senderId: String?
 }
 
-struct ReplyRef: Decodable {
+struct ReplyRef: Codable {
     let id: String?
     let stream: String?
     let type: String?
@@ -84,7 +84,7 @@ struct ReplyRef: Decodable {
     let deleted: Bool?
 }
 
-struct YoohMessage: Decodable, Identifiable {
+struct YoohMessage: Codable, Identifiable {
     let id: String
     let chatId: String
     let senderId: String

@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Chat types
 
-enum ChatType: String, Decodable {
+enum ChatType: String, Codable {
     case direct, group, channel, server
     case unknown
 
@@ -12,7 +12,7 @@ enum ChatType: String, Decodable {
     }
 }
 
-struct ChatSettings: Decodable {
+struct ChatSettings: Codable {
     let reactionsEnabled: Bool?
     let commentsEnabled: Bool?
     let hideParticipants: Bool?
@@ -30,6 +30,20 @@ struct ChatSettings: Decodable {
     }
     private enum PermissionsKeys: String, CodingKey {
         case slowModeSeconds, sendMessages
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: RootKeys.self)
+        try c.encodeIfPresent(reactionsEnabled, forKey: .reactionsEnabled)
+        try c.encodeIfPresent(commentsEnabled, forKey: .commentsEnabled)
+        try c.encodeIfPresent(hideParticipants, forKey: .hideParticipants)
+        try c.encodeIfPresent(signMessages, forKey: .signMessages)
+        try c.encodeIfPresent(autoDeleteDays, forKey: .autoDeleteDays)
+        try c.encodeIfPresent(allowMemberInvites, forKey: .allowMemberInvites)
+        try c.encodeIfPresent(wallpaperPreset, forKey: .wallpaperPreset)
+        var perms = c.nestedContainer(keyedBy: PermissionsKeys.self, forKey: .permissions)
+        try perms.encodeIfPresent(slowModeSeconds, forKey: .slowModeSeconds)
+        try perms.encodeIfPresent(membersCanPost, forKey: .sendMessages)
     }
 
     init(from decoder: Decoder) throws {
@@ -53,7 +67,7 @@ struct ChatSettings: Decodable {
 
 // MARK: - Hydrated chat (hydrateChatForUser)
 
-struct YoohChat: Decodable, Identifiable, Hashable {
+struct YoohChat: Codable, Identifiable, Hashable {
     let id: String
     let type: ChatType
     let title: String?
