@@ -44,6 +44,8 @@ enum UITestPreview {
         if CommandLine.arguments.contains("UITEST_CHAT") {
             app.chatsPath.append("uitest-c1")
         }
+        // Preview sockets never connect: show the synced state.
+        app.socketState = .connected
 #endif
     }
 

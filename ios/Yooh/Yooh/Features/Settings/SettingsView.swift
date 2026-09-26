@@ -76,58 +76,61 @@ struct SettingsView: View {
     /// Telegram-style profile hero: banner backdrop, avatar, name,
     /// phone · username, QR shortcut and Edit.
     private var hero: some View {
-        ZStack(alignment: .top) {
-            heroBackdrop
-            VStack(spacing: 0) {
-                HStack {
-                    Button { showQR = true } label: {
-                        Image(systemName: "qrcode")
-                            .font(.system(size: 19, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 46, height: 46)
-                            .background(Color.black.opacity(0.35), in: .circle)
-                    }
-                    .accessibilityLabel(Text("QR-код"))
-                    Spacer()
-                    NavigationLink {
-                        ProfileView()
-                    } label: {
-                        Text("Изм.")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 18)
-                            .padding(.vertical, 10)
-                            .background(Color.black.opacity(0.35), in: .capsule)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Изменить профиль"))
+        VStack(spacing: 0) {
+            HStack {
+                Button { showQR = true } label: {
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 46, height: 46)
+                        .background(Color.black.opacity(0.35), in: .circle)
                 }
-                .padding(.horizontal, YoohTheme.Spacing.l)
-                .padding(.top, YoohTheme.Spacing.s)
-                if let user = app.session.currentUser {
-                    AvatarView(dataURL: user.avatar, name: user.displayName, size: 110)
-                        .padding(.top, 54)
-                    HStack(spacing: 4) {
-                        Text(user.displayName)
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundStyle(.white)
-                        if user.isPremium {
-                            Image(systemName: "star.fill")
-                                .font(.caption)
-                                .foregroundStyle(.yellow)
-                        }
-                        if !user.emojiStatus.isEmpty {
-                            Text(user.emojiStatus)
-                                .font(.title3)
-                        }
-                    }
-                    .padding(.top, 8)
-                    Text("\(user.phone) · @\(user.username)")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .padding(.bottom, 20)
+                .accessibilityLabel(Text("QR-код"))
+                Spacer()
+                NavigationLink {
+                    ProfileView()
+                } label: {
+                    Text("Изм.")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
+                        .background(Color.black.opacity(0.35), in: .capsule)
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Изменить профиль"))
             }
+            .padding(.horizontal, YoohTheme.Spacing.l)
+            .padding(.top, YoohTheme.Spacing.m)
+            if let user = app.session.currentUser {
+                AvatarView(dataURL: user.avatar, name: user.displayName, size: 110)
+                    .padding(.top, YoohTheme.Spacing.m)
+                HStack(spacing: 4) {
+                    Text(user.displayName)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    if user.isPremium {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                    }
+                    if !user.emojiStatus.isEmpty {
+                        Text(user.emojiStatus)
+                            .font(.title3)
+                    }
+                }
+                .padding(.top, 8)
+                Text("\(user.phone) · @\(user.username)")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(1)
+            }
+        }
+        .padding(.bottom, 20)
+        .frame(maxWidth: .infinity)
+        .background {
+            heroBackdrop
         }
         .clipShape(.rect(cornerRadius: 24))
     }
@@ -147,8 +150,6 @@ struct SettingsView: View {
                     startPoint: .topLeading, endPoint: .bottomTrailing)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 250, maxHeight: 250)
-        .clipped()
         .overlay {
             LinearGradient(colors: [.clear, Color.black.opacity(0.25)],
                            startPoint: .top, endPoint: .bottom)
