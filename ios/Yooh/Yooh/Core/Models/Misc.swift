@@ -13,8 +13,12 @@ enum StoryPrivacy: String, Codable {
     }
 }
 
-struct StoryViewer: Decodable {
+struct StoryViewer: Codable, Identifiable {
+    var id: String { userId ?? UUID().uuidString }
     let userId: String?
+    let name: String?
+    let username: String?
+    let avatar: String?
     let viewedAt: String?
     let reaction: String?
 }

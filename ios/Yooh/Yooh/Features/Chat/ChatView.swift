@@ -12,9 +12,10 @@ struct ChatDetailView: View {
     @State private var isNearBottom = true
     @State private var typingStopTask: Task<Void, Never>?
 
-    init(chat: YoohChat, app: AppState) {
+    init(chat: YoohChat, app: AppState, jumpToMessageId: String? = nil) {
         _vm = State(initialValue: ChatViewModel(chat: chat))
         _vm.wrappedValue.app = app
+        _vm.wrappedValue.pendingJumpId = jumpToMessageId
     }
 
     var body: some View {

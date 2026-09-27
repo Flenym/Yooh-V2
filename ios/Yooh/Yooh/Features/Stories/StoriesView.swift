@@ -116,6 +116,7 @@ private struct StoryViewerView: View {
     @State private var storyIdx = 0
     @State private var progress: CGFloat = 0
     @State private var replyText = ""
+    @State private var showViews = false
     @State private var showCaptionEditor = false
     @State private var editCaption = ""
     @State private var isSendingReply = false
@@ -155,6 +156,19 @@ private struct StoryViewerView: View {
                         .font(.subheadline.bold())
                     Spacer()
                     if isOwnStory {
+                        if let story = current {
+                            Button {
+                                showViews = true
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "eye.fill")
+                                    Text("\(story.viewers?.count ?? 0)")
+                                        .font(.caption.bold())
+                                }
+                                .foregroundStyle(.white)
+                            }
+                            .accessibilityLabel(Text("Кто смотрел"))
+                        }
                         Button {
                             Task {
                                 if let s = current {
@@ -208,6 +222,11 @@ private struct StoryViewerView: View {
                 }
             }
             .animation(.snappy, value: saveNotice)
+        }
+        .sheet(isPresented: $showViews) {
+            if let story = current {
+                StoryViewsSheet(story: story)
+            }
         }
         .sheet(isPresented: $showCaptionEditor) {
             NavigationStack {
@@ -478,6 +497,62 @@ private struct StoryPageView: View {
                     .padding()
             }
         }
+    }
+}
+
+/// Viewers of an own story (count + reactions + time).
+private struct StoryViewsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let story: YoohStory
+
+    private var viewers: [StoryViewer] { story.viewers ?? [] }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text(RU.plural(viewers.count, one: "просмотр", few: "просмотра", many: "просмотров"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(viewers) { v in
+                    HStack(spacing: 12) {
+                        AvatarView(dataURL: v.avatar, name: displayName(v), size: 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(displayName(v))
+                                    .font(.headline)
+                                    .lineLimit(1)
+                                if let r = v.reaction, !r.isEmpty {
+                                    Text(r)
+                                }
+                            }
+                            if let at = v.viewedAt, !at.isEmpty {
+                                Text(YoohDates.fullDateTime(at))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("Просмотры")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Закрыть") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func displayName(_ v: StoryViewer) -> String {
+        if let n = v.name, !n.isEmpty { return n }
+        if let u = v.username, !u.isEmpty { return "@\(u)" }
+        return "Пользователь"
     }
 }
 

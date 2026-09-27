@@ -66,6 +66,23 @@ enum ChatCache {
         try? FileManager.default.removeItem(at: baseDir(userId: userId))
     }
 
+    /// Global search over cached messages (works offline).
+    /// Returns up to 20 (chat, message) hits, newest first.
+    static func searchMessages(query: String, userId: String) -> [(chat: YoohChat, message: YoohMessage)] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard q.count >= 2, !userId.isEmpty else { return [] }
+        guard let chats = loadChats(userId: userId) else { return [] }
+        var hits: [(YoohChat, YoohMessage)] = []
+        for chat in chats {
+            guard let msgs = loadMessages(chatId: chat.id, userId: userId) else { continue }
+            for m in msgs where (m.text?.lowercased().contains(q) ?? false) {
+                hits.append((chat, m))
+                if hits.count >= 20 { return hits }
+            }
+        }
+        return hits
+    }
+
     private static func pruneMessages(except chatIds: [String], userId: String) {
         let dir = baseDir(userId: userId).appendingPathComponent("messages", isDirectory: true)
         guard let files = try? FileManager.default.contentsOfDirectory(

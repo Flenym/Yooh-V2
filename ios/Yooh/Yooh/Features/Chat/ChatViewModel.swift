@@ -16,6 +16,8 @@ final class ChatViewModel {
 
     var stream: MessageStream = .main
     var draft = ""
+    /// Global-search jump: scrolls to this message once loaded.
+    var pendingJumpId: String?
     var replyTo: YoohMessage?
     var editing: YoohMessage?
     var forwardTarget: YoohMessage?
@@ -125,6 +127,7 @@ final class ChatViewModel {
            let cached = ChatCache.loadMessages(chatId: chatId, userId: myUserId), !cached.isEmpty
         {
             messages = stamp(cached)
+            consumePendingJump()
         }
         loadTask = Task {
             isLoading = true
@@ -136,6 +139,7 @@ final class ChatViewModel {
                 messages = stamp(list)
                 hasMore = list.count >= AppConfig.messagePageSize
                 ChatCache.saveMessages(messages, chatId: chatId, userId: myUserId)
+                self.consumePendingJump()
                 sendReadForLatest()
             } catch {
                 guard !Task.isCancelled else { return }
@@ -161,6 +165,12 @@ final class ChatViewModel {
                 self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
             }
         }
+    }
+
+    private func consumePendingJump() {
+        guard let id = pendingJumpId else { return }
+        pendingJumpId = nil
+        jumpToMessage(id)
     }
 
     func jumpToMessage(_ id: String) {

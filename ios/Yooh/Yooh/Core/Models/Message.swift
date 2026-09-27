@@ -43,11 +43,12 @@ struct MessageLocation: Codable, Hashable {
     let mapUrl: String?
 }
 
-struct PollOption: Codable, Hashable {
+struct PollOption: Codable, Hashable, Identifiable {
     let id: String
     let text: String?
     let count: Int
     let mine: Bool
+    let voters: [PublicUser]?
 }
 
 struct Poll: Codable {

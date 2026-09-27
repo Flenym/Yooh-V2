@@ -348,6 +348,7 @@ private struct LocationContentView: View {
 private struct PollContentView: View {
     let message: YoohMessage
     let vm: ChatViewModel
+    @State private var votersOption: PollOption?
 
     var body: some View {
         VStack(alignment: .leading, spacing: YoohTheme.Spacing.s) {
@@ -366,37 +367,95 @@ private struct PollContentView: View {
             }
             if let poll = message.poll {
                 ForEach(poll.options, id: \.id) { opt in
-                    Button {
-                        vm.vote(message, optionIds: [opt.id])
-                    } label: {
-                        HStack {
-                            Text(opt.text ?? "")
-                                .font(.subheadline)
-                            Spacer()
-                            if poll.anonymous != true {
+                    HStack {
+                        Button {
+                            vm.vote(message, optionIds: [opt.id])
+                        } label: {
+                            HStack {
+                                Text(opt.text ?? "")
+                                    .font(.subheadline)
+                                Spacer()
+                                if poll.correctOptionId == opt.id {
+                                    Image(systemName: "checkmark.seal.fill")
+                                        .foregroundStyle(.green)
+                                        .accessibilityLabel(Text("Правильный ответ"))
+                                } else if opt.mine {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(ThemeStore.shared.accent)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text("Голосовать: \(opt.text ?? "вариант")"))
+                        if poll.anonymous != true {
+                            Button {
+                                votersOption = opt
+                            } label: {
                                 Text("\(opt.count)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                    .padding(.vertical, 4)
+                                    .padding(.leading, 4)
                             }
-                            if poll.correctOptionId == opt.id {
-                                Image(systemName: "checkmark.seal.fill")
-                                    .foregroundStyle(.green)
-                                    .accessibilityLabel(Text("Правильный ответ"))
-                            } else if opt.mine {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(ThemeStore.shared.accent)
-                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Кто голосовал: \(opt.text ?? "вариант")"))
                         }
-                        .padding(.vertical, 4)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Голосовать: \(opt.text ?? "вариант")"))
                 }
-                Text("\(poll.totalVotes) votes")
+                Text(RU.plural(poll.totalVotes, one: "голос", few: "голоса", many: "голосов"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+        .sheet(item: $votersOption) { opt in
+            PollVotersSheet(optionText: opt.text ?? "Вариант", voters: opt.voters ?? [])
+        }
+    }
+}
+
+/// Voters of a non-anonymous poll option (server embeds them).
+private struct PollVotersSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let optionText: String
+    let voters: [PublicUser]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if voters.isEmpty {
+                    Text("Пока никто не голосовал.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(voters) { user in
+                        HStack(spacing: 12) {
+                            AvatarView(dataURL: user.avatar, name: user.title, size: 44)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.title)
+                                    .font(.headline)
+                                    .lineLimit(1)
+                                if let u = user.username, !u.isEmpty {
+                                    Text("@\(u)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle("Голоса: \(optionText)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Закрыть") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 

@@ -171,6 +171,11 @@ struct ContactsSearchBody: View {
     var onPickUser: (PublicUser) -> Void
     var onJoinPublic: (DiscoveredChat) -> Void
     var botsOnly: Bool = false
+    /// Global search: also match cached message texts (offline-capable).
+    var includeMessageResults = false
+    var onPickMessage: (YoohChat, YoohMessage) -> Void = { _, _ in }
+
+    @State private var messageHits: [(chat: YoohChat, message: YoohMessage)] = []
 
     enum Scope: String, CaseIterable {
         case all = "Все"
@@ -268,8 +273,37 @@ struct ContactsSearchBody: View {
                     Text("Публичные группы").foregroundStyle(.secondary)
                 }
             }
+            if includeMessageResults, !messageHits.isEmpty {
+                Section {
+                    ForEach(messageHits, id: \.message.id) { hit in
+                        Button { onPickMessage(hit.chat, hit.message) } label: {
+                            HStack(spacing: YoohTheme.Spacing.m) {
+                                AvatarView(dataURL: hit.chat.avatar, name: hit.chat.displayTitle, size: 52)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(hit.chat.displayTitle)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(ThemeStore.shared.accent)
+                                        .lineLimit(1)
+                                    Text(hit.message.text ?? "")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(2)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 6)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    }
+                } header: {
+                    Text("Сообщения").foregroundStyle(.secondary)
+                }
+            }
             if search.trimmingCharacters(in: .whitespaces).count >= 2,
-               contacts.users.isEmpty, contacts.publicChats.isEmpty, !contacts.isSearching
+               contacts.users.isEmpty, contacts.publicChats.isEmpty,
+               messageHits.isEmpty, !contacts.isSearching
             {
                     EmptyStateView(symbol: "magnifyingglass", title: "Ничего не найдено",
                                subtitle: "Попробуйте другое имя или @username.")
@@ -278,12 +312,24 @@ struct ContactsSearchBody: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(YoohTheme.TG.background)
-        .searchable(text: $search, prompt: "Имя или @username")
-        .onChange(of: search) { _, q in contacts.search(q, botsOnly: botsOnly) }
+        .searchable(text: $search, prompt: "Имя, @username или текст сообщения")
+        .onChange(of: search) { _, q in
+            contacts.search(q, botsOnly: botsOnly)
+            refreshMessageHits(q)
+        }
         .onChange(of: botsOnly) { contacts.search(search, botsOnly: botsOnly) }
         .overlay {
             if contacts.isSearching { ProgressView().padding(.top, 40) }
         }
+    }
+
+    private func refreshMessageHits(_ q: String) {
+        guard includeMessageResults else { return }
+        guard let me = app.session.currentUser?.id else {
+            messageHits = []
+            return
+        }
+        messageHits = ChatCache.searchMessages(query: q, userId: me)
     }
 
     private var scopeChips: some View {

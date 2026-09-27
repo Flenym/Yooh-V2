@@ -196,6 +196,7 @@ private struct GlobalSearchView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
     @State private var openedChat: YoohChat?
+    @State private var jumpMessageId: String?
     @State private var requestUser: PublicUser?
 
     var body: some View {
@@ -205,6 +206,7 @@ private struct GlobalSearchView: View {
                 Task {
                     switch await app.contactsViewModel.openDirect(with: user) {
                     case .chat(let chat):
+                        jumpMessageId = nil
                         openedChat = chat
                     case .needsRequest(let u):
                         requestUser = u
@@ -216,9 +218,15 @@ private struct GlobalSearchView: View {
             onJoinPublic: { dc in
                 Task {
                     if let chat = await app.contactsViewModel.joinPublic(dc) {
+                        jumpMessageId = nil
                         openedChat = chat
                     }
                 }
+            },
+            includeMessageResults: true,
+            onPickMessage: { chat, message in
+                jumpMessageId = message.id
+                openedChat = chat
             }
         )
         .navigationTitle("Поиск")
@@ -229,7 +237,7 @@ private struct GlobalSearchView: View {
             }
         }
         .navigationDestination(item: $openedChat) { chat in
-            ChatDetailView(chat: chat, app: app)
+            ChatDetailView(chat: chat, app: app, jumpToMessageId: jumpMessageId)
         }
         .sheet(item: $requestUser) { user in
             MessageRequestSheet(user: user)

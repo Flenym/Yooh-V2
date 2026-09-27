@@ -8,33 +8,28 @@ struct StickerSheetView: View {
     let vm: ChatViewModel
 
     @State private var error: String?
+    @State private var tab = 0
+    @State private var gifQuery = ""
+    @State private var gifs: [GifItem] = []
+    @State private var gifLoading = false
+    @State private var gifTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
-            Group {
-                if app.settingsViewModel.stickerPacks.isEmpty {
-                    EmptyStateView(symbol: "face.smiling", title: "Нет стикеров",
-                                   subtitle: "Стикерпаки из настроек появятся здесь.")
+            VStack(spacing: 0) {
+                Picker("Вкладка", selection: $tab) {
+                    Text("Стикеры").tag(0)
+                    Text("GIF").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .padding()
+                if tab == 0 {
+                    stickerList
                 } else {
-                    List(app.settingsViewModel.stickerPacks, id: \.id) { pack in
-                        Section(pack.title ?? "Пак") {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 64))], spacing: 12) {
-                                ForEach(pack.stickers ?? []) { item in
-                                    Button {
-                                        send(item)
-                                    } label: {
-                                        stickerThumb(item)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                    .listStyle(.plain)
+                    gifList
                 }
             }
-            .navigationTitle("Стикеры")
+            .navigationTitle(tab == 0 ? "Стикеры" : "GIF")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -49,6 +44,138 @@ struct StickerSheetView: View {
             .task {
                 await app.settingsViewModel.loadStickerPacks()
             }
+            .task(id: tab) {
+                if tab == 1, gifs.isEmpty { await loadGifs(query: "") }
+            }
+        }
+    }
+
+    // MARK: - Stickers
+
+    private var stickerList: some View {
+        Group {
+            if app.settingsViewModel.stickerPacks.isEmpty {
+                EmptyStateView(symbol: "face.smiling", title: "Нет стикеров",
+                               subtitle: "Стикерпаки из настроек появятся здесь.")
+            } else {
+                List(app.settingsViewModel.stickerPacks, id: \.id) { pack in
+                    Section(pack.title ?? "Пак") {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 64))], spacing: 12) {
+                            ForEach(pack.stickers ?? []) { item in
+                                Button {
+                                    send(item)
+                                } label: {
+                                    stickerThumb(item)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - GIF
+
+    private var gifList: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Поиск GIF", text: $gifQuery)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .onSubmit { Task { await loadGifs(query: gifQuery) } }
+                if !gifQuery.isEmpty {
+                    Button {
+                        gifQuery = ""
+                        Task { await loadGifs(query: "") }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(10)
+            .background(YoohTheme.TG.field, in: .rect(cornerRadius: 12))
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            if gifLoading, gifs.isEmpty {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if gifs.isEmpty {
+                Spacer()
+                EmptyStateView(symbol: "photo", title: "Ничего не найдено",
+                               subtitle: "Попробуйте другой запрос.")
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
+                        ForEach(gifs) { g in
+                            Button {
+                                Task { await sendGif(g) }
+                            } label: {
+                                AsyncImage(url: g.previewURL) { phase in
+                                    switch phase {
+                                    case .success(let img):
+                                        img.resizable().scaledToFill()
+                                    default:
+                                        YoohTheme.TG.field
+                                    }
+                                }
+                                .frame(width: 100, height: 100)
+                                .clipShape(.rect(cornerRadius: 12))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Отправить GIF"))
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+    }
+
+    private func loadGifs(query: String) async {
+        gifTask?.cancel()
+        gifTask = Task {
+            gifLoading = true
+            defer { gifLoading = false }
+            do {
+                try? await Task.sleep(nanoseconds: 350_000_000)
+                guard !Task.isCancelled else { return }
+                let items = query.trimmingCharacters(in: .whitespaces).isEmpty
+                    ? try await GifService.shared.featured()
+                    : try await GifService.shared.search(query)
+                guard !Task.isCancelled else { return }
+                gifs = items
+            } catch {
+                guard !Task.isCancelled else { return }
+                if gifs.isEmpty {
+                    do {
+                        gifs = try await GifService.shared.featured()
+                    } catch {
+                        self.error = "Не удалось загрузить GIF."
+                    }
+                }
+            }
+        }
+        await gifTask?.value
+    }
+
+    private func sendGif(_ item: GifItem) async {
+        do {
+            let data = try await GifService.shared.data(for: item)
+            vm.upload(data: data, filename: "gif.gif", mimeType: "image/gif")
+            Haptics.send()
+            dismiss()
+        } catch {
+            self.error = "Не удалось отправить GIF."
         }
     }
 
