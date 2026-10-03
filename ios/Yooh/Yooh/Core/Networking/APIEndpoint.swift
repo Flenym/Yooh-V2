@@ -307,6 +307,13 @@ struct APIEndpoint {
         APIEndpoint(path: "/api/chats/\(chatId)/messages/scheduled")
     }
 
+    static func searchAllMessages(query: String, limit: Int = 20) -> APIEndpoint {
+        APIEndpoint(path: "/api/messages/search", query: [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "limit", value: String(limit)),
+        ])
+    }
+
     static func editMessage(chatId: String, messageId: String, text: String) -> APIEndpoint {
         APIEndpoint(method: .patch, path: "/api/chats/\(chatId)/messages/\(messageId)",
                     jsonBody: ["text": text])

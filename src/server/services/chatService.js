@@ -82,6 +82,10 @@ const locationPayloadSchema = z.object({
   mapUrl: z.string().max(2000).optional(),
 });
 
+const contactPayloadSchema = z.object({
+  userId: z.string().min(1).max(128),
+});
+
 const pollPayloadSchema = z.object({
   question: z.string().min(1).max(300),
   options: z.array(z.string().min(1).max(120)).min(2).max(12),
@@ -92,10 +96,11 @@ const pollPayloadSchema = z.object({
 });
 
 const createMessageSchema = z.object({
-  kind: z.enum(["text", "location", "poll"]).optional(),
+  kind: z.enum(["text", "location", "poll", "contact"]).optional(),
   text: z.string().max(4000).optional(),
   location: locationPayloadSchema.optional(),
   poll: pollPayloadSchema.optional(),
+  contact: contactPayloadSchema.optional(),
   replyToMessageId: z.string().min(1).optional(),
   threadRootId: z.string().min(1).optional(),
   clientMessageId: z.string().min(8).max(128).optional(),
@@ -1103,7 +1108,7 @@ function ensureChatSendAllowed(db, chat, membership, options = {}) {
           entry.chatId === chat.id &&
           entry.senderId === membership.userId &&
           !entry.deletedAt &&
-          ["text", "file", "location", "poll"].includes(String(entry.type ?? "")),
+          ["text", "file", "location", "poll", "contact"].includes(String(entry.type ?? "")),
       );
     if (lastOwnMessage) {
       const lastTs = new Date(lastOwnMessage.createdAt).getTime();
@@ -3016,7 +3021,8 @@ export function createChatService({ store, config }) {
     const text = trimText(parsed.text);
     const isLocationMessage = kind === "location";
     const isPollMessage = kind === "poll";
-    if (!isLocationMessage && !isPollMessage && !text) {
+    const isContactMessage = kind === "contact";
+    if (!isLocationMessage && !isPollMessage && !isContactMessage && !text) {
       throw new HttpError(400, "Message text is empty");
     }
     if (isLocationMessage && !parsed.location) {
@@ -3024,6 +3030,9 @@ export function createChatService({ store, config }) {
     }
     if (isPollMessage && !parsed.poll) {
       throw new HttpError(400, "Poll payload is required");
+    }
+    if (isContactMessage && !parsed.contact) {
+      throw new HttpError(400, "Contact payload is required");
     }
     const clientMessageId = trimText(parsed.clientMessageId);
 
@@ -3058,6 +3067,7 @@ export function createChatService({ store, config }) {
 
       let locationPayload = null;
       let pollPayload = null;
+      let contactPayload = null;
       if (isLocationMessage) {
         const parsedLocation = locationPayloadSchema.parse(parsed.location ?? {});
         locationPayload = {
@@ -3069,6 +3079,22 @@ export function createChatService({ store, config }) {
         };
       } else if (isPollMessage) {
         pollPayload = normalizePollPayload(parsed.poll, userId);
+      } else if (isContactMessage) {
+        const parsedContact = contactPayloadSchema.parse(parsed.contact ?? {});
+        const targetId = trimText(parsedContact.userId);
+        const targetUser = db.users.find((entry) => entry.id === targetId);
+        if (!targetUser || targetUser.isSystemBot) {
+          throw new HttpError(404, "Contact user not found");
+        }
+        const snapshot = getPublicUserForViewer(db, targetUser, userId, {
+          includePhone: false,
+        });
+        contactPayload = {
+          userId: snapshot.id,
+          username: snapshot.username ?? "",
+          displayName: snapshot.displayName ?? "",
+          avatar: snapshot.avatar ?? "",
+        };
       }
 
       const payloadWeight = byteLength(
@@ -3077,7 +3103,9 @@ export function createChatService({ store, config }) {
             ? JSON.stringify(locationPayload ?? {})
             : isPollMessage
               ? JSON.stringify(pollPayload ?? {})
-              : ""),
+              : isContactMessage
+                ? JSON.stringify(contactPayload ?? {})
+                : ""),
       );
       const user = db.users.find((entry) => entry.id === userId);
       enforceMonthLimit(db, userId, payloadWeight, getUserTrafficLimitBytes(user, config));
@@ -3123,12 +3151,27 @@ export function createChatService({ store, config }) {
         id: uuid(),
         chatId,
         senderId: userId,
-        type: isLocationMessage ? "location" : isPollMessage ? "poll" : "text",
-        text: text || (isLocationMessage ? trimText(locationPayload?.title || locationPayload?.address) : trimText(pollPayload?.question)),
+        type: isLocationMessage
+          ? "location"
+          : isPollMessage
+            ? "poll"
+            : isContactMessage
+              ? "contact"
+              : "text",
+        text:
+          text ||
+          (isLocationMessage
+            ? trimText(locationPayload?.title || locationPayload?.address)
+            : isPollMessage
+              ? trimText(pollPayload?.question)
+              : isContactMessage
+                ? trimText(contactPayload?.displayName)
+                : ""),
         clientMessageId: clientMessageId || null,
         fileId: null,
         location: locationPayload,
         poll: pollPayload,
+        contact: contactPayload,
         stream,
         threadRootId,
         replyToMessageId,
@@ -3176,6 +3219,31 @@ export function createChatService({ store, config }) {
       return db.messages
         .filter((entry) => entry.chatId === chatId)
         .filter((entry) => (entry.stream ?? "main") === stream)
+        .filter((entry) => !isMessagePending(entry, nowMs))
+        .filter((entry) => String(entry.text ?? "").toLowerCase().includes(query))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit)
+        .map((entry) => hydrateMessage(db, entry, userId));
+    });
+  }
+
+  /// Global message search across all chats of the user (membership-checked).
+  async function searchAllMessages(userId, options = {}) {
+    const query = trimText(options.q).toLowerCase();
+    if (query.length < 2) {
+      return [];
+    }
+    const limitRaw = Number.parseInt(options.limit, 10);
+    const limit = Number.isNaN(limitRaw) ? 20 : Math.min(Math.max(limitRaw, 1), 50);
+
+    return store.read((db) => {
+      const nowMs = Date.now();
+      const memberChatIds = new Set(
+        db.memberships.filter((entry) => entry.userId === userId).map((entry) => entry.chatId),
+      );
+      return db.messages
+        .filter((entry) => memberChatIds.has(entry.chatId))
+        .filter((entry) => (entry.stream ?? "main") !== "comment")
         .filter((entry) => !isMessagePending(entry, nowMs))
         .filter((entry) => String(entry.text ?? "").toLowerCase().includes(query))
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -4722,6 +4790,7 @@ export function createChatService({ store, config }) {
     createChat,
     listMessages,
     searchMessages,
+    searchAllMessages,
     listScheduledMessages,
     collectDueScheduledMessages,
     createMessageRequest,

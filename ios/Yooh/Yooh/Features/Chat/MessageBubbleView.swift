@@ -121,6 +121,8 @@ struct MessageBubbleView: View {
             LocationContentView(message: message)
         case .poll:
             PollContentView(message: message, vm: vm)
+        case .contact:
+            ContactContentView(message: message, vm: vm)
         case .call:
             HStack(spacing: YoohTheme.Spacing.s) {
                 Image(systemName: "phone.fill")
@@ -456,6 +458,64 @@ private struct PollVotersSheet: View {
             }
         }
         .presentationDetents([.medium])
+    }
+}
+
+/// Shared contact card: avatar, name, username. Tap opens the chat.
+private struct ContactContentView: View {
+    @Environment(AppState.self) private var app
+    let message: YoohMessage
+    let vm: ChatViewModel
+
+    var body: some View {
+        let c = message.contact
+        Button {
+            Task { await openChat() }
+        } label: {
+            HStack(spacing: YoohTheme.Spacing.m) {
+                AvatarView(dataURL: c?.avatar, name: c?.title ?? "?", size: 52)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(c?.title ?? "Контакт")
+                        .font(.headline)
+                        .lineLimit(1)
+                    if let u = c?.username, !u.isEmpty {
+                        Text("@\(u)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("Написать сообщение")
+                        .font(.caption)
+                        .foregroundStyle(ThemeStore.shared.accent)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 4)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Контакт \(c?.title ?? "")"))
+    }
+
+    private func openChat() async {
+        guard let c, let id = c.userId, !id.isEmpty else { return }
+        let user = PublicUser(id: id, username: c.username,
+                              displayName: c.displayName, avatar: c.avatar)
+        if let res = await app.contactsViewModel.openDirect(with: user) {
+            switch res {
+            case .chat(let chat):
+                app.chatsPath.append(chat.id)
+            case .needsRequest:
+                vm.showError("Пользователь принимает сообщения только от контактов.")
+            case .none:
+                break
+            case .none:
+                break
+            }
+        }
+        Haptics.selection()
     }
 }
 

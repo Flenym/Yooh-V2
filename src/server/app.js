@@ -1026,6 +1026,18 @@ export async function createAppContext(overrides = {}) {
   );
 
   app.get(
+    "/api/messages/search",
+    requireAuth,
+    asyncRoute(async (req, res) => {
+      const messages = await chatService.searchAllMessages(req.user.id, {
+        q: req.query.q,
+        limit: req.query.limit,
+      });
+      res.status(200).json({ messages });
+    }),
+  );
+
+  app.get(
     "/api/chats/:chatId/messages/scheduled",
     requireAuth,
     asyncRoute(async (req, res) => {

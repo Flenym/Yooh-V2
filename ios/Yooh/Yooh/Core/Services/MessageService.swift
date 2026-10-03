@@ -62,6 +62,21 @@ final class MessageService {
         return try await send(chatId: chatId, request: req, stream: stream)
     }
 
+    func sendContact(chatId: String, userId: String,
+                     stream: MessageStream = .main) async throws -> YoohMessage
+    {
+        var req = SendMessageRequest()
+        req.kind = "contact"
+        req.contact = OutgoingContact(userId: userId)
+        req.clientMessageId = UUID().uuidString
+        return try await send(chatId: chatId, request: req, stream: stream)
+    }
+
+    func searchAll(query: String, limit: Int = 20) async throws -> [YoohMessage] {
+        let res: MessageListResponse = try await api.send(.searchAllMessages(query: query, limit: limit))
+        return res.messages
+    }
+
     func edit(chatId: String, messageId: String, text: String) async throws -> YoohMessage {
         let res: SingleMessageResponse = try await api.send(.editMessage(chatId: chatId, messageId: messageId, text: text))
         return res.message

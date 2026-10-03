@@ -2,8 +2,26 @@ import Foundation
 
 // MARK: - Message (hydrateMessage in chatService.js)
 
+/// Shared contact card payload (server: message.contact snapshot).
+struct MessageContact: Codable, Hashable {
+    let userId: String?
+    let username: String?
+    let displayName: String?
+    let avatar: String?
+
+    var title: String {
+        if let d = displayName, !d.isEmpty { return d }
+        if let u = username, !u.isEmpty { return "@\(u)" }
+        return "Контакт"
+    }
+}
+
+struct OutgoingContact: Encodable {
+    var userId: String
+}
+
 enum MessageType: String, Codable {
-    case text, file, location, poll, call
+    case text, file, location, poll, contact, call
     case unknown
 
     init(from decoder: Decoder) throws {
@@ -103,6 +121,7 @@ struct YoohMessage: Codable, Identifiable {
     var readByUserIds: [String]
     let location: MessageLocation?
     let poll: Poll?
+    let contact: MessageContact?
     let call: CallInfo?
     let forwardedFrom: ForwardRef?
     let editedAt: String?
@@ -113,7 +132,7 @@ struct YoohMessage: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, chatId, senderId, type, text, clientMessageId, fileId, stream,
              threadRootId, replyToMessageId, replyTo, sender, file, reactions,
-             readByUserIds, location, poll, call, forwardedFrom,
+             readByUserIds, location, poll, contact, call, forwardedFrom,
              editedAt, updatedAt, createdAt, scheduledAt
     }
 
@@ -136,6 +155,7 @@ struct YoohMessage: Codable, Identifiable {
         readByUserIds = (try? c.decode([String].self, forKey: .readByUserIds)) ?? []
         location = try c.decodeIfPresent(MessageLocation.self, forKey: .location)
         poll = try c.decodeIfPresent(Poll.self, forKey: .poll)
+        contact = try c.decodeIfPresent(MessageContact.self, forKey: .contact)
         call = try c.decodeIfPresent(CallInfo.self, forKey: .call)
         forwardedFrom = try c.decodeIfPresent(ForwardRef.self, forKey: .forwardedFrom)
         editedAt = try c.decodeIfPresent(String.self, forKey: .editedAt)
@@ -192,13 +212,14 @@ struct SendMessageRequest: Encodable {
     var kind: String? = nil
     var location: OutgoingLocation? = nil
     var poll: OutgoingPoll? = nil
+    var contact: OutgoingContact? = nil
     var replyToMessageId: String? = nil
     var threadRootId: String? = nil
     var clientMessageId: String? = nil
     var scheduledAt: String? = nil
 
     enum CodingKeys: String, CodingKey {
-        case text, kind, location, poll, replyToMessageId, threadRootId, clientMessageId, scheduledAt
+        case text, kind, location, poll, contact, replyToMessageId, threadRootId, clientMessageId, scheduledAt
     }
 
     func encode(to encoder: Encoder) throws {
@@ -207,6 +228,7 @@ struct SendMessageRequest: Encodable {
         try c.encodeIfPresent(kind, forKey: .kind)
         try c.encodeIfPresent(location, forKey: .location)
         try c.encodeIfPresent(poll, forKey: .poll)
+        try c.encodeIfPresent(contact, forKey: .contact)
         try c.encodeIfPresent(replyToMessageId, forKey: .replyToMessageId)
         try c.encodeIfPresent(threadRootId, forKey: .threadRootId)
         try c.encodeIfPresent(clientMessageId, forKey: .clientMessageId)

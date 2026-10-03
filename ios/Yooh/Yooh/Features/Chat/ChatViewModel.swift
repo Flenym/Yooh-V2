@@ -211,6 +211,20 @@ final class ChatViewModel {
         }
     }
 
+    func sendContact(userId: String) {
+        Task {
+            do {
+                let saved = try await app.messageService.sendContact(
+                    chatId: chatId, userId: userId, stream: stream)
+                replaceOptimistic(clientId: saved.clientMessageId, with: saved)
+                await app.chatsViewModel.refresh()
+                Haptics.send()
+            } catch {
+                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            }
+        }
+    }
+
     func send() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         if editing != nil {

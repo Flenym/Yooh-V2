@@ -13,6 +13,7 @@ struct ComposerView: View {
     @State private var showCamera = false
     @State private var showFiles = false
     @State private var showStickers = false
+    @State private var showContact = false
     @State private var showSchedule = false
     @State private var scheduleDate = Date().addingTimeInterval(3600)
     @State private var isLocating = false
@@ -58,6 +59,9 @@ struct ComposerView: View {
                     }
                     Button { onPoll() } label: {
                         Label("Опрос", systemImage: "chart.bar")
+                    }
+                    Button { showContact = true } label: {
+                        Label("Контакт", systemImage: "person.crop.circle.badge.plus")
                     }
                     Button {
                         scheduleDate = Date().addingTimeInterval(3600)
@@ -147,6 +151,9 @@ struct ComposerView: View {
         }
         .sheet(isPresented: $showStickers) {
             StickerSheetView(vm: vm)
+        }
+        .sheet(isPresented: $showContact) {
+            ContactPickerSheet(vm: vm)
         }
         .sheet(isPresented: $showSchedule) {
             NavigationStack {
@@ -261,6 +268,87 @@ struct ComposerView: View {
         }
         .padding(.horizontal, YoohTheme.Spacing.l)
         .padding(.vertical, 4)
+    }
+}
+
+/// Contact picker: search users, tap to send as a contact card.
+private struct ContactPickerSheet: View {
+    @Environment(AppState.self) private var app
+    @Environment(\.dismiss) private var dismiss
+    let vm: ChatViewModel
+
+    @State private var query = ""
+    @State private var results: [PublicUser] = []
+    @State private var isSearching = false
+    @State private var searchTask: Task<Void, Never>?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if isSearching {
+                    ProgressView()
+                }
+                ForEach(results) { user in
+                    Button {
+                        vm.sendContact(userId: user.id)
+                        Haptics.send()
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            AvatarView(dataURL: user.avatar, name: user.title, size: 44)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.title).font(.headline).lineLimit(1)
+                                if let u = user.username, !u.isEmpty {
+                                    Text("@\(u)").font(.subheadline).foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if !isSearching, results.isEmpty {
+                    Text(query.trimmingCharacters(in: .whitespaces).count >= 2
+                         ? "Никого не найдено."
+                         : "Введите имя или @username — минимум 2 символа.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Поделиться контактом")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $query, prompt: "Имя или @username")
+            .onChange(of: query) { _, q in search(q) }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Отмена") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func search(_ text: String) {
+        searchTask?.cancel()
+        let q = text.trimmingCharacters(in: .whitespaces)
+        guard q.count >= 2 else {
+            results = []
+            return
+        }
+        searchTask = Task {
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            guard !Task.isCancelled else { return }
+            isSearching = true
+            defer { isSearching = false }
+            do {
+                let found = try await app.userService.searchUsers(query: q)
+                guard !Task.isCancelled else { return }
+                results = found
+            } catch {
+                guard !Task.isCancelled else { return }
+                results = []
+            }
+        }
     }
 }
 

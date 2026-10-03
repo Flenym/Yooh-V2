@@ -134,6 +134,7 @@ struct ChatRowView: View {
         case .file: return "Файл: \(m.file?.originalName ?? "вложение")"
         case .location: return "Геопозиция"
         case .poll: return "Опрос: \(m.poll?.question ?? "")"
+        case .contact: return "Контакт: \(m.contact?.title ?? "контакт")"
         case .call: return "Звонок"
         case .unknown: return ""
         case .text: return ""

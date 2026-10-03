@@ -176,6 +176,7 @@ struct ContactsSearchBody: View {
     var onPickMessage: (YoohChat, YoohMessage) -> Void = { _, _ in }
 
     @State private var messageHits: [(chat: YoohChat, message: YoohMessage)] = []
+    @State private var messageTask: Task<Void, Never>?
 
     enum Scope: String, CaseIterable {
         case all = "Все"
@@ -324,12 +325,40 @@ struct ContactsSearchBody: View {
     }
 
     private func refreshMessageHits(_ q: String) {
-        guard includeMessageResults else { return }
-        guard let me = app.session.currentUser?.id else {
+        messageTask?.cancel()
+        guard includeMessageResults,
+              let me = app.session.currentUser?.id else {
             messageHits = []
             return
         }
-        messageHits = ChatCache.searchMessages(query: q, userId: me)
+        let trimmed = q.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else {
+            messageHits = []
+            return
+        }
+        messageTask = Task {
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            guard !Task.isCancelled else { return }
+            if ConnectionMonitor.shared.isAvailable {
+                do {
+                    let found = try await app.messageService.searchAll(query: trimmed)
+                    guard !Task.isCancelled else { return }
+                    var hits: [(chat: YoohChat, message: YoohMessage)] = []
+                    for m in found {
+                        if let c = app.chatsViewModel.chats.first(where: { $0.id == m.chatId }) {
+                            hits.append((c, m))
+                            if hits.count >= 20 { break }
+                        }
+                    }
+                    messageHits = hits
+                    return
+                } catch {
+                    // Fall through to device cache below.
+                }
+            }
+            guard !Task.isCancelled else { return }
+            messageHits = ChatCache.searchMessages(query: trimmed, userId: me)
+        }
     }
 
     private var scopeChips: some View {
