@@ -1875,3 +1875,64 @@ describe("file messages", () => {
     expect(download.headers["content-disposition"]).toContain(encodeURIComponent(fileName));
   });
 });
+
+describe("contact messages and global search", () => {
+  it("sends contact cards and finds messages across chats", async () => {
+    const alice = await registerUser("+79990000101", { username: "alice_ct", displayName: "Alice Ct" });
+    const bob = await registerUser("+79990000102", { username: "bob_ct", displayName: "Bob Ct" });
+
+    const group = await api
+      .post("/api/chats")
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ type: "group", title: "Contact Test Group" });
+    expect(group.status).toBe(201);
+    const chatId = group.body.chat.id;
+
+    const addMember = await api
+      .post(`/api/chats/${chatId}/members`)
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ memberUsername: "@bob_ct" });
+    expect(addMember.status).toBe(201);
+
+    const contact = await api
+      .post(`/api/chats/${chatId}/messages`)
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ kind: "contact", contact: { userId: bob.user.id } });
+    expect(contact.status).toBe(201);
+    expect(contact.body.message.type).toBe("contact");
+    expect(contact.body.message.text).toBe("Bob Ct");
+    expect(contact.body.message.contact?.userId).toBe(bob.user.id);
+    expect(contact.body.message.contact?.username).toBe("bob_ct");
+
+    const badTarget = await api
+      .post(`/api/chats/${chatId}/messages`)
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ kind: "contact", contact: { userId: "missing-user" } });
+    expect(badTarget.status).toBe(404);
+
+    const missingPayload = await api
+      .post(`/api/chats/${chatId}/messages`)
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ kind: "contact" });
+    expect(missingPayload.status).toBe(400);
+
+    const marker = `zebra-search-${Date.now()}`;
+    const texted = await api
+      .post(`/api/chats/${chatId}/messages`)
+      .set("authorization", `Bearer ${alice.token}`)
+      .send({ text: marker });
+    expect(texted.status).toBe(201);
+
+    const global = await api
+      .get(`/api/messages/search?q=${encodeURIComponent(marker)}`)
+      .set("authorization", `Bearer ${bob.token}`);
+    expect(global.status).toBe(200);
+    expect(global.body.messages.some((entry) => entry.id === texted.body.message.id)).toBe(true);
+
+    const tooShort = await api
+      .get("/api/messages/search?q=x")
+      .set("authorization", `Bearer ${bob.token}`);
+    expect(tooShort.status).toBe(200);
+    expect(tooShort.body.messages).toEqual([]);
+  });
+});
