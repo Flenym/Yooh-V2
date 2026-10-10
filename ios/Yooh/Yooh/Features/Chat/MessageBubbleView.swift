@@ -500,7 +500,7 @@ private struct ContactContentView: View {
     }
 
     private func openChat() async {
-        guard let c, let id = c.userId, !id.isEmpty else { return }
+        guard let c = message.contact, let id = c.userId, !id.isEmpty else { return }
         let user = PublicUser(id: id, username: c.username,
                               displayName: c.displayName, avatar: c.avatar)
         if let res = await app.contactsViewModel.openDirect(with: user) {
@@ -509,10 +509,6 @@ private struct ContactContentView: View {
                 app.chatsPath.append(chat.id)
             case .needsRequest:
                 vm.showError("Пользователь принимает сообщения только от контактов.")
-            case .none:
-                break
-            case .none:
-                break
             }
         }
         Haptics.selection()

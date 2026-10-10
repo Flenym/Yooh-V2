@@ -187,6 +187,7 @@ struct YoohMessage: Codable, Identifiable {
         readByUserIds = [senderId]
         location = nil
         poll = nil
+        contact = nil
         call = nil
         forwardedFrom = nil
         editedAt = nil
