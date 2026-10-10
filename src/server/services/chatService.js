@@ -10,7 +10,7 @@ import {
   canViewerSendVoiceToTarget,
   getPublicUserForViewer,
 } from "./privacyRules.js";
-import { byteLength, hashPhone, isValidGroupTitle, monthKey, normalizePhone, normalizePublicHandle, nowIso, trimText } from "../utils.js";
+import { byteLength, hashPhone, isValidGroupTitle, monthKey, normalizePublicHandle, nowIso, trimText } from "../utils.js";
 
 const chatSettingsSchema = z
   .object({
@@ -253,12 +253,6 @@ function enforceMonthLimit(db, userId, addedBytes, monthLimitBytes) {
 function getUserTrafficLimitBytes(user, config) {
   const baseLimit = Number.parseInt(config.monthLimitBytes ?? 0, 10) || 0;
   return user?.isPremium ? baseLimit * 2 : baseLimit;
-}
-
-function getUserFileLimitBytes(user, config) {
-  const baseLimit = Number.parseInt(config.fileLimitBytes ?? 0, 10) || 0;
-  const premiumLimit = 4 * 1024 * 1024 * 1024;
-  return user?.isPremium ? Math.max(baseLimit, premiumLimit) : Math.min(baseLimit, 2 * 1024 * 1024 * 1024);
 }
 
 function normalizeReadByUserIds(value, messageSenderId = "") {

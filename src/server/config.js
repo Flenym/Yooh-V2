@@ -116,7 +116,8 @@ export function loadConfig(overrides = {}) {
     smsHttpUrl: (process.env.SMS_HTTP_URL ?? "").trim(),
     smsHttpToken: (process.env.SMS_HTTP_TOKEN ?? "").trim(),
     smsHttpHeaders: (process.env.SMS_HTTP_HEADERS ?? "").trim(),
-    smsFallbackToSupportBot: toBoolean(process.env.SMS_FALLBACK_TO_SUPPORT_BOT, true),
+    // Off by default: login codes must never land in a chat unless an operator opts in.
+  smsFallbackToSupportBot: toBoolean(process.env.SMS_FALLBACK_TO_SUPPORT_BOT, false),
     contactHashSalt: (process.env.CONTACT_HASH_SALT ?? process.env.CONTACTS_HASH_SALT ?? "yooh-contact-salt").trim(),
     vapidPublicKey: (process.env.VAPID_PUBLIC_KEY ?? "").trim(),
     vapidPrivateKey: (process.env.VAPID_PRIVATE_KEY ?? "").trim(),
